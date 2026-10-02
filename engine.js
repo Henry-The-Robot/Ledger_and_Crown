@@ -215,7 +215,7 @@
       if (s.bal.cash < R.upkeep + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${R.upkeep + interest} of wages and interest. The hands walk off.`);
       post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: R.upkeep, cash: -R.upkeep });
       if (interest) { post(s, "interest", `Week ${d / 7} interest on Ezra's loan`, { interest, cash: -interest }); use(s, "tvm"); }
-      if (s.bal.equip + s.bal.accdep > 0) { const dep = Math.min(R.depPerWeek, s.bal.equip + s.bal.accdep); post(s, "dep", "Depreciation on the sprinkler", { depreciation: dep, accdep: -dep }); use(s, "depreciation"); }
+      if (s.bal.equip + s.bal.accdep > 0) { const dep = Math.min(R.depPerWeek * Math.round(s.bal.equip / R.sprinklerCost), s.bal.equip + s.bal.accdep); // 5 a week per sprinkler owned post(s, "dep", "Depreciation on the sprinkler", { depreciation: dep, accdep: -dep }); use(s, "depreciation"); }
       const gp = s.week.revenue - s.week.cogs;
       if (gp >= R.upkeep) use(s, "breakeven"); if (gp - R.upkeep - interest > 0) use(s, "operating");
       if (s.bal.ar > 0) use(s, "wc");
