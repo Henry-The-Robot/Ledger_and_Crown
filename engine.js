@@ -18,6 +18,9 @@
     rain: [5, 12, 13, 20, 26],
     // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
     // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
+    // customers who pay part up front: [day offered, buyer, sacks, price, days to deliver, deposit share, what they say]
+    deposits: [[11, "ashby", 27, 9, 8, 0.5, "My niece is marrying at the end of the week. A feast's worth of bread: 27 sacks. Half now to hold your place, the rest on delivery."],
+      [18, "hobb", 24, 10, 8, 0.3, "I'm adding a second wheel. 24 sacks, and a third paid today so you can buy seed. I'll want them on time."]],
     pellDays: [5, 8], pedlarDays: [13, 16], poisonCost: 35, pellSacks: 12, pellShare: 80, // the pig farmer, the rat-poison pedlar, and what Pell's pig sale would give you
     events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
     field: { x0: 5, y0: 10, w: 9, h: 4 },
@@ -27,7 +30,7 @@
     accdep: ["Accumulated depreciation", "A"], ap: ["Accounts payable", "L"], loan: ["Loan payable", "L"], crown: ["Crown debt", "L"],
     capital: ["Owner's equity", "E"], revenue: ["Revenue", "R"], cogs: ["Cost of goods sold", "X"],
     upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], losses: ["Crop & stock losses", "X"], interest: ["Interest expense", "X"],
-    factoring: ["Factoring fees", "X"],
+    factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
     mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
@@ -75,9 +78,9 @@
   // ---------- derived views ----------
   function balanceSheet(b) { // b = a balance map (s.bal or s.opening)
     const ni = -(b.revenue) - b.cogs - b.upkeep - b.depreciation - b.fines - b.losses - b.interest - b.factoring;
-    const assets = b.cash + b.ar + b.inv + b.equip + b.accdep, liab = -b.ap - b.loan - b.crown, equity = -b.capital + ni;
-    return { cash: b.cash, ar: b.ar, inv: b.inv, equipNet: b.equip + b.accdep, assets, ap: -b.ap, loan: -b.loan, crown: -b.crown, liab, equity, ni,
-      currentAssets: b.cash + b.ar + b.inv, currentLiab: -b.ap - b.loan - b.crown };
+    const assets = b.cash + b.ar + b.inv + b.equip + b.accdep, liab = -b.ap - b.loan - b.crown - b.deposits, equity = -b.capital + ni;
+    return { cash: b.cash, ar: b.ar, inv: b.inv, equipNet: b.equip + b.accdep, assets, ap: -b.ap, loan: -b.loan, crown: -b.crown, deposits: -b.deposits, liab, equity, ni,
+      currentAssets: b.cash + b.ar + b.inv, currentLiab: -b.ap - b.loan - b.crown - b.deposits };
   }
   function terms(s) { // what Ezra and Tomas offer, from their trust (and, for Ezra, from the forecast you showed him)
     const e = s.trust.ezra, t = s.trust.tomas;
@@ -129,6 +132,7 @@
     const o = s.offers.splice(k, 1)[0]; s.orders.push(Object.assign(o, { status: "open", late: false }));
     if (o.who === "pell") { s.pell = "deal"; if (o.share) s.promises.push({ who: "pell", amount: R.pellShare, text: `A quarter of Pell's pig sale at Midwinter, about ${R.pellShare}`, day: s.day }); }
     if (o.who === "duke") { use(s, "wc", false); use(s, "overtrading", false); } // felt: growth that must be funded now and paid later
+    if (o.deposit) { o.paid = Math.round(o.value * o.deposit); post(s, "deposit", `${NAMES[o.who]} paid a ${o.paid} deposit on ${o.sacks} sacks (not Revenue yet: we still owe the grain)`, { cash: o.paid, deposits: -o.paid }); use(s, "accrual"); }
     note(s, `Agreed: ${o.sacks} sacks to ${NAMES[o.who]} at ${o.price}, due day ${o.due}, ${o.terms ? "paid " + o.terms + " days after delivery" : "Cash on delivery"}.`);
     return ok();
   }
@@ -149,9 +153,10 @@
     if (s.sacks < o.sacks) return err(`Need ${o.sacks} sacks; the barn has ${s.sacks}.`);
     const v = o.sacks * o.price, c = o.sacks * R.unitCost;
     s.sacks -= o.sacks; o.status = "delivered"; o.deliveredDay = s.day;
-    if (o.terms) { const inv = { id: s.nextId++, who: o.who, amount: v, due: s.day + o.terms }; s.invoices.push(inv);
-      post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} on ${o.terms}-day terms (invoice due day ${inv.due})`, { ar: v, revenue: -v }); use(s, "accrual"); }
-    else post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} for Cash`, { cash: v, revenue: -v });
+    const dep = o.paid || 0; // a deposit already taken is a liability; delivering the grain turns it into Revenue
+    if (o.terms) { const inv = { id: s.nextId++, who: o.who, amount: v - dep, due: s.day + o.terms }; s.invoices.push(inv);
+      post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} on ${o.terms}-day terms (invoice due day ${inv.due})${dep ? `, ${dep} already paid as a deposit` : ""}`, { ar: v - dep, deposits: dep, revenue: -v }); use(s, "accrual"); }
+    else post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]}${dep ? ` for the ${v - dep} still owed (${dep} was paid as a deposit)` : " for Cash"}`, { cash: v - dep, deposits: dep, revenue: -v });
     post(s, "cogs", `Cost of the ${o.sacks} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += o.sacks;
     const onTime = s.day <= o.due;
@@ -241,13 +246,15 @@
         o.status = "cancelled"; bump(s, o.who, -2); if (o.who === "duke") bump(s, "ezra", -1);
         const fine = Math.round(o.value * R.breachPct);
         if (s.bal.cash < fine) return insolvent(s, `${NAMES[o.who]} sues for the ${fine} forfeit on the broken order, and Cash is ${s.bal.cash}.`);
+        const refund = o.paid || 0; if (s.bal.cash < fine + refund) return insolvent(s, `${NAMES[o.who]} wants the ${refund} deposit back plus a ${fine} forfeit, and Cash is ${s.bal.cash}.`);
+        if (refund) post(s, "refund", `Refunded ${NAMES[o.who]}'s ${refund} deposit: the grain never came`, { deposits: refund, cash: -refund });
         post(s, "fine", `Forfeit to ${NAMES[o.who]}: order cancelled, ${o.sacks} sacks never came`, { fines: fine, cash: -fine });
         note(s, `${NAMES[o.who]} cancelled the order and took a ${fine} forfeit.`);
       } else if (d >= o.due && !o.late) { o.late = true; bump(s, o.who, -1); note(s, `${NAMES[o.who]}'s order is due today and not delivered: late from tomorrow.`); }
     }
     s.offers = s.offers.filter(o => o.expires > d);
     if (d >= R.days) { s.over = true; s.outcome = "closed"; note(s, "The last night of spring. Time to close the books."); return ok(); }
-    s.day++; makeOffers(s);
+    s.day++; makeOffers(s); specialOffers(s);
     return ok();
   }
   // a loss is written off the books the night it happens: Inventory down, Crop & stock losses up (an expense that cuts net income)
@@ -293,6 +300,11 @@
     note(s, "Tomas's men fenced the field."); return ok();
   }
   function insolvent(s, why) { s.over = true; s.outcome = "insolvent"; s.why = why; use(s, "insolvency", false); use(s, "overtrading", false); note(s, why); return ok(); }
+  function specialOffers(s) { // the deposit customers: cash now, grain later
+    if (s.quiet) return;
+    R.deposits.filter(r => r[0] === s.day).forEach(([d, who, sacks, price, dueIn, share, say]) =>
+      s.offers.push({ id: s.nextId++, who, sacks, price, terms: 0, due: Math.min(R.days, d + dueIn), expires: d + 3, value: sacks * price, deposit: share, say }));
+  }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
     OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, price, tdays, dueIn]) => {

@@ -238,7 +238,7 @@
   // ---------- negotiation: open, counter, leverage, walk away (2-4 rounds) ----------
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
   async function haggle(o, cfg) {
-    let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = cfg.line, round = 0;
+    let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
     while (round < 4) {
       const lev = [];
@@ -259,7 +259,7 @@
       theirs = Math.min(walk, Math.ceil((theirs + p) / 2)); line = round >= 3 ? `My last word: ${theirs}.` : `Too dear. Meet me at ${theirs}.`;
     }
     const k = await sayP(o.who, `${theirs}, take it or leave it.`, [`Accept ${theirs}`, "Walk away"]); return k === 0 ? close(theirs) : null;
-    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
+    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
   }
   // ---------- villagers ----------
   async function talk(who) {
@@ -267,13 +267,16 @@
     if (FAIR[who]) return fairDeal(who);
     if (who === "pell") return pellTalk(); if (who === "pedlar") return pedlarTalk();
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
-    const o = s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
+    const o = s.offers.find(x => x.who === who && x.deposit) || s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
     if (o) { await haggle(o, { open: o.price - 1, walk: o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
     const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
     say(who, idle[s.day % idle.length]);
   }
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
+  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability
+    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
+  }
   async function pellTalk() {
     if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
     const asks = `Neighbour, I'm short. Twelve sacks of grain for my pigs, and I can't pay what it's worth until the pigs go to market at Midwinter. I can give you ${S.R.unitCost} a sack, 21 days on. I'd be grateful.`;
@@ -449,7 +452,7 @@
   const fmt = v => typeof v === "number" ? (v < 0 ? `(${-v})` : String(v)) : v;
   function bsTable(b, title, p) {
     pre = p || "bs1"; return `<table class="stm"><tr><th>${title}</th><th></th></tr>` + tr("Cash", b.cash, "sub", "cash") + tr("Accounts receivable", b.ar, "sub", "ar") + tr("Inventory", b.inv, "sub", "inv") +
-      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
+      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
       tr("Crown debt (due at Midwinter)", b.crown, "sub", "crown") + tr("Owner's equity", b.equity, "sub", "equity") + tr("Liabilities + Owner's equity", b.liab + b.equity, "total") +
       `</table><div class="ok">${b.assets === b.liab + b.equity ? "Assets = Liabilities + Owner's equity ✓" : "OUT OF BALANCE"}</div>`;
   }
@@ -461,7 +464,7 @@
   }
   function cfTable(st) {
     const c = st.cf; pre = "cf"; return `<table class="stm" id="cft"><tr><th>Cash-flow statement (indirect)</th><th></th></tr>` + tr("Net income", c.net, "", "net") + tr("+ Depreciation", c.dep, "sub", "dep") +
-      tr("(Increase) decrease in Accounts receivable", -c.dAR, "sub", "ar") + tr("(Increase) decrease in Inventory", -c.dInv, "sub", "inv") + tr("Increase (decrease) in Accounts payable", c.dAP, "sub", "ap") +
+      tr("(Increase) decrease in Accounts receivable", -c.dAR, "sub", "ar") + tr("(Increase) decrease in Inventory", -c.dInv, "sub", "inv") + tr("Increase (decrease) in Accounts payable", c.dAP, "sub", "ap") + (c.dDep ? tr("Increase (decrease) in Customer deposits", c.dDep, "sub", "dep") : "") +
       tr("Cash from operations", c.cfo, "total", "cfo") + tr("Equipment bought", c.capex, "sub", "capex") + tr("Cash from investing", c.cfi, "total", "cfi") +
       tr("Borrowed", c.borrowed, "sub", "cff") + tr("Repaid", c.repaid, "sub", "cff") + tr("Cash from financing", c.cff, "total", "cff") +
       tr("Change in Cash", c.change, "total", "change") + `</table><div class="ok">${c.reconciles ? `Cash ${c.cashStart} → ${c.cashEnd}: reconciles ✓` : "DOES NOT RECONCILE"}</div>`;
