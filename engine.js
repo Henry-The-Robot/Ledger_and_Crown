@@ -18,6 +18,7 @@
     rain: [5, 12, 13, 20, 26],
     // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
     // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
+    pellDays: [5, 8], pedlarDays: [13, 16], poisonCost: 35, pellSacks: 12, pellShare: 80, // the pig farmer, the rat-poison pedlar, and what Pell's pig sale would give you
     events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
     field: { x0: 5, y0: 10, w: 9, h: 4 },
   };
@@ -29,7 +30,7 @@
     factoring: ["Factoring fees", "X"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
-    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey" };
+    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   const OFFERS = [
     [1, "ashby", 6, 8, 0, 4], [2, "hobb", 18, 9, 14, 6], [4, "ashby", 9, 8, 0, 4], [6, "hobb", 24, 9, 14, 6],
@@ -41,7 +42,7 @@
   function newGame(opt) {
     opt = opt || {};
     const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0,
-      trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4 }, quiet: !!opt.story,
+      trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4, pell: 4, pedlar: 4 }, pell: null, poison: false, promises: [], quiet: !!opt.story,
       sacks: 15, seeds: 0, fenced: false, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
@@ -68,7 +69,7 @@
   const use = (s, id, well) => s.uses.push({ id, day: s.day, well: well !== false });
   const sum = a => a.reduce((x, y) => x + y, 0);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const bump = (s, who, d) => { s.trust[who] = clamp(s.trust[who] + d, 0, 10); };
+  const bump = (s, who, d) => { s.trust[who] = clamp((s.trust[who] == null ? 4 : s.trust[who]) + d, 0, 10); };
   const ok = m => ({ ok: true, msg: m }), err = m => ({ ok: false, msg: m });
 
   // ---------- derived views ----------
@@ -126,6 +127,7 @@
   function accept(s, id) {
     const k = s.offers.findIndex(o => o.id === id); if (k < 0) return err("That offer is gone.");
     const o = s.offers.splice(k, 1)[0]; s.orders.push(Object.assign(o, { status: "open", late: false }));
+    if (o.who === "pell") { s.pell = "deal"; if (o.share) s.promises.push({ who: "pell", amount: R.pellShare, text: `A quarter of Pell's pig sale at Midwinter, about ${R.pellShare}`, day: s.day }); }
     if (o.who === "duke") { use(s, "wc", false); use(s, "overtrading", false); } // felt: growth that must be funded now and paid later
     note(s, `Agreed: ${o.sacks} sacks to ${NAMES[o.who]} at ${o.price}, due day ${o.due}, ${o.terms ? "paid " + o.terms + " days after delivery" : "Cash on delivery"}.`);
     return ok();
@@ -253,12 +255,15 @@
   function overnight(s, ev) {
     if (ev === "pigs") {
       const crops = s.plots.filter(p => p.crop).sort((a, b) => b.crop.age - a.crop.age || a.i - b.i), n = Math.ceil(crops.length * R.pigShare);
+      const kept = s.orders.some(o => o.who === "pell" && o.status !== "cancelled");
       if (s.fenced) note(s, "Pigs rooted at the fence all night and went home hungry. The fence paid for itself.");
+      else if (kept) note(s, "Pell's pigs stayed in their pen. He remembers who helped him when he was short.");
       else if (n > 0) { const lost = crops.slice(0, n); const cost = sum(lost.map(p => p.crop.cost)); lost.forEach(p => p.crop = null);
-        writeOff(s, `Pigs ate ${n} of ${crops.length} plots in the ground (written off at cost)`, cost); note(s, `Pigs got in and ate ${n} of your ${crops.length} growing plots: ${cost} of Inventory written off as a loss.`); }
+        writeOff(s, `Pigs ate ${n} of ${crops.length} plots in the ground (written off at cost)`, cost); if (s.pell === "refused") bump(s, "pell", -2); note(s, `${s.pell === "refused" ? "Pell's pigs, the ones you wouldn't feed: " : ""}Pigs got in and ate ${n} of your ${crops.length} growing plots: ${cost} of Inventory written off as a loss.`); }
     } else if (ev === "rats") {
       const k = Math.min(s.sacks, Math.max(1, Math.floor(s.sacks * R.ratShare)));
-      if (s.sacks > 0) { s.sacks -= k; writeOff(s, `Rats spoiled ${k} sacks in the barn (written off at cost)`, k * R.unitCost); note(s, `Rats got into the barn: ${k} sacks spoiled, ${k * R.unitCost} of Inventory written off. Sacks you ship don't rot.`); }
+      if (s.poison) note(s, "The rats took the poisoned bait and the barn stayed clean. Barnaby's price stung, but the sacks are safe.");
+      else if (s.sacks > 0) { s.sacks -= k; writeOff(s, `Rats spoiled ${k} sacks in the barn (written off at cost)`, k * R.unitCost); note(s, `Rats got into the barn: ${k} sacks spoiled, ${k * R.unitCost} of Inventory written off. Sacks you ship don't rot.`); }
     } else if (ev === "warm") {
       s.plots.forEach(p => { if (p.crop && p.crop.age < R.growDays) p.crop.age++; }); note(s, "A warm, bright day: everything in the ground grew an extra day.");
     } else if (ev === "frost") note(s, "A hard frost last night: nothing grew. Deliveries that counted on tomorrow's crop slip a day.");
@@ -266,10 +271,21 @@
   // what Maud can see coming: the day before and the day of, so a prepared player can act
   function warning(s) {
     const ev = R.events[s.day] || R.events[s.day + 1], when = R.events[s.day] ? "tonight" : "tomorrow night";
-    if (ev === "pigs" && !s.fenced) return `Hobb's pigs have broken loose and are heading for the fields ${when}. A fence from Tomas costs ${R.fenceCost}; pigs would eat about a quarter of what's growing.`;
-    if (ev === "rats") return `Rats are in the village ${when}. Stock in the barn is Inventory you can lose; sacks you've shipped are safe.`;
+    if (s.day >= R.pellDays[0] && s.day <= R.pellDays[1] && !s.pell) return "Pell the pig farmer is waiting by the mill with a favour to ask. What a farmer says yes to, and what he says no to, comes back around.";
+    if (s.day >= R.pedlarDays[0] && s.day <= R.pedlarDays[1] && !s.poison) return `Barnaby the pedlar is on the road with rat poison. Rats are due soon; weigh what he charges against what a quarter of your barn is worth.`;
+    const spared = s.fenced || s.orders.some(o => o.who === "pell" && o.status !== "cancelled");
+    if (ev === "pigs" && !spared) return `Pell's pigs have broken loose and are heading for the fields ${when}. A fence from Tomas costs ${R.fenceCost}; pigs would eat about a quarter of what's growing.`;
+    if (ev === "rats" && !s.poison) return `Rats are in the village ${when}. Stock in the barn is Inventory you can lose; sacks you've shipped are safe.`;
     if (ev === "frost") return `A frost is coming ${when}: nothing will grow that night. Check your delivery dates.`;
     return null;
+  }
+  function refusePell(s) { s.pell = "refused"; bump(s, "pell", -1); note(s, "You turned Pell away. He walked off muttering about his pigs."); return ok(); }
+  // Barnaby's rat poison: expensive, but compare it with what the rats would take from the barn as it stands today
+  const ratLoss = s => Math.min(s.sacks, Math.max(1, Math.floor(s.sacks * R.ratShare))) * R.unitCost;
+  function buyPoison(s, price) {
+    if (s.poison) return err("The barn is already baited."); if (s.bal.cash < price) return err(`The poison is ${price}; Cash is ${s.bal.cash}.`);
+    post(s, "poison", `Rat poison from Barnaby (Operating expense: wages & upkeep)`, { upkeep: price, cash: -price }); s.poison = true;
+    note(s, `Bought rat poison for ${price}. If the rats come, they'll eat it instead of your grain.`); return ok();
   }
   function buyFence(s) {
     if (s.fenced) return err("The field is already fenced."); if (s.bal.cash < R.fenceCost) return err(`A fence costs ${R.fenceCost}; Cash is ${s.bal.cash}.`);
@@ -301,6 +317,6 @@
   }
 
   root.Spring = { R, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, buyFence, warning, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, buyFence, refusePell, buyPoison, ratLoss, warning, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

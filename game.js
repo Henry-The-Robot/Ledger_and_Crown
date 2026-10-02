@@ -22,6 +22,7 @@
   BUILD.forEach(b => { b.img = A.building(b.w, b.h, Object.assign({}, b, { sign: b.sign && A.SIGNS[b.sign] })); b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
   const NPC = {}; BUILD.filter(b => b.who).forEach(b => NPC[b.who] = { who: b.who, x: b.door.x + 1, y: b.door.y + 1, dir: "down" });
   NPC.duke = { who: "duke", x: 36, y: 10, dir: "left" };
+  NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
   const FAIR = { mira: { x: 25, y: 20, sacks: 6, walk: 6, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
@@ -48,7 +49,10 @@
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
-  const npcHere = n => n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
+  const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
+  const npcHere = n => n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
+    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
+    : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
   const blocked = (x, y) => x < 0 || y < 0 || x >= MW || y >= MH || solid.has(key(x, y)) || !!npcAt(x, y);
   // ---------- player & input ----------
@@ -261,12 +265,31 @@
   async function talk(who) {
     if (storyOn && Story.onTalk(who)) return;
     if (FAIR[who]) return fairDeal(who);
+    if (who === "pell") return pellTalk(); if (who === "pedlar") return pedlarTalk();
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
     const o = s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
     if (o) { await haggle(o, { open: o.price - 1, walk: o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
     const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
     say(who, idle[s.day % idle.length]);
+  }
+  // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
+  async function pellTalk() {
+    if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
+    const asks = `Neighbour, I'm short. Twelve sacks of grain for my pigs, and I can't pay what it's worth until the pigs go to market at Midwinter. I can give you ${S.R.unitCost} a sack, 21 days on. I'd be grateful.`;
+    const pick = await sayP("pell", asks, ["Haggle for a better price (paid in 14 days)", `Grain at 3 a sack, for a quarter of what the pigs fetch at Midwinter`, "Turn him away", "Not yet"]);
+    if (pick === 0) { const o = S.addOffer(s, "pell", S.R.pellSacks, S.R.unitCost, 14, 4, 2), deal = await haggle(o, { open: S.R.unitCost, walk: S.R.unitCost + 1, line: "Four a sack. It's all I have, neighbour." });
+      if (!deal) S.decline(s, o.id); else await sayP("pell", "Twelve sacks by day " + (s.day + 4) + ". I'll keep the pigs in.", ["Close"]); }
+    else if (pick === 1) { const o = S.addOffer(s, "pell", S.R.pellSacks, 3, 21, 4, 2); o.share = true; const r = act(() => S.accept(s, o.id));
+      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise. It isn't Cash, a bill or Revenue until Pell pays it at Midwinter, so the Ledger lists it as a note and nowhere else.<br>Is it worth it? Maybe. But look at what your books say today.`, [["Open the Ledger", ledger], ["Close", null]]); }
+    else if (pick === 2) { act(() => S.refusePell(s)); say("pell", "I'll remember this. So will my pigs."); }
+  }
+  async function pedlarTalk() {
+    if (s.poison) return say("pedlar", "Your barn's baited. The rats'll curse your name.");
+    const price = S.R.poisonCost, loss = S.ratLoss(s), buy = p => () => { const r = act(() => S.buyPoison(s, p)); say(r.ok ? "maud" : "pedlar", r.ok ? `Poison costs Cash now and is an operating expense: it goes in the Ledger as upkeep. The rats might never have come, or might have cost you ${loss}. That's what insurance is: a certain cost against an uncertain loss.` : r.msg); };
+    const pick = await sayP("pedlar", `Rat poison, friend. ${price} Cash, and not a penny less. Rats are coming to every barn on this road.<br><i>(Rats in your barn right now would spoil about ${loss} of grain.)</i>`, [`Buy at ${price}`, "Offer 25", "Not today"]);
+    if (pick === 0) buy(price)();
+    else if (pick === 1) { const k = await sayP("pedlar", "Twenty-five? Thirty, and that's my last word.", ["Buy at 30", "Walk away"]); if (k === 0) buy(30)(); }
   }
   async function fairDeal(who) { // the market fair: a different buyer, a different price; once a day each
     const f = FAIR[who]; fairSeen[who] = f.walk;
@@ -448,6 +471,7 @@
     const jr = s.journal.slice(-9).reverse().map(j => `<tr><td>${j.day}</td><td>${j.memo}<div class="hint">${Object.entries(j.lines).map(([k, v]) => `${v > 0 ? "Dr" : "Cr"} ${S.ACCTS[k][0]} ${Math.abs(v)}`).join(" · ")}</div></td></tr>`).join("");
     showPanel("ledger", `<h1>The Ledger <span class="hint">day ${s.day} · click Close or press Esc</span></h1><div class="grid g3">${bsTable(b, "Balance sheet today")}${isTable(st)}
       <div><h3>Inventory at cost</h3><div class="hint">${s.sacks} sacks × 4 + ${s.seeds} seed × 12 + ${s.plots.filter(p => p.crop).length} plots growing × 12 = ${b.inv}</div></div></div>
+      ${s.promises && s.promises.length ? `<h3 style="margin-top:10px">Promised, not booked</h3><table class="stm">${s.promises.map(p => `<tr><td>${p.text}</td><td class="num">${p.amount}</td></tr>`).join("")}</table><div class="hint">A promise of future money isn't an asset until it's paid, so it isn't on the balance sheet. Accountants disclose it in a note.</div>` : ""}
       <h3 style="margin-top:10px">Journal (latest postings)</h3><table class="stm">${jr}</table>`);
   }
   // ---------- closing the books: guided (chapter 9), then Ezra's loan review ----------

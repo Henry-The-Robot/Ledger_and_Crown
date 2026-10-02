@@ -42,6 +42,8 @@
     duke: { H: "#3a2a1a", c: "#8f2f3f", C: "#6d2230", l: "#d9b24a" },
     mira: { H: "#2f2018", c: "#d9a83a", C: "#b8862b", l: "#5a4636", e: "#d9a07a" },
     abbey: { H: "#8a6a4a", c: "#6b5a48", C: "#54463a", l: "#54463a" },
+    pell: { H: "#6a4a2a", c: "#b07a6a", C: "#8f5f50", l: "#4a3a2a", e: "#e0a888" },
+    pedlar: { H: "#2a2a3a", c: "#7a7a2a", C: "#5a5a1f", l: "#3a3a2a", e: "#e0b090" },
   };
   // ---------- crops (wheat), five growth stages ----------
   const CROPS = [

@@ -5,7 +5,7 @@ const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++;
 const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 const plant = (s, n) => { s.plots.filter(p => p.tilled && !p.crop).slice(0, n).forEach(p => p.crop = { age: 1, cost: 12 }); s.bal.inv += n * 12; s.bal.cash -= n * 12; };
 { const s = S.newGame(); s.bal.cash = 400; upTo(s, 9); plant(s, 5); const n0 = s.plots.filter(p => p.crop).length, inv0 = s.bal.inv, ni0 = S.balanceSheet(s.bal).ni;
-  ok(/Hobb's pigs/.test(S.coach(s).text), "Maud warns about the pigs on the day");
+  ok(/Pell's pigs/.test(S.coach(s).text), "Maud warns about the pigs on the day");
   S.sleep(s); const n1 = s.plots.filter(p => p.crop).length, lost = n0 - n1;
   ok(lost === Math.ceil(n0 / 4), `pigs eat a quarter of the plots (${lost} of ${n0})`);
   ok(s.bal.losses === lost * 12 && s.bal.inv === inv0 - lost * 12, "loss is written off at cost: Inventory down, Crop & stock losses up");
