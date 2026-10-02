@@ -16,6 +16,9 @@
     factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
     crownDebt: 1000,            // owed to the Crown at Midwinter (the story's goal)
     rain: [5, 12, 13, 20, 26],
+    // the going price per sack by day (index = day - 1): steady at first, then a glut around days 10-13, a Duke-fuelled rise by day 17, a dip, a late rally
+    market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
+    premium: { ashby: 0, hobb: 1, duke: 2 }, // what each buyer pays over the going price on a standard offer
     field: { x0: 5, y0: 10, w: 9, h: 4 },
   };
   const ACCTS = {
@@ -34,6 +37,12 @@
     [15, "ashby", 12, 8, 0, 4], [18, "hobb", 30, 9, 14, 6], [19, "ashby", 12, 8, 0, 4], [22, "ashby", 12, 8, 0, 4],
     [23, "hobb", 24, 9, 14, 5], [25, "ashby", 9, 8, 0, 3],
   ];
+
+  const marketPrice = d => R.market[clamp(d, 1, R.days) - 1];
+  function roll(d, who, salt) { // a stateless 0..1 roll from (day, buyer, salt): same game, same offers, nothing to save
+    let h = 2166136261; for (const c of who + ":" + d + ":" + salt) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+    h = Math.imul(h ^ (h >>> 15), 2246822507); h ^= h >>> 13; return (h >>> 0) % 1000 / 1000;
+  }
 
   function newGame(opt) {
     opt = opt || {};
@@ -246,9 +255,17 @@
   function insolvent(s, why) { s.over = true; s.outcome = "insolvent"; s.why = why; use(s, "insolvency", false); use(s, "overtrading", false); note(s, why); return ok(); }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
-    OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, price, tdays, dueIn]) => {
-      const sacks = who === "duke" ? base : Math.max(3, Math.round(base * (0.6 + s.trust[who] / 10) / 3) * 3);
-      s.offers.push({ id: s.nextId++, who, sacks, price, terms: tdays, due: Math.min(R.days, d + dueIn), expires: d + 2, value: sacks * price });
+    OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, , tdays, dueIn]) => {
+      let sacks = who === "duke" ? base : Math.max(3, Math.round(base * (0.6 + s.trust[who] / 10) / 3) * 3);
+      let price = marketPrice(d) + (R.premium[who] || 0), due = dueIn, terms = tdays, tag = "";
+      if (who !== "duke") { // buyers differ day to day: a rush, a bigger order on longer terms, a small one on short terms
+        const r = roll(d, who, 1), rescale = k => Math.max(3, Math.round(sacks * k / 3) * 3);
+        if (who === "ashby") { if (r >= .8 && d <= 20) { terms = 7; price += 1; tag = "pays in a week"; } else if (r >= .55) { sacks = rescale(.75); due = 2; price += 1; tag = "rush"; } }
+        else if (r >= .75) { sacks = rescale(.75); terms = 7; price -= 1; tag = "small, pays in a week"; } else if (r >= .5 && d >= 6) { sacks = rescale(1.25); price += 1; tag = "big order"; }
+      }
+      const offer = { id: s.nextId++, who, sacks, price, terms, due: Math.min(R.days, d + due), expires: d + 2, value: sacks * price, tag };
+      if (who !== "duke") offer.reserve = price + 1 + (roll(d, who, 2) >= .5 ? 1 : 0); // the most they'll really pay: 1-2 over the first price
+      s.offers.push(offer);
     });
   }
 
@@ -266,7 +283,7 @@
     return null;
   }
 
-  root.Spring = { R, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
+  root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
     weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
