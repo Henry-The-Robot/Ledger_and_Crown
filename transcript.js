@@ -1,9 +1,14 @@
 // Spring at Thornfield — the transcript (T key). All 17 core courses are visible from the first minute; only C0-C2
-// are active in Spring, the rest are locked behind the act that unlocks them. A concept moves unseen -> used (did it
-// in play) -> mastered (explained it correctly to Ezra or Maud, or used it well 3 times). Earned by playing only.
+// are active in Spring, the rest are locked behind the act that unlocks them. Earned by playing only.
+// Honest mastery (Kyle, 2026-10-02: "That's not mastery, that's an introduction to the concept"):
+//   introduced  — you met it once (Maud taught it, or you did it once)
+//   practiced   — correct on your own on at least 2 different game days
+//   mastered    — correct on your own on at least 3 different game days, at least once by explaining it (a typed
+//                 answer without a walk-through), spread over at least 2 real calendar days. Spacing over real time
+//                 is what makes memory last (Cepeda et al. 2006), so one sitting can't master anything.
 // Persists in localStorage; concept ids that exist in poc/codex.js are mirrored there so the hub's Almanac fills too.
 (function (root) {
-  const KEY = "lc_transcript_v1";
+  const KEY = "lc_transcript_v2"; // v1 marked one right answer as mastery; its records aren't carried over
   const COURSES = [
     ["C0", "Quantitative Readiness", 0], ["C1", "Financial Accounting", 0], ["C2", "Managerial Accounting", 0],
     ["C3", "Data, Statistics & Decisions", 2], ["C4", "Microeconomics & Pricing", 2], ["C5", "Finance I: Valuation", 3],
@@ -24,26 +29,42 @@
   const store = root.localStorage ? { get: () => { try { return JSON.parse(root.localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }, set: d => { try { root.localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {} } }
     : { get: () => mem, set: d => { mem = d; } };
   const codex = (id, st) => { if (root.Codex && CODEX_IDS.indexOf(id) >= 0) try { root.Codex.mark(id, st); } catch (e) {} };
+  const today = () => new Date().toISOString().slice(0, 10);
 
-  function use(id, well) { // returns "used" | "mastered" when the state changed, else null
-    const d = store.get(), c = d[id] || (d[id] = { used: 0, mastered: false }); let changed = null;
-    if (!c.used) changed = "used"; if (well !== false) c.used++; else c.used = Math.max(c.used, 1);
-    if (!c.mastered && c.used >= 3) { c.mastered = true; changed = "mastered"; }
-    store.set(d); codex(id, "felt"); if (changed === "mastered") codex(id, "named"); return changed;
+  function level(c) {
+    if (!c) return "unseen";
+    const days = new Set(c.ev.map(e => e.day)).size, real = new Set(c.ev.map(e => e.real)).size, explained = c.ev.some(e => e.kind === "answer");
+    if (days >= 3 && explained && real >= 2) return "mastered";
+    if (days >= 2) return "practiced";
+    return "introduced";
   }
-  function master(id) { const d = store.get(), c = d[id] || (d[id] = { used: 1, mastered: false }), was = c.mastered; c.mastered = true; c.used = Math.max(c.used, 1); store.set(d); codex(id, "named"); return was ? null : "mastered"; }
-  const state = id => { const c = store.get()[id]; return !c ? "unseen" : c.mastered ? "mastered" : "used"; };
+  // One piece of evidence per concept per game day and kind (doing it ten times on one day still counts once).
+  function record(id, kind, day) {
+    const d = store.get(), c = d[id] || (d[id] = { ev: [] }), before = d[id].ev.length ? level(c) : "unseen", r = today(), dd = day == null ? -1 : day;
+    if (!c.ev.some(e => e.day === dd && e.kind === kind)) c.ev.push({ day: dd, kind, real: r });
+    const after = level(c); store.set(d);
+    codex(id, "felt"); if (after === "mastered") codex(id, "named");
+    return after !== before ? after : null;
+  }
+  // use: did it in play (well === false means it went badly: it still introduces the idea, but isn't evidence of skill)
+  function use(id, well, day) { if (well === false) { const d = store.get(); if (!d[id]) { d[id] = { ev: [] }; store.set(d); codex(id, "felt"); return "introduced"; } return null; } return record(id, "use", day); }
+  // master (kept for the story's calls): explained it correctly in a lesson, on your own. Evidence, not mastery.
+  function master(id, day) { return record(id, "answer", day); }
+  const state = id => level(store.get()[id]);
   const name = id => { for (const k in CONCEPTS) for (const [i, n] of CONCEPTS[k]) if (i === id) return n; return id; };
-  function progress(code) { const cs = CONCEPTS[code] || []; if (!cs.length) return 0; return cs.reduce((a, [i]) => a + ({ unseen: 0, used: .4, mastered: 1 })[state(i)], 0) / cs.length; }
+  const W = { unseen: 0, introduced: .2, practiced: .55, mastered: 1 };
+  function progress(code) { const cs = CONCEPTS[code] || []; if (!cs.length) return 0; return cs.reduce((a, [i]) => a + W[state(i)], 0) / cs.length; }
   function reset() { store.set({}); }
+  const LABEL = { unseen: "unseen", introduced: "introduced", practiced: "practiced", mastered: "mastered &#9733;" };
   function html() {
     const row = ([code, title, act]) => { const p = Math.round(progress(code) * 100), locked = act > 0;
       return `<div class="course${locked ? " locked" : ""}"><div class="ch"><b>${code}</b> ${title}<span>${locked ? "&#128274; " + ACTS[act] : p + "%"}</span></div>` +
         (locked ? "" : `<div class="bar"><i style="width:${p}%"></i></div>` + CONCEPTS[code].map(([i, n]) => { const st = state(i);
-          return `<div class="cx ${st}"><span>${st === "unseen" ? "? ? ?" : n}</span><span>${st === "mastered" ? "mastered &#9733;" : st === "used" ? "used" : "unseen"}</span></div>`; }).join("")) + "</div>"; };
-    return `<h2>Transcript <span class="hint">Thornfield School of the Vale · MBA core</span></h2><div class="courses">${COURSES.map(row).join("")}</div>` +
-      `<div class="diploma">&#128274; Diploma: sealed until the Grand Audit</div>`;
+          return `<div class="cx ${st === "mastered" ? "mastered" : st === "unseen" ? "unseen" : "used"}"><span>${st === "unseen" ? "? ? ?" : n}</span><span>${LABEL[st]}</span></div>`; }).join("")) + "</div>"; };
+    return `<h2>Transcript <span class="hint">Thornfield School of the Vale · MBA core</span></h2>` +
+      `<p class="hint">Introduced: you've met it. Practiced: right on your own on 2 different days. Mastered: right on your own on 3 different days, at least once by explaining it, across at least 2 real days. Ideas come back in later seasons so you can master them.</p>` +
+      `<div class="courses">${COURSES.map(row).join("")}</div><div class="diploma">&#128274; Diploma: sealed until the Grand Audit</div>`;
   }
-  root.Transcript = { COURSES, CONCEPTS, use, master, state, name, progress, reset, html };
+  root.Transcript = { COURSES, CONCEPTS, use, master, state, name, progress, reset, html, level };
   if (typeof module !== "undefined") module.exports = root.Transcript;
 })(typeof window !== "undefined" ? window : globalThis);

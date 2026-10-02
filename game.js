@@ -117,7 +117,7 @@
   }
   const story = (evt, info) => { if (storyOn) Story.after(evt, info); };
   let usePtr = 0;
-  function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well); if (ch) toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)}`); } }
+  function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } }
   // ---------- dialogue: one box, Promise-based; choices, a number field, highlights ----------
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
@@ -446,7 +446,7 @@
   // ---------- closing the books: guided (chapter 9), then Ezra's loan review ----------
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
-    ["statements", "cfs"].forEach(i => { const c = TR.use(i); if (c) toast(`Transcript: ${TR.name(i)}`); });
+    ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
     const banner = s.outcome === "insolvent" ? `<div class="banner">Insolvent on day ${s.day}. ${s.why}</div>` : "";
     const guided = storyOn && Story.state.stage !== "done";
     showPanel("close", `<h1>Closing the books: Spring, year one</h1>${banner}<div class="grid g3" id="stmts"><div id="sec-is">${isTable(st)}</div><div id="sec-bs0">${bsTable(st.start, "Balance sheet, start of spring", "bs0")}</div><div id="sec-bs1">${bsTable(st.end, s.outcome === "insolvent" ? "Balance sheet, day " + s.day : "Balance sheet, end of spring")}<div class="hint">Owner's equity ${st.end.equity} = ${st.start.equity} at the start + Net income ${st.is.net}</div></div></div>
@@ -477,7 +477,7 @@
       const qq = qs[i]; qq.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("ask")));
       ez.innerHTML = `<div class="ezq"><b>Ezra</b> <span class="hint">(${i + 1} of ${qs.length}; each answer moves your summer rate)</span><br>${qq.q} ${qq.ask}</div>` +
         qq.options.slice().sort(() => Math.random() - .5).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
-      ez.querySelectorAll(".choice").forEach(b => b.onclick = () => { const ok = b.dataset.o === qq.answer; if (ok) { right++; [qq.id].concat(qq.also || []).forEach(id => { if (TR.master(id)) toast(`Mastered: ${TR.name(id)} ★`); }); }
+      ez.querySelectorAll(".choice").forEach(b => b.onclick = () => { const ok = b.dataset.o === qq.answer; if (ok) { right++; [qq.id].concat(qq.also || []).forEach(id => { const c = TR.master(id, s.day); if (c) toast(c === "mastered" ? `Mastered: ${TR.name(id)} ★` : `Transcript: ${TR.name(id)} (${c})`); }); }
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${ok ? "Just so." : `No. ${qq.answer}.`}</div><button class="btn gold" id="nx">Next</button>`; $("nx").onclick = () => { i++; next(); }; });
     }
     next();

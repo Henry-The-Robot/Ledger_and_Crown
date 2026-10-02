@@ -40,8 +40,8 @@ window.Story = (function () {
   function keep(id, term, line, example) { if (!st.notebook.some(n => n.id === id)) st.notebook.push({ id, term, line, example }); G.toast(`Maud's notebook: ${term} (N)`); }
   const tell = (t, spot) => G.say("maud", t, null, spot);
   const ask = (t, answer, hints, spot, tol, docs, work, how) => G.ask("maud", t, answer, hints, spot, tol, docs, work, how);
-  // Mastery only when the player got there themselves: a walk-through or a reported skip leaves it at "used".
-  const mastered = id => { if (!window.__walked) TR.master(id); };
+  // Only answers the player got on their own count as evidence: a walk-through or a reported skip adds nothing.
+  const mastered = id => { if (!window.__walked) TR.master(id, G.s.day); }; // evidence of skill, not instant mastery (transcript.js)
   // Document buttons for Try beats: the player finds the numbers in their own books (hints say where, never the sum).
   const DOC = {
     ledger: { label: "Open the Ledger", open: () => G.ledger() },
