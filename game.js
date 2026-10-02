@@ -22,6 +22,7 @@
   BUILD.forEach(b => { b.img = A.building(b.w, b.h, Object.assign({}, b, { sign: b.sign && A.SIGNS[b.sign] })); b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
   const NPC = {}; BUILD.filter(b => b.who).forEach(b => NPC[b.who] = { who: b.who, x: b.door.x + 1, y: b.door.y + 1, dir: "down" });
   NPC.duke = { who: "duke", x: 36, y: 10, dir: "left" };
+  NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
   const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
@@ -48,7 +49,10 @@
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
-  const npcHere = n => n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
+  const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
+  const npcHere = n => n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
+    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
+    : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
   const blocked = (x, y) => x < 0 || y < 0 || x >= MW || y >= MH || solid.has(key(x, y)) || !!npcAt(x, y);
   // ---------- player & input ----------
@@ -234,7 +238,7 @@
   // ---------- negotiation: open, counter, leverage, walk away (2-4 rounds) ----------
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
   async function haggle(o, cfg) {
-    let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = cfg.line, round = 0;
+    let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
     while (round < 4) {
       const lev = [];
@@ -255,18 +259,40 @@
       theirs = Math.min(walk, Math.ceil((theirs + p) / 2)); line = round >= 3 ? `My last word: ${theirs}.` : `Too dear. Meet me at ${theirs}.`;
     }
     const k = await sayP(o.who, `${theirs}, take it or leave it.`, [`Accept ${theirs}`, "Walk away"]); return k === 0 ? close(theirs) : null;
-    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
+    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
   }
   // ---------- villagers ----------
   async function talk(who) {
     if (storyOn && Story.onTalk(who)) return;
     if (FAIR[who]) return fairDeal(who);
+    if (who === "pell") return pellTalk(); if (who === "pedlar") return pedlarTalk();
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
-    const o = s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
+    const o = s.offers.find(x => x.who === who && x.deposit) || s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
     if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
     const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
     say(who, idle[s.day % idle.length]);
+  }
+  // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
+  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability
+    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
+  }
+  async function pellTalk() {
+    if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
+    const asks = `Neighbour, I'm short. Twelve sacks of grain for my pigs, and I can't pay what it's worth until the pigs go to market at Midwinter. I can give you ${S.R.unitCost} a sack, 21 days on. I'd be grateful.`;
+    const pick = await sayP("pell", asks, ["Haggle for a better price (paid in 14 days)", `Grain at 3 a sack, for a quarter of what the pigs fetch at Midwinter`, "Turn him away", "Not yet"]);
+    if (pick === 0) { const o = S.addOffer(s, "pell", S.R.pellSacks, S.R.unitCost, 14, 4, 2), deal = await haggle(o, { open: S.R.unitCost, walk: S.R.unitCost + 1, line: "Four a sack. It's all I have, neighbour." });
+      if (!deal) S.decline(s, o.id); else await sayP("pell", "Twelve sacks by day " + (s.day + 4) + ". I'll keep the pigs in.", ["Close"]); }
+    else if (pick === 1) { const o = S.addOffer(s, "pell", S.R.pellSacks, 3, 21, 4, 2); o.share = true; const r = act(() => S.accept(s, o.id));
+      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise. It isn't Cash, a bill or Revenue until Pell pays it at Midwinter, so the Ledger lists it as a note and nowhere else.<br>Is it worth it? Maybe. But look at what your books say today.`, [["Open the Ledger", ledger], ["Close", null]]); }
+    else if (pick === 2) { act(() => S.refusePell(s)); say("pell", "I'll remember this. So will my pigs."); }
+  }
+  async function pedlarTalk() {
+    if (s.poison) return say("pedlar", "Your barn's baited. The rats'll curse your name.");
+    const price = S.R.poisonCost, loss = S.ratLoss(s), buy = p => () => { const r = act(() => S.buyPoison(s, p)); say(r.ok ? "maud" : "pedlar", r.ok ? `Poison costs Cash now and is an operating expense: it goes in the Ledger as upkeep. The rats might never have come, or might have cost you ${loss}. That's what insurance is: a certain cost against an uncertain loss.` : r.msg); };
+    const pick = await sayP("pedlar", `Rat poison, friend. ${price} Cash, and not a penny less. Rats are coming to every barn on this road.<br><i>(Rats in your barn right now would spoil about ${loss} of grain.)</i>`, [`Buy at ${price}`, "Offer 25", "Not today"]);
+    if (pick === 0) buy(price)();
+    else if (pick === 1) { const k = await sayP("pedlar", "Twenty-five? Thirty, and that's my last word.", ["Buy at 30", "Walk away"]); if (k === 0) buy(30)(); }
   }
   async function fairDeal(who) { // the market fair: a different buyer, a different price; once a day each
     const f = FAIR[who]; fairSeen[who] = f.walk;
@@ -285,6 +311,7 @@
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
       ["Sprinkler: 80 Cash", () => { const r = act(() => S.buySprinkler(s)); say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg); }, s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
+      ...(!s.fenced && s.day <= 9 ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => { const r = act(() => S.buyFence(s)); say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg); }, s.bal.cash < S.R.fenceCost]] : []),
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => { const r = act(() => S.payBills(s)); say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg); }, !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -366,9 +393,15 @@
     const notes = s.log.slice(0, s.log.length - n0).reverse().map(l => l.t).slice(0, 4);
     if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks);
     pl.x = 6 * T + 8; pl.y = 7 * T + 12; pl.dir = "down"; save();
-    const morning = () => { morningBark(); story("morning"); };
+    const morning = () => { morningBark(); story("morning"); lossLesson(); };
     if (fast) return morning();
     night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning);
+  }
+  function lossLesson() { // a loss shows up in the Ledger as an expense with no Cash leaving: walk the player to the exact lines
+    const j = s.journal.find(x => x.type === "loss" && x.day === s.day - 1); if (!j || (storyOn && Story.busy)) return;
+    const n = Object.values(j.lines)[0] ? j.lines.losses : 0;
+    say("maud", `Open the Ledger and find the journal line "${j.memo}".<br>Debit Crop & stock losses ${n}, credit Inventory ${n}. Cash didn't move, but Net income fell by ${n} and so did Inventory: value you paid for is gone. That's why losses hit profit.`,
+      [["Open the Ledger", ledger], ["Later", null]]);
   }
   function night(title, notes, then) {
     const n = $("night"); n.innerHTML = `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join(""); n.classList.add("on");
@@ -385,7 +418,7 @@
     const b = S.balanceSheet(s.bal), wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk), wd = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(s.day - 1) % 7];
     document.body.classList.toggle("desk", atDesk);
     const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span>${v}</span>`;
-    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : "")) +
+    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : "")) + box("fund", "Toward the Crown", S.crownFund(s).net + " / " + S.R.crownDebt) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
@@ -427,19 +460,19 @@
   const fmt = v => typeof v === "number" ? (v < 0 ? `(${-v})` : String(v)) : v;
   function bsTable(b, title, p) {
     pre = p || "bs1"; return `<table class="stm"><tr><th>${title}</th><th></th></tr>` + tr("Cash", b.cash, "sub", "cash") + tr("Accounts receivable", b.ar, "sub", "ar") + tr("Inventory", b.inv, "sub", "inv") +
-      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
+      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
       tr("Crown debt (due at Midwinter)", b.crown, "sub", "crown") + tr("Owner's equity", b.equity, "sub", "equity") + tr("Liabilities + Owner's equity", b.liab + b.equity, "total") +
       `</table><div class="ok">${b.assets === b.liab + b.equity ? "Assets = Liabilities + Owner's equity ✓" : "OUT OF BALANCE"}</div>`;
   }
   function isTable(st) {
     const i = st.is; pre = "is"; return `<table class="stm"><tr><th>Income statement</th><th></th></tr>` + tr("Revenue", i.revenue, "", "revenue") + tr("Cost of goods sold", -i.cogs, "sub", "cogs") + tr("Gross profit", i.gross, "total", "gross") +
-      tr("Wages & upkeep", -i.upkeep, "sub", "opex") + (i.dep ? tr("Depreciation", -i.dep, "sub", "opex") : "") + (i.fines ? tr("Contract forfeits", -i.fines, "sub", "opex") : "") +
+      tr("Wages & upkeep", -i.upkeep, "sub", "opex") + (i.dep ? tr("Depreciation", -i.dep, "sub", "opex") : "") + (i.fines ? tr("Contract forfeits", -i.fines, "sub", "opex") : "") + (i.losses ? tr("Crop & stock losses", -i.losses, "sub", "opex") : "") +
       tr("Operating expenses", -i.opex, "", "opex") + tr("Operating income", i.operating, "total", "operating") + tr("Interest expense", -i.interest, "sub", "interest") +
       (i.factoring ? tr("Factoring fees", -i.factoring, "sub", "interest") : "") + tr("Net income", i.net, "total", "net") + `</table>`;
   }
   function cfTable(st) {
     const c = st.cf; pre = "cf"; return `<table class="stm" id="cft"><tr><th>Cash-flow statement (indirect)</th><th></th></tr>` + tr("Net income", c.net, "", "net") + tr("+ Depreciation", c.dep, "sub", "dep") +
-      tr("(Increase) decrease in Accounts receivable", -c.dAR, "sub", "ar") + tr("(Increase) decrease in Inventory", -c.dInv, "sub", "inv") + tr("Increase (decrease) in Accounts payable", c.dAP, "sub", "ap") +
+      tr("(Increase) decrease in Accounts receivable", -c.dAR, "sub", "ar") + tr("(Increase) decrease in Inventory", -c.dInv, "sub", "inv") + tr("Increase (decrease) in Accounts payable", c.dAP, "sub", "ap") + (c.dDep ? tr("Increase (decrease) in Customer deposits", c.dDep, "sub", "dep") : "") +
       tr("Cash from operations", c.cfo, "total", "cfo") + tr("Equipment bought", c.capex, "sub", "capex") + tr("Cash from investing", c.cfi, "total", "cfi") +
       tr("Borrowed", c.borrowed, "sub", "cff") + tr("Repaid", c.repaid, "sub", "cff") + tr("Cash from financing", c.cff, "total", "cff") +
       tr("Change in Cash", c.change, "total", "change") + `</table><div class="ok">${c.reconciles ? `Cash ${c.cashStart} → ${c.cashEnd}: reconciles ✓` : "DOES NOT RECONCILE"}</div>`;
@@ -449,9 +482,16 @@
     const jr = s.journal.slice(-9).reverse().map(j => `<tr><td>${j.day}</td><td>${j.memo}<div class="hint">${Object.entries(j.lines).map(([k, v]) => `${v > 0 ? "Dr" : "Cr"} ${S.ACCTS[k][0]} ${Math.abs(v)}`).join(" · ")}</div></td></tr>`).join("");
     showPanel("ledger", `<h1>The Ledger <span class="hint">day ${s.day} · click Close or press Esc</span></h1><div class="grid g3">${bsTable(b, "Balance sheet today")}${isTable(st)}
       <div><h3>Inventory at cost</h3><div class="hint">${s.sacks} sacks × 4 + ${s.seeds} seed × 12 + ${s.plots.filter(p => p.crop).length} plots growing × 12 = ${b.inv}</div></div></div>
+      ${s.promises && s.promises.length ? `<h3 style="margin-top:10px">Promised, not booked</h3><table class="stm">${s.promises.map(p => `<tr><td>${p.text}</td><td class="num">${p.amount}</td></tr>`).join("")}</table><div class="hint">A promise of future money isn't an asset until it's paid, so it isn't on the balance sheet. Accountants disclose it in a note.</div>` : ""}
       <h3 style="margin-top:10px">Journal (latest postings)</h3><table class="stm">${jr}</table>`);
   }
   // ---------- closing the books: guided (chapter 9), then Ezra's loan review ----------
+  function midwinter() { // the stakes: could this farm pay the Crown if Midwinter were tomorrow?
+    const f = S.crownFund(s), row = (l, v, neg) => `<tr><td>${l}</td><td class="num">${neg ? "−" : ""}${v}</td></tr>`, big = { paid: ["The farm is yours.", "ok"], promise: ["Only a promise saves you.", "warn"], short: ["The Crown takes the farm.", "banner"] }[f.verdict];
+    const lines = { paid: `You'd clear the Crown's ${f.crown} with ${f.gap} to spare. But every customer has to pay, and Edric's invoices were good too.`,
+      promise: `You're ${-f.gap} short of the Crown. Pell's pig money (${f.hoped}) would cover it, but a promise isn't Cash until he pays.`, short: `You're ${-f.gap} short of the Crown's ${f.crown}. Look at what ate your profit: losses, interest, forfeits and Receivables you haven't collected.` }[f.verdict];
+    return `<div class="${big[1]}" style="margin:6px 0"><b>If Midwinter were tomorrow: ${big[0]}</b><div class="hint">${lines}</div><table class="stm">${f.have.map(r => row(r[0], r[1])).join("")}${f.owe.filter(r => r[1]).map(r => row(r[0], r[1], 1)).join("")}${row("The Crown's debt", f.crown, 1)}<tr class="total"><td>${f.gap >= 0 ? "Left over" : "Short by"}</td><td class="num">${Math.abs(f.gap)}</td></tr></table></div>`;
+  }
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
     ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
@@ -462,8 +502,9 @@
     if (guided) { ["is", "bs0", "bs1", "cf"].forEach(k => $("sec-" + k).classList.add("veil")); await Story.close(st, h); $("mline").innerHTML = `<b>Maud:</b> ${h.text}`; }
     h.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("hl")));
     const ez = $("ez");
+    const mw = s.outcome === "insolvent" ? "" : midwinter();
     if (s.outcome === "insolvent") ez.innerHTML = `<p>Ezra won't lend to an estate that couldn't pay its wages. The farm goes to auction.</p><button class="btn gold" id="again">Try spring again</button>`;
-    else ez.innerHTML = `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
+    else ez.innerHTML = mw + `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
     wire(); save();
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));

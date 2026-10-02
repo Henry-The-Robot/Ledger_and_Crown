@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Visitors: Pell and the pedlar</title></head><body><pre id="out">running</pre>
+<!-- Sandbox: day 5 Pell's dialog (share deal -> Maud's lesson, promise listed in the Ledger), day 13 the pedlar (haggle to 30, poison bought).
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/visitors.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  const txt = () => d.getElementById("dlg").textContent, btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent));
+  const S = w.Spring, s = w.G.s; w.G.closeDlg(); w.G.hidePanel(); s.bal.cash += 300; while (s.day < 5) S.sleep(s);
+  w.G.talk("pell"); await sleep(50); out.push(`pell asks: ${/short/.test(txt()) && /Midwinter/.test(txt())}`);
+  btn(/quarter of what the pigs fetch/).click(); await sleep(80);
+  out.push(`maud explains the promise: ${/Gross profit/.test(txt()) && /promise/.test(txt())}`, `promise recorded: ${s.promises.length === 1}`, `pell order open at 3: ${s.orders.some(o => o.who === "pell" && o.price === 3)}`);
+  btn(/Open the Ledger/).click(); await sleep(50);
+  out.push(`ledger lists it under Promised, not booked: ${/Promised, not booked/.test(d.getElementById("panelBody").textContent)}`); w.G.hidePanel(); w.G.closeDlg();
+  while (s.day < 13) S.sleep(s);
+  w.G.talk("pedlar"); await sleep(50); out.push(`pedlar quotes 35 and the rat loss: ${/35 Cash/.test(txt()) && /spoil about/.test(txt())}`);
+  btn(/Offer 25/).click(); await sleep(50); out.push(`pedlar counters 30: ${/Thirty/.test(txt())}`);
+  const u0 = s.bal.upkeep; btn(/Buy at 30/).click(); await sleep(80);
+  out.push(`bought for 30 as upkeep: ${s.poison && s.bal.upkeep === u0 + 30}`, `maud explains insurance: ${/insurance/.test(txt())}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>

@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Customer deposit flow</title></head><body><pre id="out">running</pre>
+<!-- Sandbox day 11: Ashby's deposit order is announced, accepting takes the deposit, Maud explains the liability, the Ledger shows
+     Customer deposits. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/deposit-flow.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => { try {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  const txt = () => d.getElementById("dlg").textContent, btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent));
+  const S = w.Spring, s = w.G.s; w.G.closeDlg(); w.G.hidePanel(); while (s.day < 11) S.sleep(s);
+  w.G.talk("ashby"); await sleep(50); out.push(`offer mentions the deposit: ${/marrying/.test(txt()) && /paid up front/.test(txt())}`);
+  const c0 = s.bal.cash; btn(/Accept/).click(); await sleep(80);
+  out.push(`deposit taken: ${s.bal.cash > c0 && s.bal.deposits < 0}`, `maud explains the liability: ${/Customer deposits/.test(txt()) && /Revenue didn't move/.test(txt())}`);
+  btn(/Open the Ledger/).click(); await sleep(50);
+  out.push(`ledger balance sheet shows Customer deposits: ${/Customer deposits \(grain owed\)/.test(d.getElementById("panelBody").textContent)}`, `still balanced: ${/Assets = Liabilities/.test(d.getElementById("panelBody").textContent)}`, `errors: ${JSON.stringify(errs)}`);
+  } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>

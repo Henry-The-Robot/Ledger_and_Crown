@@ -21,17 +21,24 @@
     // the going price per sack by day (index = day - 1): steady at first, then a glut around days 10-13, a Duke-fuelled rise by day 17, a dip, a late rally
     market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
     premium: { ashby: 0, hobb: 1, duke: 2 }, // what each buyer pays over the going price on a standard offer
+    // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
+    // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
+    // customers who pay part up front: [day offered, buyer, sacks, price, days to deliver, deposit share, what they say]
+    deposits: [[11, "ashby", 27, 9, 8, 0.5, "My niece is marrying at the end of the week. A feast's worth of bread: 27 sacks. Half now to hold your place, the rest on delivery."],
+      [18, "hobb", 24, 10, 8, 0.3, "I'm adding a second wheel. 24 sacks, and a third paid today so you can buy seed. I'll want them on time."]],
+    pellDays: [5, 8], pedlarDays: [13, 16], poisonCost: 35, pellSacks: 12, pellShare: 80, // the pig farmer, the rat-poison pedlar, and what Pell's pig sale would give you
+    events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
     field: { x0: 5, y0: 10, w: 9, h: 4 },
   };
   const ACCTS = {
     cash: ["Cash", "A"], ar: ["Accounts receivable", "A"], inv: ["Inventory", "A"], equip: ["Equipment", "A"],
     accdep: ["Accumulated depreciation", "A"], ap: ["Accounts payable", "L"], loan: ["Loan payable", "L"], crown: ["Crown debt", "L"],
     capital: ["Owner's equity", "E"], revenue: ["Revenue", "R"], cogs: ["Cost of goods sold", "X"],
-    upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], interest: ["Interest expense", "X"],
-    factoring: ["Factoring fees", "X"],
+    upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], losses: ["Crop & stock losses", "X"], interest: ["Interest expense", "X"],
+    factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
-    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey" };
+    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   const OFFERS = [
     [1, "ashby", 6, 8, 0, 4], [2, "hobb", 18, 9, 14, 6], [4, "ashby", 9, 8, 0, 4], [6, "hobb", 24, 9, 14, 6],
@@ -49,8 +56,8 @@
   function newGame(opt) {
     opt = opt || {};
     const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0,
-      trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4 }, quiet: !!opt.story,
-      sacks: 15, seeds: 0, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
+      trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4, pell: 4, pedlar: 4 }, pell: null, poison: false, promises: [], quiet: !!opt.story,
+      sacks: 15, seeds: 0, fenced: false, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
     for (let i = 0; i < f.w * f.h; i++) s.plots.push({ i, x: f.x0 + i % f.w, y: f.y0 + Math.floor(i / f.w), tilled: i < f.w, watered: false, crop: null, sprinkler: false });
@@ -76,15 +83,15 @@
   const use = (s, id, well) => s.uses.push({ id, day: s.day, well: well !== false });
   const sum = a => a.reduce((x, y) => x + y, 0);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  const bump = (s, who, d) => { s.trust[who] = clamp(s.trust[who] + d, 0, 10); };
+  const bump = (s, who, d) => { s.trust[who] = clamp((s.trust[who] == null ? 4 : s.trust[who]) + d, 0, 10); };
   const ok = m => ({ ok: true, msg: m }), err = m => ({ ok: false, msg: m });
 
   // ---------- derived views ----------
   function balanceSheet(b) { // b = a balance map (s.bal or s.opening)
-    const ni = -(b.revenue) - b.cogs - b.upkeep - b.depreciation - b.fines - b.interest - b.factoring;
-    const assets = b.cash + b.ar + b.inv + b.equip + b.accdep, liab = -b.ap - b.loan - b.crown, equity = -b.capital + ni;
-    return { cash: b.cash, ar: b.ar, inv: b.inv, equipNet: b.equip + b.accdep, assets, ap: -b.ap, loan: -b.loan, crown: -b.crown, liab, equity, ni,
-      currentAssets: b.cash + b.ar + b.inv, currentLiab: -b.ap - b.loan - b.crown };
+    const ni = -(b.revenue) - b.cogs - b.upkeep - b.depreciation - b.fines - b.losses - b.interest - b.factoring;
+    const assets = b.cash + b.ar + b.inv + b.equip + b.accdep, liab = -b.ap - b.loan - b.crown - b.deposits, equity = -b.capital + ni;
+    return { cash: b.cash, ar: b.ar, inv: b.inv, equipNet: b.equip + b.accdep, assets, ap: -b.ap, loan: -b.loan, crown: -b.crown, deposits: -b.deposits, liab, equity, ni,
+      currentAssets: b.cash + b.ar + b.inv, currentLiab: -b.ap - b.loan - b.crown - b.deposits };
   }
   function terms(s) { // what Ezra and Tomas offer, from their trust (and, for Ezra, from the forecast you showed him)
     const e = s.trust.ezra, t = s.trust.tomas;
@@ -135,7 +142,9 @@
   function accept(s, id) {
     const k = s.offers.findIndex(o => o.id === id); if (k < 0) return err("That offer is gone.");
     const o = s.offers.splice(k, 1)[0]; s.orders.push(Object.assign(o, { status: "open", late: false }));
+    if (o.who === "pell") { s.pell = "deal"; if (o.share) s.promises.push({ who: "pell", amount: R.pellShare, text: `A quarter of Pell's pig sale at Midwinter, about ${R.pellShare}`, day: s.day }); }
     if (o.who === "duke") { use(s, "wc", false); use(s, "overtrading", false); } // felt: growth that must be funded now and paid later
+    if (o.deposit) { o.paid = Math.round(o.value * o.deposit); post(s, "deposit", `${NAMES[o.who]} paid a ${o.paid} deposit on ${o.sacks} sacks (not Revenue yet: we still owe the grain)`, { cash: o.paid, deposits: -o.paid }); use(s, "accrual"); }
     note(s, `Agreed: ${o.sacks} sacks to ${NAMES[o.who]} at ${o.price}, due day ${o.due}, ${o.terms ? "paid " + o.terms + " days after delivery" : "Cash on delivery"}.`);
     return ok();
   }
@@ -156,9 +165,10 @@
     if (s.sacks < o.sacks) return err(`Need ${o.sacks} sacks; the barn has ${s.sacks}.`);
     const v = o.sacks * o.price, c = o.sacks * R.unitCost;
     s.sacks -= o.sacks; o.status = "delivered"; o.deliveredDay = s.day;
-    if (o.terms) { const inv = { id: s.nextId++, who: o.who, amount: v, due: s.day + o.terms }; s.invoices.push(inv);
-      post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} on ${o.terms}-day terms (invoice due day ${inv.due})`, { ar: v, revenue: -v }); use(s, "accrual"); }
-    else post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} for Cash`, { cash: v, revenue: -v });
+    const dep = o.paid || 0; // a deposit already taken is a liability; delivering the grain turns it into Revenue
+    if (o.terms) { const inv = { id: s.nextId++, who: o.who, amount: v - dep, due: s.day + o.terms }; s.invoices.push(inv);
+      post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]} on ${o.terms}-day terms (invoice due day ${inv.due})${dep ? `, ${dep} already paid as a deposit` : ""}`, { ar: v - dep, deposits: dep, revenue: -v }); use(s, "accrual"); }
+    else post(s, "sale", `Sold ${o.sacks} sacks to ${NAMES[o.who]}${dep ? ` for the ${v - dep} still owed (${dep} was paid as a deposit)` : " for Cash"}`, { cash: v - dep, deposits: dep, revenue: -v });
     post(s, "cogs", `Cost of the ${o.sacks} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += o.sacks;
     const onTime = s.day <= o.due;
@@ -209,6 +219,14 @@
     const weeks = Math.floor(R.days / 7) - Math.floor((s.day - 1) / 7), saved = R.sprinklerSaving * weeks, dep = R.depPerWeek * weeks;
     return { weeks, saved, dep, profit: saved - dep, cash: saved - R.sprinklerCost, paybackWeeks: Math.ceil(R.sprinklerCost / R.sprinklerSaving), life: R.sprinklerCost / R.depPerWeek };
   }
+  // The Crown's 1,000 is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
+  // what you'd be counting on. Promises (Pell's pig share) are shown apart: they are hoped for, not owned.
+  function crownFund(s) {
+    const b = balanceSheet(s.bal), hoped = sum((s.promises || []).map(p => p.amount));
+    const have = [["Cash", b.cash], ["Accounts receivable (if every customer pays)", b.ar], ["Inventory (at cost)", b.inv]], owe = [["Accounts payable", b.ap], ["Loan payable", b.loan], ["Customer deposits (grain still owed)", b.deposits]];
+    const net = sum(have.map(r => r[1])) - sum(owe.map(r => r[1])), gap = net - R.crownDebt;
+    return { have, owe, net, hoped, crown: R.crownDebt, gap, verdict: gap >= 0 ? "paid" : gap + hoped >= 0 ? "promise" : "short" };
+  }
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
     if (amt > room) return err(`Ezra's limit is ${t.loanLimit}; you owe ${-s.bal.loan}.`);
@@ -224,7 +242,9 @@
   function sleep(s) {
     if (s.over) return err("The season is closed.");
     const d = s.day;
-    s.plots.forEach(p => { if (p.crop && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
+    const ev = R.events[d];
+    s.plots.forEach(p => { if (p.crop && ev !== "frost" && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
+    if (ev) overnight(s, ev);
     s.invoices.filter(v => v.due <= d).forEach(v => { post(s, "collect", `${NAMES[v.who]} paid invoice of ${v.amount}`, { cash: v.amount, ar: -v.amount }); use(s, "ar"); note(s, `${NAMES[v.who]} paid ${v.amount}.`); });
     s.invoices = s.invoices.filter(v => v.due > d);
     if (d % 7 === 0) {
@@ -251,16 +271,65 @@
         o.status = "cancelled"; bump(s, o.who, -2); if (o.who === "duke") bump(s, "ezra", -1);
         const fine = Math.round(o.value * R.breachPct);
         if (s.bal.cash < fine) return insolvent(s, `${NAMES[o.who]} sues for the ${fine} forfeit on the broken order, and Cash is ${s.bal.cash}.`);
+        const refund = o.paid || 0; if (s.bal.cash < fine + refund) return insolvent(s, `${NAMES[o.who]} wants the ${refund} deposit back plus a ${fine} forfeit, and Cash is ${s.bal.cash}.`);
+        if (refund) post(s, "refund", `Refunded ${NAMES[o.who]}'s ${refund} deposit: the grain never came`, { deposits: refund, cash: -refund });
         post(s, "fine", `Forfeit to ${NAMES[o.who]}: order cancelled, ${o.sacks} sacks never came`, { fines: fine, cash: -fine });
         note(s, `${NAMES[o.who]} cancelled the order and took a ${fine} forfeit.`);
       } else if (d >= o.due && !o.late) { o.late = true; bump(s, o.who, -1); note(s, `${NAMES[o.who]}'s order is due today and not delivered: late from tomorrow.`); }
     }
     s.offers = s.offers.filter(o => o.expires > d);
     if (d >= R.days) { s.over = true; s.outcome = "closed"; note(s, "The last night of spring. Time to close the books."); return ok(); }
-    s.day++; makeOffers(s);
+    s.day++; makeOffers(s); specialOffers(s);
     return ok();
   }
+  // a loss is written off the books the night it happens: Inventory down, Crop & stock losses up (an expense that cuts net income)
+  function writeOff(s, what, cost) { post(s, "loss", what, { losses: cost, inv: -cost }); use(s, "inventory"); }
+  function overnight(s, ev) {
+    if (ev === "pigs") {
+      const crops = s.plots.filter(p => p.crop).sort((a, b) => b.crop.age - a.crop.age || a.i - b.i), n = Math.ceil(crops.length * R.pigShare);
+      const kept = s.orders.some(o => o.who === "pell" && o.status !== "cancelled");
+      if (s.fenced) note(s, "Pigs rooted at the fence all night and went home hungry. The fence paid for itself.");
+      else if (kept) note(s, "Pell's pigs stayed in their pen. He remembers who helped him when he was short.");
+      else if (n > 0) { const lost = crops.slice(0, n); const cost = sum(lost.map(p => p.crop.cost)); lost.forEach(p => p.crop = null);
+        writeOff(s, `Pigs ate ${n} of ${crops.length} plots in the ground (written off at cost)`, cost); if (s.pell === "refused") bump(s, "pell", -2); note(s, `${s.pell === "refused" ? "Pell's pigs, the ones you wouldn't feed: " : ""}Pigs got in and ate ${n} of your ${crops.length} growing plots: ${cost} of Inventory written off as a loss.`); }
+    } else if (ev === "rats") {
+      const k = Math.min(s.sacks, Math.max(1, Math.floor(s.sacks * R.ratShare)));
+      if (s.poison) note(s, "The rats took the poisoned bait and the barn stayed clean. Barnaby's price stung, but the sacks are safe.");
+      else if (s.sacks > 0) { s.sacks -= k; writeOff(s, `Rats spoiled ${k} sacks in the barn (written off at cost)`, k * R.unitCost); note(s, `Rats got into the barn: ${k} sacks spoiled, ${k * R.unitCost} of Inventory written off. Sacks you ship don't rot.`); }
+    } else if (ev === "warm") {
+      s.plots.forEach(p => { if (p.crop && p.crop.age < R.growDays) p.crop.age++; }); note(s, "A warm, bright day: everything in the ground grew an extra day.");
+    } else if (ev === "frost") note(s, "A hard frost last night: nothing grew. Deliveries that counted on tomorrow's crop slip a day.");
+  }
+  // what Maud can see coming: the day before and the day of, so a prepared player can act
+  function warning(s) {
+    const ev = R.events[s.day] || R.events[s.day + 1], when = R.events[s.day] ? "tonight" : "tomorrow night";
+    if (s.day >= R.pellDays[0] && s.day <= R.pellDays[1] && !s.pell) return "Pell the pig farmer is waiting by the mill with a favour to ask. What a farmer says yes to, and what he says no to, comes back around.";
+    if (s.day >= R.pedlarDays[0] && s.day <= R.pedlarDays[1] && !s.poison) return `Barnaby the pedlar is on the road with rat poison. Rats are due soon; weigh what he charges against what a quarter of your barn is worth.`;
+    const spared = s.fenced || s.orders.some(o => o.who === "pell" && o.status !== "cancelled");
+    if (ev === "pigs" && !spared) return `Pell's pigs have broken loose and are heading for the fields ${when}. A fence from Tomas costs ${R.fenceCost}; pigs would eat about a quarter of what's growing.`;
+    if (ev === "rats" && !s.poison) return `Rats are in the village ${when}. Stock in the barn is Inventory you can lose; sacks you've shipped are safe.`;
+    if (ev === "frost") return `A frost is coming ${when}: nothing will grow that night. Check your delivery dates.`;
+    return null;
+  }
+  function refusePell(s) { s.pell = "refused"; bump(s, "pell", -1); note(s, "You turned Pell away. He walked off muttering about his pigs."); return ok(); }
+  // Barnaby's rat poison: expensive, but compare it with what the rats would take from the barn as it stands today
+  const ratLoss = s => Math.min(s.sacks, Math.max(1, Math.floor(s.sacks * R.ratShare))) * R.unitCost;
+  function buyPoison(s, price) {
+    if (s.poison) return err("The barn is already baited."); if (s.bal.cash < price) return err(`The poison is ${price}; Cash is ${s.bal.cash}.`);
+    post(s, "poison", `Rat poison from Barnaby (Operating expense: wages & upkeep)`, { upkeep: price, cash: -price }); s.poison = true;
+    note(s, `Bought rat poison for ${price}. If the rats come, they'll eat it instead of your grain.`); return ok();
+  }
+  function buyFence(s) {
+    if (s.fenced) return err("The field is already fenced."); if (s.bal.cash < R.fenceCost) return err(`A fence costs ${R.fenceCost}; Cash is ${s.bal.cash}.`);
+    post(s, "fence", `Fence for the field (Operating expense: wages & upkeep)`, { upkeep: R.fenceCost, cash: -R.fenceCost }); s.fenced = true;
+    note(s, "Tomas's men fenced the field."); return ok();
+  }
   function insolvent(s, why) { s.over = true; s.outcome = "insolvent"; s.why = why; use(s, "insolvency", false); use(s, "overtrading", false); note(s, why); return ok(); }
+  function specialOffers(s) { // the deposit customers: cash now, grain later
+    if (s.quiet) return;
+    R.deposits.filter(r => r[0] === s.day).forEach(([d, who, sacks, price, dueIn, share, say]) =>
+      s.offers.push({ id: s.nextId++, who, sacks, price, terms: 0, due: Math.min(R.days, d + dueIn), expires: d + 3, value: sacks * price, deposit: share, say }));
+  }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
     OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, , tdays, dueIn]) => {
@@ -284,6 +353,7 @@
     const short = committed(s) - s.sacks - sacksComing(s);
     if (cash + collect < due) return { danger: true, text: `Cash ${cash}, and ${due} of wages, interest and Accounts payable fall due by day ${wk}. Ezra lends; the market cart buys surplus.` };
     const late = s.bills.find(b => b.late); if (late) return { danger: true, text: `Tomas's bill of ${late.amount} is overdue. Five days and he goes to the court.` };
+    const w = warning(s); if (w) return { danger: true, text: w }; // danger: true so the story's quiet stretches still show it
     if (short > 0) return { danger: short > 20, text: `Open orders need ${committed(s)} sacks; Inventory plus the field makes ${s.sacks + sacksComing(s)}. Plant ${Math.ceil(short / 3)} more plots.` };
     if (s.offers.some(o => o.who === "duke")) return { danger: false, text: `The Duke pays 21 days after delivery. Seed and wages are paid now: can Cash wait that long?` };
     if (s.bal.ar > 2 * cash && cash < 150) return { danger: false, text: `Accounts receivable ${s.bal.ar}, Cash ${cash}. Revenue isn't Cash until the invoice is paid.` };
@@ -292,6 +362,6 @@
   }
 
   root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, refusePell, buyPoison, ratLoss, warning, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
