@@ -311,7 +311,7 @@
   function specialOffers(s) { // the deposit customers: cash now, grain later
     if (s.quiet) return;
     R.deposits.filter(r => r[0] === s.day).forEach(([d, who, sacks, price, dueIn, share, say]) =>
-      s.offers.push({ id: s.nextId++, who, sacks, price, terms: 0, due: Math.min(R.days, d + dueIn), expires: d + 3, value: sacks * price, deposit: share, say }));
+      s.offers.push({ id: s.nextId++, who, sacks, price, terms: 0, due: Math.min(R.days, d + dueIn), expires: d + 3, value: sacks * price, deposit: share, say, reserve: price + 1 }));
   }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
