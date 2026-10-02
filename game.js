@@ -147,7 +147,11 @@
   let askSkip = null;
   // how: the method, taught on a different example, so the player still works out their own number (always available).
   async function ask(who, text, answer, hints, sp, tol, docs, work, how) {
-    let tries = 0, extra = "", walked = false; window.__want = answer; docs = docs || [];
+    let tries = 0, extra = "", walked = false; window.__want = answer; docs = (docs || []).slice();
+    // Every question can open your books. A question that brings its own forecast (e.g. a what-if) keeps it;
+    // the default hides Closing Cash so it never gives the answer away.
+    if (!docs.some(d => /Ledger/.test(d.label))) docs.push({ label: "Open the Ledger", open: ledger });
+    if (!docs.some(d => /forecast/i.test(d.label))) docs.push({ label: "Open the cash forecast", open: () => board({ title: "Cash forecast, next two weeks (In and Out)", n: 14, noClose: true, fill: [] }) });
     let skipped = false; askSkip = () => { skipped = true; $("dlg").style.display = "none"; spot(null); resume && resume({ i: -1 }); };
     let resume = null;
     for (;;) {
