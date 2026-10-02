@@ -106,7 +106,7 @@
   // ---------- farm actions ----------
   function act(s, i) { // the E key on a field tile: till -> plant -> water -> harvest
     const p = s.plots[i]; if (!p || s.over) return err("");
-    if (p.sprinkler) return err("The sprinkler waters the 8 plots around it each morning.");
+    if (p.sprinkler) { p.sprinkler = false; s.sprinklersHeld++; return ok("pickup"); } // moving it is free: pick up, then place on another empty tilled plot
     if (!p.tilled) { p.tilled = true; return ok("till"); }
     if (!p.crop) {
       if (s.sprinklersHeld > 0) return placeSprinkler(s, i);
@@ -190,7 +190,7 @@
   function buySprinkler(s) {
     if (s.bal.cash < R.sprinklerCost) return err(`A sprinkler costs ${R.sprinklerCost}; Cash is ${s.bal.cash}.`);
     post(s, "equip", "Bought a sprinkler (Equipment, 16-week life)", { equip: R.sprinklerCost, cash: -R.sprinklerCost });
-    s.sprinklersHeld++; note(s, "Bought a sprinkler. Place it on an empty tilled plot."); return ok();
+    s.sprinklersHeld++; note(s, "Bought a sprinkler. Place it on an empty tilled plot; click it again to move it."); return ok();
   }
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
