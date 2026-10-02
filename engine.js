@@ -8,7 +8,9 @@
   const R = {
     days: 28, seedCost: 12, sacksPerPlot: 3, unitCost: 4, growDays: 4, // a plot: 12 of seed -> 3 sacks at 4 each
     upkeep: 45,                 // weekly farmhand wages + upkeep (Operating expense), paid in Cash
+    sprinklerSaving: 20, wageFloor: 20, // each placed sprinkler saves the hands 20 a week of hauling water (wages never fall below the floor)
     spotPrice: 5,               // the market cart buys any surplus for Cash
+    sprinklerHead: 1,           // a crop planted in sprinkled soil starts this many days along (a shorter cycle, so more harvests)
     sprinklerCost: 80, depPerWeek: 5, // Equipment: 16-week life, straight-line, no salvage (C1.05)
     lateGrace: 3, breachPct: 0.1, // an order more than 3 days late is cancelled, with a forfeit of 10% of its value
     apDefault: 5,               // a bill 5 days overdue: Tomas takes you to the reeve's court
@@ -94,19 +96,20 @@
     const t = terms(s), rows = []; let cash = s.bal.cash - (extraOut || 0);
     for (let d = s.day; d < s.day + n && d <= R.days; d++) {
       const open = cash, cin = sum(s.invoices.filter(v => v.due === d || (d === s.day && v.due < d)).map(v => v.amount));
-      const wk = d % 7 === 0 ? R.upkeep + Math.round(-s.bal.loan * t.rateBp / 10000) : 0, bills = sum(s.bills.filter(b => b.due === d || (d === s.day && b.due < d)).map(b => b.amount));
+      const wk = d % 7 === 0 ? wages(s) + Math.round(-s.bal.loan * t.rateBp / 10000) : 0, bills = sum(s.bills.filter(b => b.due === d || (d === s.day && b.due < d)).map(b => b.amount));
       const fines = sum(openOrders(s).filter(o => Math.max(s.day, o.due + R.lateGrace + 1) === d).map(o => Math.round(o.value * R.breachPct))); // undelivered orders forfeit
       cash = open + cin - wk - bills - fines; rows.push({ day: d, open, cin, wages: wk, bills, fines, cout: wk + bills + fines, close: cash });
     }
     return rows;
   }
+  const wages = s => Math.max(R.wageFloor, R.upkeep - R.sprinklerSaving * s.plots.filter(p => p.sprinkler).length); // a sprinkler only saves labour once it's in the field
   const rain = d => R.rain.indexOf(d) >= 0;
   const inGround = s => s.plots.filter(p => p.crop);
   const sacksComing = s => inGround(s).length * R.sacksPerPlot;
   const openOrders = s => s.orders.filter(o => o.status === "open");
   const committed = s => sum(openOrders(s).map(o => o.sacks));
   const billsDue = (s, byDay) => sum(s.bills.filter(b => b.due <= byDay).map(b => b.amount));
-  function weekBills(s) { const t = terms(s); return R.upkeep + Math.round(-s.bal.loan * t.rateBp / 10000); }
+  function weekBills(s) { const t = terms(s); return wages(s) + Math.round(-s.bal.loan * t.rateBp / 10000); }
   const nextWeekEnd = s => Math.ceil(s.day / 7) * 7;
   function neighbours(s, p) { return s.plots.filter(q => q !== p && Math.abs(q.x - p.x) <= 1 && Math.abs(q.y - p.y) <= 1); }
   const sprinkled = (s, p) => neighbours(s, p).some(q => q.sprinkler);
@@ -120,7 +123,7 @@
     if (!p.crop) {
       if (s.sprinklersHeld > 0) return placeSprinkler(s, i);
       if (s.seeds <= 0) return err("No seed. Tomas sells it in town.");
-      s.seeds--; p.crop = { age: 0, cost: R.seedCost }; p.watered = rain(s.day) || p.watered; return ok("plant");
+      s.seeds--; p.crop = { age: sprinkled(s, p) ? R.sprinklerHead : 0, cost: R.seedCost }; p.watered = rain(s.day) || p.watered; return ok("plant");
     }
     if (stage(s, p) === 4) { s.sacks += R.sacksPerPlot; p.crop = null; p.watered = false; use(s, "inventory"); return ok("harvest"); }
     if (!p.watered && !rain(s.day)) { p.watered = true; return ok("water"); }
@@ -201,6 +204,11 @@
     post(s, "equip", "Bought a sprinkler (Equipment, 16-week life)", { equip: R.sprinklerCost, cash: -R.sprinklerCost });
     s.sprinklersHeld++; note(s, "Bought a sprinkler. Place it on an empty tilled plot; click it again to move it."); return ok();
   }
+  // Is a sprinkler worth it? The same weighing a business makes for any machine: money now, savings later, wear in between.
+  function sprinklerFacts(s) {
+    const weeks = Math.floor(R.days / 7) - Math.floor((s.day - 1) / 7), saved = R.sprinklerSaving * weeks, dep = R.depPerWeek * weeks;
+    return { weeks, saved, dep, profit: saved - dep, cash: saved - R.sprinklerCost, paybackWeeks: Math.ceil(R.sprinklerCost / R.sprinklerSaving), life: R.sprinklerCost / R.depPerWeek };
+  }
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
     if (amt > room) return err(`Ezra's limit is ${t.loanLimit}; you owe ${-s.bal.loan}.`);
@@ -221,12 +229,12 @@
     s.invoices = s.invoices.filter(v => v.due > d);
     if (d % 7 === 0) {
       const t = terms(s), interest = Math.round(-s.bal.loan * t.rateBp / 10000);
-      if (s.bal.cash < R.upkeep + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${R.upkeep + interest} of wages and interest. The hands walk off.`);
-      post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: R.upkeep, cash: -R.upkeep });
+      if (s.bal.cash < wages(s) + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${wages(s) + interest} of wages and interest. The hands walk off.`);
+      post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: wages(s), cash: -wages(s) });
       if (interest) { post(s, "interest", `Week ${d / 7} interest on Ezra's loan`, { interest, cash: -interest }); use(s, "tvm"); }
       if (s.bal.equip + s.bal.accdep > 0) { const dep = Math.min(R.depPerWeek * Math.round(s.bal.equip / R.sprinklerCost), s.bal.equip + s.bal.accdep); post(s, "dep", "Depreciation on the sprinkler", { depreciation: dep, accdep: -dep }); use(s, "depreciation"); }
       const gp = s.week.revenue - s.week.cogs;
-      if (gp >= R.upkeep) use(s, "breakeven"); if (gp - R.upkeep - interest > 0) use(s, "operating");
+      if (gp >= wages(s)) use(s, "breakeven"); if (gp - wages(s) - interest > 0) use(s, "operating");
       if (s.bal.ar > 0) use(s, "wc");
       if (s.bal.ar > s.bal.cash) use(s, "overtrading"); // used well: got through a pay-day with more tied up in receivables than in Cash
       s.week = newWeek();
@@ -284,6 +292,6 @@
   }
 
   root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

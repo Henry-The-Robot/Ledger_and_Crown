@@ -283,7 +283,8 @@
     say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. ${t.apDays ? `On account: 14 days, or 2% off within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
       ["Buy 3 for Cash (36)", buy(3, false), s.bal.cash < 36], ["Buy 9 for Cash (108)", buy(9, false), s.bal.cash < 108],
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
-      ["Sprinkler: 80 Cash", () => { const r = act(() => S.buySprinkler(s)); say("tomas", r.ok ? "Waters the 8 plots around it every morning. Set it on an empty tilled plot." : r.msg); }, s.bal.cash < 80],
+      ["Sprinkler: 80 Cash", () => { const r = act(() => S.buySprinkler(s)); say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg); }, s.bal.cash < 80],
+      ["Is a sprinkler worth it?", sprinklerAdvice],
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => { const r = act(() => S.payBills(s)); say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg); }, !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -293,6 +294,13 @@
     if (inv && (!storyOn || Story.state.ch >= 8)) opts.push([`Sell ${S.NAMES[inv.who]}'s invoice (${inv.amount}) for ${Math.round(inv.amount * .85)} today`, go(() => S.factor(s, inv.id))]);
     opts.push(["Leave", null]);
     say("ezra", `Your credit: ${hearts(s.trust.ezra)}. I lend up to ${t.loanLimit} at ${t.rateBp / 100}% a week. You owe me ${owed}.`, opts);
+  }
+  function sprinklerAdvice() { // the buy decision in numbers: it costs Cash now, saves wages later, and wears out
+    const f = S.sprinklerFacts(s), c = S.R.sprinklerCost, late = f.cash < 0;
+    say("tomas", `<b>A sprinkler: ${c} Cash now.</b> While it's in the field it saves the hands ${S.R.sprinklerSaving} a week, and seed planted beside it starts a day ahead. It wears out over ${f.life} weeks, a ${S.R.depPerWeek} Depreciation expense each week.<br>` +
+      `<b>With ${f.weeks} pay-day${f.weeks === 1 ? "" : "s"} left this season:</b> saves ${f.saved}, Depreciation ${f.dep}, so it adds ${f.profit} to profit. But the ${c} left your Cash on day one: after the season your Cash is ${f.cash < 0 ? -f.cash + " short" : f.cash + " better"}. It pays for itself in Cash after ${f.paybackWeeks} weeks.<br>` +
+      `<i>${late ? "Bought this late, it's a good machine in a bad month: profit says yes, Cash says wait. " : ""}A machine is worth it when the savings over its life beat its price and your Cash can wait for them. Profit and Cash can disagree. That's the Ledger's lesson.</i>`,
+      [["Back", tomas], ["Open the Ledger", ledger]]);
   }
   function maud() { const c = S.coach(s); say("maud", c ? c.text : "Nothing to add. The books look sound to me."); }
   function crate() {

@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Sprinkler advice dialog</title></head><body><pre id="out">running</pre>
+<!-- Tomas's "Is a sprinkler worth it?" renders the numbers, Back returns. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/sprinkler-advice.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  w.G.closeDlg(); w.G.hidePanel(); w.G.talk("tomas"); await sleep(50);
+  const txt = () => d.getElementById("dlg").textContent, btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent));
+  btn(/Is a sprinkler worth it/).click(); await sleep(50);
+  out.push(`shows cost, savings, depreciation: ${/80 Cash now/.test(txt()) && /saves 80/.test(txt()) && /Depreciation 20/.test(txt())}`, `shows profit vs Cash: ${/adds 60 to profit/.test(txt()) && /Cash/.test(txt())}`);
+  btn(/Back/).click(); await sleep(50); out.push(`back returns to Tomas: ${/Seed is 12/.test(txt())}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>
