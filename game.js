@@ -24,8 +24,8 @@
   NPC.duke = { who: "duke", x: 36, y: 10, dir: "left" };
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
-  const FAIR = { mira: { x: 25, y: 20, sacks: 6, walk: 6, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
-    abbey: { x: 43, y: 20, sacks: 9, walk: 8, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
+  const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
+    abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
   const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19];
   (function buildMap() {
@@ -240,7 +240,7 @@
       const lev = [];
       if (fairBest > theirs && !used.fair) lev.push("fair"); if (s.trust[o.who] >= 6 && !used.rec) lev.push("rec");
       const labels = ["Ask my price", `Accept ${theirs} a sack`].concat(lev.map(l => l === "fair" ? `"The fair pays ${fairBest}"` : `"I always deliver on time"`), ["Walk away"]);
-      const r = await dlg({ who: o.who, text: `${line}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
+      const r = await dlg({ who: o.who, text: `${line}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.tag ? ` (${o.tag})` : ""}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
       const pick = labels[r.i];
       if (pick === "Walk away") { toast("You walked away."); return null; }
       if (pick.startsWith("Accept")) return close(theirs);
@@ -263,7 +263,7 @@
     if (FAIR[who]) return fairDeal(who);
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
     const o = s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
-    if (o) { await haggle(o, { open: o.price - 1, walk: o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
+    if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
     const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
     say(who, idle[s.day % idle.length]);
@@ -377,7 +377,7 @@
     const b = S.balanceSheet(s.bal), wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk), wd = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(s.day - 1) % 7];
     document.body.classList.toggle("desk", atDesk);
     const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span>${v}</span>`;
-    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
+    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : "")) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
