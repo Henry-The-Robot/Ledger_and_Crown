@@ -410,7 +410,7 @@
     const b = S.balanceSheet(s.bal), wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk), wd = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(s.day - 1) % 7];
     document.body.classList.toggle("desk", atDesk);
     const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span>${v}</span>`;
-    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
+    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("fund", "Toward the Crown", S.crownFund(s).net + " / " + S.R.crownDebt) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
@@ -478,6 +478,12 @@
       <h3 style="margin-top:10px">Journal (latest postings)</h3><table class="stm">${jr}</table>`);
   }
   // ---------- closing the books: guided (chapter 9), then Ezra's loan review ----------
+  function midwinter() { // the stakes: could this farm pay the Crown if Midwinter were tomorrow?
+    const f = S.crownFund(s), row = (l, v, neg) => `<tr><td>${l}</td><td class="num">${neg ? "−" : ""}${v}</td></tr>`, big = { paid: ["The farm is yours.", "ok"], promise: ["Only a promise saves you.", "warn"], short: ["The Crown takes the farm.", "banner"] }[f.verdict];
+    const lines = { paid: `You'd clear the Crown's ${f.crown} with ${f.gap} to spare. But every customer has to pay, and Edric's invoices were good too.`,
+      promise: `You're ${-f.gap} short of the Crown. Pell's pig money (${f.hoped}) would cover it, but a promise isn't Cash until he pays.`, short: `You're ${-f.gap} short of the Crown's ${f.crown}. Look at what ate your profit: losses, interest, forfeits and Receivables you haven't collected.` }[f.verdict];
+    return `<div class="${big[1]}" style="margin:6px 0"><b>If Midwinter were tomorrow: ${big[0]}</b><div class="hint">${lines}</div><table class="stm">${f.have.map(r => row(r[0], r[1])).join("")}${f.owe.filter(r => r[1]).map(r => row(r[0], r[1], 1)).join("")}${row("The Crown's debt", f.crown, 1)}<tr class="total"><td>${f.gap >= 0 ? "Left over" : "Short by"}</td><td class="num">${Math.abs(f.gap)}</td></tr></table></div>`;
+  }
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
     ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
@@ -488,8 +494,9 @@
     if (guided) { ["is", "bs0", "bs1", "cf"].forEach(k => $("sec-" + k).classList.add("veil")); await Story.close(st, h); $("mline").innerHTML = `<b>Maud:</b> ${h.text}`; }
     h.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("hl")));
     const ez = $("ez");
+    const mw = s.outcome === "insolvent" ? "" : midwinter();
     if (s.outcome === "insolvent") ez.innerHTML = `<p>Ezra won't lend to an estate that couldn't pay its wages. The farm goes to auction.</p><button class="btn gold" id="again">Try spring again</button>`;
-    else ez.innerHTML = `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
+    else ez.innerHTML = mw + `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
     wire(); save();
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));

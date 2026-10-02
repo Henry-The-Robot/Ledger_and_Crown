@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Midwinter settlement</title></head><body><pre id="out">running</pre>
+<!-- Sandbox: a careful season closes with the "If Midwinter were tomorrow" box; a reckless one doesn't show it (insolvent). The HUD shows the Crown fund.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/midwinter.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+function run(policy, q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+  f.onload = async () => { try { const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
+    out.push(`${policy}: HUD has the Crown fund: ${/Toward the Crown/.test(d.getElementById("hud").textContent)}`);
+    w.G.play(policy, 40); await sleep(100); const body = d.getElementById("panelBody").textContent;
+    out.push(`${policy}: outcome ${w.G.s.outcome}; Midwinter box: ${/If Midwinter were tomorrow/.test(body)}; verdict line: ${(body.match(/If Midwinter were tomorrow: ([^.]*\.)/) || [])[1]}; errors ${JSON.stringify(errs)}`); } catch (e) { out.push("EXCEPTION " + e.message); } f.remove(); res(); }; }); }
+(async () => { await run("careful"); await run("reckless"); document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); })();
+</script></body></html>

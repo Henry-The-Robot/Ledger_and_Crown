@@ -202,6 +202,14 @@
     post(s, "equip", "Bought a sprinkler (Equipment, 16-week life)", { equip: R.sprinklerCost, cash: -R.sprinklerCost });
     s.sprinklersHeld++; note(s, "Bought a sprinkler. Place it on an empty tilled plot."); return ok();
   }
+  // The Crown's 1,000 is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
+  // what you'd be counting on. Promises (Pell's pig share) are shown apart: they are hoped for, not owned.
+  function crownFund(s) {
+    const b = balanceSheet(s.bal), hoped = sum((s.promises || []).map(p => p.amount));
+    const have = [["Cash", b.cash], ["Accounts receivable (if every customer pays)", b.ar], ["Inventory (at cost)", b.inv]], owe = [["Accounts payable", b.ap], ["Loan payable", b.loan], ["Customer deposits (grain still owed)", b.deposits]];
+    const net = sum(have.map(r => r[1])) - sum(owe.map(r => r[1])), gap = net - R.crownDebt;
+    return { have, owe, net, hoped, crown: R.crownDebt, gap, verdict: gap >= 0 ? "paid" : gap + hoped >= 0 ? "promise" : "short" };
+  }
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
     if (amt > room) return err(`Ezra's limit is ${t.loanLimit}; you owe ${-s.bal.loan}.`);
@@ -329,6 +337,6 @@
   }
 
   root.Spring = { R, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, buyFence, refusePell, buyPoison, ratLoss, warning, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, buyFence, crownFund, refusePell, buyPoison, ratLoss, warning, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
