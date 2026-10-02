@@ -1,0 +1,54 @@
+/* Ledger & Crown — shared POC style: parchment, iron-gall ink, heraldic accents */
+:root{
+  --parch:#f3e9d2; --parch2:#e9dab8; --parch3:#dcc79a;
+  --ink:#2b2118; --ink2:#5a4a38; --faint:#8a7658;
+  --crimson:#9b2335; --verd:#2f6f62; --gold:#b8862b; --blue:#2f4f7f;
+  --good:#2f6f62; --bad:#9b2335;
+  --mono:"Consolas","SFMono-Regular","Menlo",monospace;
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--serif);color:var(--ink);background:#3a2e22;
+  background-image:radial-gradient(circle at 20% 10%,#4a3b2b 0,#2a2018 70%);min-height:100vh}
+.page{max-width:1180px;margin:18px auto;padding:22px 28px 30px;background:var(--parch);
+  background-image:radial-gradient(ellipse at top left,#fbf4e2 0,var(--parch) 45%,var(--parch2) 100%);
+  border:1px solid #c9b183;box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 0 60px rgba(120,90,40,.18);border-radius:4px}
+h1,h2,h3{font-weight:normal;letter-spacing:.02em;margin:.2em 0 .4em}
+h1{font-size:30px;color:var(--crimson);font-variant:small-caps}
+h2{font-size:21px;color:var(--ink);border-bottom:1px solid var(--parch3);padding-bottom:3px}
+h3{font-size:16px;color:var(--ink2);font-variant:small-caps;letter-spacing:.06em}
+a{color:var(--blue)}
+.sub{color:var(--ink2);font-style:italic;margin-top:-6px}
+.mono,.num{font-family:var(--mono)}
+.num{text-align:right;white-space:nowrap}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.card{background:rgba(255,250,235,.55);border:1px solid var(--parch3);border-radius:4px;padding:12px 14px}
+.card.dark{background:#2b2118;color:var(--parch);border-color:#000}
+.btn{font-family:var(--serif);font-size:15px;background:var(--ink);color:var(--parch);border:1px solid #000;
+  padding:7px 14px;border-radius:3px;cursor:pointer;margin:2px 4px 2px 0}
+.btn:hover{background:var(--crimson)}
+.btn.alt{background:transparent;color:var(--ink);border-color:var(--ink2)}
+.btn.alt:hover{background:var(--parch2)}
+.btn.gold{background:var(--gold);color:#1a1208;border-color:#6d4f16}
+.btn:disabled{opacity:.4;cursor:not-allowed;background:var(--ink2)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{padding:3px 6px;border-bottom:1px dotted var(--parch3)}
+th{text-align:left;font-weight:normal;color:var(--ink2);font-variant:small-caps}
+tr.total td{border-top:1px solid var(--ink);font-weight:bold}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:10px;background:var(--parch2);
+  border:1px solid var(--parch3);color:var(--ink2);margin-right:4px}
+.log{font-size:13.5px;max-height:190px;overflow:auto;background:rgba(255,250,235,.4);border:1px solid var(--parch3);padding:6px 10px}
+.log p{margin:2px 0}
+.overlay{position:fixed;inset:0;background:rgba(20,14,8,.72);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{max-width:760px;width:92%;max-height:90vh;overflow:auto;background:var(--parch);border:2px solid var(--gold);
+  border-radius:5px;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.codex{border-left:4px solid var(--gold);background:rgba(184,134,43,.10);padding:8px 12px;margin:8px 0}
+.codex b{color:var(--crimson);font-variant:small-caps;letter-spacing:.04em}
+.quote{font-style:italic;color:var(--ink2);border-left:3px solid var(--parch3);padding-left:10px}
+.back{font-size:13px;color:var(--parch);display:block;max-width:1180px;margin:10px auto 0;text-decoration:none;opacity:.8}
+.choice{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;font-size:15px}
+.hint{font-size:13px;color:var(--faint)}
+.pill-good{color:var(--good);font-weight:bold}.pill-bad{color:var(--bad);font-weight:bold}
+@media(max-width:800px){.g2,.g3{grid-template-columns:1fr}.page{padding:14px}}

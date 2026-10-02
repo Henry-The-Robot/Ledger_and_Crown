@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spring: mouse-only close check</title></head>
+<body><pre id="out">running</pre>
+<!-- Every panel a player can leave must close with the mouse: the Close/Done buttons and a backdrop click.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/mouse-close.html -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  const open = () => d.getElementById("panel").style.display !== "none";
+  for (const k of ["ledger", "notebook", "transcript"]) {
+    for (const how of ["top", "bottom", "backdrop"]) {
+      w.G.closeDlg(); w.G.hidePanel(); w.G[k](); await sleep(20);
+      const btns = d.querySelectorAll("#panelBody .pclose"), was = open();
+      if (how === "top") btns[0] && btns[0].click(); else if (how === "bottom") btns[1] && btns[1].click();
+      else d.getElementById("panel").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
+      await sleep(20); out.push(`${k.padEnd(10)} ${how.padEnd(8)} opened=${was} closeButtons=${btns.length} closed=${!open()}`);
+    }
+  }
+  const hot = [...d.querySelectorAll("button")].filter(b => /^(Notebook|Transcript)$/.test(b.textContent)).length;
+  out.push(`hotbar mouse buttons (Notebook, Transcript): ${hot}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>

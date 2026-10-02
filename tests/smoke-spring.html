@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spring at Thornfield smoke test</title></head>
+<body><pre id="out">running</pre>
+<!-- Plays Spring at Thornfield end to end in an iframe: keyboard walking, every villager's dialogue, the ledger and
+     transcript panels, three days through the real UI (buy seed, farm, ship, sleep), then the season by bot, closing
+     the books and Ezra's review; plus a reckless run that must end insolvent. Reports every JS error.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=60000 --dump-dom tests/smoke-spring.html -->
+<script>
+const out = [], log = t => out.push(t), errs = [];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function load(q) {
+  return new Promise(res => {
+    const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px";
+    f.onload = () => { const w = f.contentWindow; res(w); };
+    f.src = "../game.html" + q; document.body.appendChild(f);
+    f.contentWindow.addEventListener("error", e => errs.push(e.message));
+  });
+}
+const key = (w, type, code, k) => w.dispatchEvent(new w.KeyboardEvent(type, { code, key: k || code, bubbles: true }));
+const btn = (d, re) => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent) && !b.disabled);
+const lines = d => (d.querySelector("#dlg .tx").innerHTML.match(/<br>/g) || []).length + 1;
+async function tFull() {
+  const w = await load("?fast=1&sandbox=1"), d = w.document, G = w.G; await sleep(100);
+  w.addEventListener("error", e => errs.push(e.message)); w.localStorage.removeItem("lc_transcript_v1");
+  const x0 = G.pl.x; key(w, "keydown", "ArrowRight", "ArrowRight"); await sleep(400); key(w, "keyup", "ArrowRight", "ArrowRight");
+  const byFrames = Math.round(G.pl.x - x0); key(w, "keydown", "ArrowRight", "ArrowRight"); const x1 = G.pl.x; for (let k = 0; k < 20; k++) G.step(1 / 60); key(w, "keyup", "ArrowRight", "ArrowRight");
+  log(`walk: arrow key held — ${byFrames}px via the animation loop (headless may throttle it), ${Math.round(G.pl.x - x1)}px over 20 stepped frames`);
+  let maxLines = 0, maxLen = 0;
+  for (const who of ["ashby", "hobb", "tomas", "ezra", "maud"]) { G.talk(who); maxLines = Math.max(maxLines, lines(d)); maxLen = Math.max(maxLen, d.querySelector("#dlg .tx").textContent.length); G.closeDlg(); }
+  log(`dialogue: 5 villagers talked to, longest ${maxLines} lines / ${maxLen} chars`);
+  G.ledger(); const led = d.getElementById("panel").style.display === "flex" && /Accounts receivable/.test(d.getElementById("panelBody").textContent) && /Journal/.test(d.getElementById("panelBody").textContent);
+  key(w, "keydown", "Escape"); key(w, "keydown", "KeyT", "t");
+  const courses = d.querySelectorAll("#panelBody .course").length, locked = d.querySelectorAll("#panelBody .course.locked").length; key(w, "keydown", "Escape");
+  log(`ledger (L) opens with statements + journal: ${led}; transcript (T): ${courses} courses, ${locked} locked, diploma slot ${!!d.querySelector(".diploma")}`);
+  // three days through the real UI
+  for (let day = 0; day < 3; day++) {
+    for (const who of ["ashby", "hobb"]) { G.talk(who); const a = btn(d, /Accept/); if (a) a.click(); else G.closeDlg(); }
+    G.talk("tomas"); const b3 = btn(d, /Buy 9 for Cash/) || btn(d, /Buy 3 for Cash/); if (b3) b3.click(); G.closeDlg();
+    for (const p of G.s.plots) { for (let k = 0; k < 3; k++) G.interactTile(p.x, p.y); if (G.s.plots.filter(q => q.crop).length > 12) break; }
+    G.crate(); let ship; while ((ship = btn(d, /^.?\d*Ship/))) { ship.click(); await sleep(5); } G.closeDlg();
+    G.interactTile(6, 6); const sl = btn(d, /Sleep/); sl.click(); await sleep(20);
+  }
+  const s = G.s; log(`UI days: now day ${s.day}, Cash ${s.bal.cash}, Revenue ${-s.bal.revenue}, crops growing ${s.plots.filter(p => p.crop).length}, journal postings ${s.journal.length}`);
+  G.talk("maud"); const bet = d.querySelectorAll("#dlg button").length; const first = d.querySelector("#dlg button"); if (first) first.click(); G.closeDlg();
+  log(`Maud bet offered with ${bet} choices`);
+  G.play("careful", 99); await sleep(50);
+  const body = d.getElementById("panelBody").textContent;
+  log(`season: outcome ${G.s.outcome}, statements balanced ${(body.match(/Owner's equity ✓/g) || []).length}/2, cash flow reconciles ${/reconciles ✓/.test(body)}, Maud highlight ${!!d.querySelector(".maudline")} rows lit ${d.querySelectorAll("tr.hl").length}`);
+  d.getElementById("goEzra").click(); await sleep(10);
+  const qs = w.Books.review(w.Books.close(G.s)); let asked = 0;
+  let badOpts = 0;
+  for (let i = 0; i < 5; i++) { const ch = [...d.querySelectorAll("#ez .choice")]; if (!ch.length) break; asked++;
+    const os = ch.map(b => b.dataset.o); if (os.length < 3 || new Set(os).size !== os.length || os.some(o => /^-?0(\.0)?%?$/.test(o))) badOpts++;
+    const q = d.querySelector("#ez .ezq").textContent, ans = qs.find(x => q.indexOf(x.ask) >= 0).answer; ch.find(b => b.dataset.o === ans).click(); await sleep(5); d.getElementById("nx").click(); await sleep(5); }
+  const res = d.getElementById("ez").textContent;
+  log(`Ezra: ${asked} questions answered, ${badOpts} with bad options (zero/duplicate/fewer than 3), result "${(res.match(/Summer terms[^(]*\([^)]*\)/) || ["none"])[0]}"`);
+  const tr = w.Transcript; log(`transcript after season: ${Object.values(tr.CONCEPTS).flat().filter(([i]) => tr.state(i) !== "unseen").length} concepts used, ${Object.values(tr.CONCEPTS).flat().filter(([i]) => tr.state(i) === "mastered").length} mastered`);
+}
+async function tReckless() {
+  const w = await load("?fast=1&sandbox=1"), d = w.document; await sleep(100); w.addEventListener("error", e => errs.push(e.message));
+  w.G.play("reckless", 99); await sleep(30);
+  log(`reckless: outcome ${w.G.s.outcome} on day ${w.G.s.day}, banner "${(d.querySelector(".banner") || { textContent: "none" }).textContent.slice(0, 80)}"`);
+}
+(async () => {
+  for (const t of [tFull, tReckless]) { try { await t(); } catch (e) { log(`FAIL ${t.name}: ${e.message}`); } }
+  log(`JS errors: ${errs.length} ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+  document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>

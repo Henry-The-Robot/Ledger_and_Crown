@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ledger &amp; Crown — Spring at Thornfield</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body{display:flex;align-items:center;justify-content:center}
+  .title{max-width:560px;text-align:center}
+  .title h1{font-size:40px;margin-bottom:4px}
+  .title .sub{margin-bottom:18px}
+  .title .btn{font-size:20px;padding:10px 34px}
+</style></head>
+<body>
+<div class="page title">
+  <h1>Ledger &amp; Crown</h1>
+  <div class="sub">Spring at Thornfield — a beta build</div>
+  <p>Uncle Edric made a profit every year and still died broke. Find out why, before the Crown takes the
+    farm. Maud the reeve teaches you as you go. About 45 minutes; it saves every morning.</p>
+  <p><a class="btn gold" href="game.html" id="playBtn">Play</a></p>
+  <p class="hint" id="contHint" style="display:none">A saved game was found — Play will offer to continue it.</p>
+  <p class="hint">Mouse only, except typing numbers. See <a href="README.md">README</a> for how to play
+    and where to send feedback.</p>
+</div>
+<script>
+  try {
+    if (localStorage.getItem("lc_spring_save_v2")) {
+      document.getElementById("contHint").style.display = "block";
+      document.getElementById("playBtn").textContent = "Play / Continue";
+    }
+  } catch (e) {}
+</script>
+</body></html>

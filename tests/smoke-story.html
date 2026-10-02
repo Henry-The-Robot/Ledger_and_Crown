@@ -1,0 +1,96 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spring at Thornfield: story smoke test</title><style>body{margin:0}iframe{border:0;display:block}</style></head>
+<body><div id="frames"></div><pre id="out">running</pre>
+<!-- Plays the Spring story, chapters 1-9, through the real UI in an iframe: answers every Try (typed numbers) from the
+     game's own expected value, fills the forecast boards, haggles (accepts the counter), ships from the crate, sleeps,
+     runs the rest of the season with the careful bot, then the guided close and Ezra's review. Also checks the save
+     (reload after chapter 5 -> "Continue" restores the stage). Reports every JS error.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=120000 --dump-dom tests/smoke-story.html
+     Screenshot a stage: ...smoke-story.html?stopAt=ashby3 (stops at the first typed-number question in that stage). -->
+<script>
+const out = [], log = t => out.push(t), errs = [], P = new URLSearchParams(location.search), stopAt = P.get("stopAt");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function load(q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px";
+  f.onload = () => { f.contentWindow.addEventListener("error", e => errs.push(e.message)); res([f, f.contentWindow]); }; f.src = "../game.html" + q; document.getElementById("frames").appendChild(f); }); }
+const vis = el => el && el.offsetParent !== null && getComputedStyle(el).display !== "none";
+let typed = 0, boards = 0, picks = 0, haggles = 0;
+function pump(w) { // do the one thing the screen is asking for; true if something was done
+  const d = w.document, panel = d.getElementById("panel"), dlg = d.getElementById("dlg");
+  if (panel.style.display !== "none") {
+    const click = id => { const b = d.getElementById(id); if (b) { b.click(); return true; } };
+    if (click("pgok") || click("rnext") || click("pclose")) return true;
+    const ins = d.querySelectorAll("#panelBody input.fc"); if (d.getElementById("bok")) { ins.forEach(x => x.value = x.dataset.ans); boards++; return click("bok"); }
+    if (w.__pick) { const r = d.querySelector(`#cft tr[data-line="${w.__pick}"]`); if (r) { r.click(); picks++; return true; } }
+    return false;
+  }
+  if (dlg.style.display === "flex") {
+    const btns = [...dlg.querySelectorAll("button")].filter(b => !b.disabled), num = d.getElementById("num");
+    if (num && w.__want !== undefined) { num.value = w.__want; typed++; btns[0].click(); return true; }
+    if (num) { const a = btns.find(b => /Accept/.test(b.textContent)); haggles++; (a || btns[0]).click(); return true; }
+    const pref = btns.find(b => /Offer 45|^.?\d?Continue/.test(b.textContent)); (pref || btns[0]).click(); return true;
+  }
+  return false;
+}
+async function drive(w, until) {
+  const G = w.G, St = w.Story, seen = [];
+  for (let i = 0; i < 6000; i++) {
+    await sleep(4);
+    const stage = St.state.stage; if (seen[seen.length - 1] !== stage) seen.push(stage);
+    const D = w.document, n = +(P.get("n") || 1);
+    if (stopAt && stage === stopAt && (P.has("pick") ? w.__pick : (D.getElementById("num") && w.__want !== undefined) || D.getElementById("bok"))) { if ((drive.hits = (drive.hits || 0) + 1) >= n) return { seen, stopped: true }; }
+    if (until && until(stage)) return { seen };
+    if (pump(w)) continue;
+    if (St.busy) continue;
+    if (G.s.over) { if (w.document.getElementById("goEzra")) return { seen }; continue; }
+    const s = G.s;
+    switch (stage) {
+      case "tomas2": case "tomas6": G.talk("tomas"); break;
+      case "plant2": { const p = s.plots.find(p => p.tilled && !p.crop && !p.sprinkler); if (p && s.seeds) G.interactTile(p.x, p.y); break; }
+      case "ashby3": G.talk("ashby"); break;
+      case "hobb4": G.talk("hobb"); break;
+      case "ship3": case "ship4": G.crate(); break;
+      case "sleep5": case "sleep8": G.sleepNow(); break;
+      case "ezra7": G.talk("ezra"); break;
+      case "duke8": G.talk("duke"); break;
+      case "run9": w.Bot.careful.day(s); G.sleepNow(); break;
+      case "done": return { seen };
+    }
+  }
+  return { seen, timeout: true };
+}
+(async () => {
+  try {
+    const [f, w] = await load("?fast=1&savetest=1&new=1"); await sleep(150); w.localStorage.removeItem("lc_transcript_v1");
+    // Every Try must be answerable and fully equipped: numeric answer and tolerance, docs list, working, Explain-how.
+    const realAsk = w.G.ask, badAsks = []; w.G.ask = function (who, text, answer, hints, sp, tol, docs, work, how) {
+      const why = [typeof answer !== "number" || isNaN(answer) ? "answer" : "", tol != null && typeof tol !== "number" ? "tol" : "", docs != null && !Array.isArray(docs) ? "docs" : "",
+        typeof work !== "string" ? "work" : "", typeof how !== "string" ? "how" : ""].filter(Boolean);
+      if (why.length) badAsks.push(text.slice(0, 40) + " → " + why.join(","));
+      return realAsk.apply(this, arguments); };
+    w.__badAsks = badAsks;
+    const r1 = await drive(w, st => st === "tomas6");
+    if (r1.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
+    const saved = JSON.parse(w.localStorage.getItem("lc_spring_save_v2") || "null");
+    log(`chapters 1-5: stages ${r1.seen.join(" → ")}; day ${w.G.s.day}; Cash ${w.G.s.bal.cash}; save stage ${saved && saved.story.stage}`);
+    const [f2, w2] = await load("?fast=1&savetest=1"); await sleep(150);
+    const cont = [...w2.document.querySelectorAll("#dlg button")].find(b => /Continue/.test(b.textContent)); if (cont) cont.click(); await sleep(50);
+    log(`save/continue: dialog offered ${!!cont}, restored stage ${w2.Story.state.stage}, day ${w2.G.s.day}, notebook ${w2.Story.state.notebook.length} entries`);
+    f2.remove();
+    const r2 = await drive(w);
+    if (r2.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
+    const st = w.Story.state, d = w.document;
+    log(`chapters 6-9: stages ${r2.seen.join(" → ")}${r2.timeout ? " TIMEOUT" : ""}; outcome ${w.G.s.outcome} day ${w.G.s.day}`);
+    log(`Try beats answered ${typed}, forecast boards ${boards}, haggles ${haggles}, line picks ${picks}; notebook: ${st.notebook.map(n => n.term).join("; ")}; journal pages ${st.pages.length}/5`);
+    log(`Ezra rate after the forecast: ${w.G.s.rateAdj} bp off; Duke order: ${(w.G.s.orders.find(o => o.who === "duke") || { sacks: "none", status: "" }).sacks} ${(w.G.s.orders.find(o => o.who === "duke") || {}).status || ""}`);
+    log(`close: statements unveiled ${d.querySelectorAll("#panelBody .veil").length === 0}, reconciles ${/reconciles ✓/.test(d.getElementById("panelBody").textContent)}, Ezra button ${!!d.getElementById("goEzra")}`);
+    const tr = w.Transcript, all = Object.values(tr.CONCEPTS).flat();
+    log(`transcript: ${all.filter(([i]) => tr.state(i) !== "unseen").length} used, ${all.filter(([i]) => tr.state(i) === "mastered").length} mastered`);
+    const road = [...d.querySelectorAll("#hud .deskonly")].length;
+    log(`Desk/Road: ${road} desk-only HUD boxes hidden on the road`);
+    log(`Try beats with a missing or misplaced setting: ${w.__badAsks.length} ${JSON.stringify(w.__badAsks)}`);
+  } catch (e) { log("FAIL " + e.message + " " + e.stack); }
+  log(`JS errors: ${errs.length} ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+  document.getElementById("frames").innerHTML = "";
+})();
+</script></body></html>

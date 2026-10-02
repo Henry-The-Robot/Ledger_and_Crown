@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spring: document buttons inside a question</title></head>
+<body><pre id="out">running</pre>
+<!-- A Try question with a document button: open the doc, close it with the mouse, the question comes back, a right
+     answer is accepted. Also checks the guided forecast hides the Closing Cash column.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/doc-button.html -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, G = w.G, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  G.closeDlg(); G.hidePanel();
+  const doc = { label: "Open the cash forecast", open: () => G.board({ title: "test", n: 10, noClose: true, fill: [] }) };
+  let done = false; G.ask("maud", "What is 2+2?", 4, ["hint"], null, 0, [doc]).then(() => done = true); await sleep(30);
+  const btns = [...d.querySelectorAll("#dlg button")].map(b => b.textContent);
+  [...d.querySelectorAll("#dlg button")].find(b => /forecast/.test(b.textContent)).click(); await sleep(30);
+  const panelOpen = d.getElementById("panel").style.display !== "none", body = d.getElementById("panelBody").textContent;
+  d.getElementById("bok").click(); await sleep(30);
+  const back = d.getElementById("dlg").style.display === "flex" && /2\+2/.test(d.getElementById("dlg").textContent);
+  d.getElementById("num").value = 4; d.querySelector("#dlg button").click(); await sleep(30);
+  out.push(`question buttons: ${JSON.stringify(btns)}`, `forecast opened: ${panelOpen}; Closing Cash column hidden: ${!/Closing Cash/.test(body)}`,
+    `after Done, the question is back: ${back}`, `right answer accepted: ${done}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>

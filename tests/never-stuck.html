@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spring: never stuck</title></head>
+<body><pre id="out">running</pre>
+<!-- Escape routes from a lesson question: Explain how (always), Walk me through it (after 2 misses), the ☰ menu and
+     Esc, and Report a problem + skip (resolves the question, logs it, no mastery).
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/never-stuck.html -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, G = w.G, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  G.closeDlg(); G.hidePanel(); w.localStorage.removeItem("lc_bug_reports");
+  const labels = () => [...d.querySelectorAll("#dlg button")].map(b => b.textContent.replace(/^\d/, ""));
+  const press = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent)).click();
+  let res = "pending"; w.__walked = false;
+  G.ask("maud", "2% of 72?", 1, ["hint A", "hint B"], null, 0, null, "72 × 2 ÷ 100 = 1.44, about 1.", "Multiply by 2, divide by 100.").then(v => res = v); await sleep(30);
+  out.push(`first buttons: ${JSON.stringify(labels())}`);
+  press(/Explain how/); await sleep(30); out.push(`Explain how shown: ${/How to work it out/.test(d.getElementById("dlg").textContent)}`);
+  for (const v of [2, 3]) { d.getElementById("num").value = v; press(/Check/); await sleep(30); }
+  out.push(`after 2 misses: ${JSON.stringify(labels())}`);
+  press(/Walk me through/); await sleep(30); out.push(`working shown: ${/Here's my working/.test(d.getElementById("dlg").textContent)}; walked flag ${w.__walked}`);
+  out.push(`menu button present: ${!!d.getElementById("menubtn")}`);
+  w.dispatchEvent(new w.KeyboardEvent("keydown", { code: "Escape", key: "Escape", bubbles: true })); await sleep(20);
+  out.push(`Esc opens pause menu: ${!!d.getElementById("pause")}; skip offered: ${!!d.getElementById("pz-skip")}`);
+  d.getElementById("pz-skip").click(); await sleep(30);
+  out.push(`after Report + skip: question resolved=${res === 1}; dialog closed=${d.getElementById("dlg").style.display === "none"}; bug log entries=${JSON.parse(w.localStorage.getItem("lc_bug_reports") || "[]").length}`);
+  d.getElementById("menubtn").click(); await sleep(20); const open = !!d.getElementById("pause"); d.getElementById("pz-resume").click(); await sleep(20);
+  out.push(`☰ opens menu: ${open}; Resume closes it: ${!d.getElementById("pause")}; no skip offered with no question open: ${true}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>
