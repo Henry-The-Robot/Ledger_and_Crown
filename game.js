@@ -289,10 +289,18 @@
   function ezra() {
     const t = S.terms(s), owed = -s.bal.loan, room = t.loanLimit - owed, inv = s.invoices.slice().sort((a, b) => b.amount - a.amount)[0];
     const go = fn => () => { const r = act(fn); r.ok ? ezra() : say("ezra", r.msg); };
-    const opts = [["Borrow 50", go(() => S.borrow(s, 50)), room < 50], ["Borrow 100", go(() => S.borrow(s, 100)), room < 100], ["Repay 50", go(() => S.repay(s, 50)), !owed || s.bal.cash < Math.min(50, owed)]];
+    const opts = [["Borrow 50", go(() => S.borrow(s, 50)), room < 50], ["Borrow 100", go(() => S.borrow(s, 100)), room < 100], ["Repay 50", go(() => S.repay(s, 50)), !owed || s.bal.cash < Math.min(50, owed) + S.loanFacts(s, 50).fee]];
+    if (owed) opts.push(["Should I repay early?", () => repayAdvice(owed)]);
     if (inv && (!storyOn || Story.state.ch >= 8)) opts.push([`Sell ${S.NAMES[inv.who]}'s invoice (${inv.amount}) for ${Math.round(inv.amount * .85)} today`, go(() => S.factor(s, inv.id))]);
     opts.push(["Leave", null]);
-    say("ezra", `Your credit: ${hearts(s.trust.ezra)}. I lend up to ${t.loanLimit} at ${t.rateBp / 100}% a week. You owe me ${owed}.`, opts);
+    const wk = Math.round(owed * t.rateBp / 10000);
+    say("ezra", `Your credit: ${hearts(s.trust.ezra)}. I lend up to ${t.loanLimit} at ${t.rateBp / 100}% a week. You owe me ${owed}${owed ? `: that's ${wk} of interest every pay-day until it's repaid. Repay before day ${S.R.prepayBefore} and I charge one week's interest on what you repay.` : "."}`, opts);
+  }
+  function repayAdvice(owed) { // the trade-off in the player's own numbers: interest saved vs the fee vs how thin Cash gets
+    const half = Math.min(owed, 50), all = owed, fa = S.loanFacts(s, all), fh = S.loanFacts(s, half), thin = f => f.low < 0 ? ` <b>Careful: Cash would go to ${f.low} within two weeks.</b>` : f.low < 40 ? ` Cash would dip to ${f.low}, which is thin.` : ` Your lowest Cash over the next two weeks stays at ${f.low}.`;
+    const line = (n, f) => `<b>Repay ${n}:</b> stops ${f.weekly} a week; ${f.paydays} pay-day${f.paydays === 1 ? "" : "s"} left this season saves ${f.saved}${f.fee ? `, minus the ${f.fee} early fee = ${f.net} better off` : ", and there's no fee after day " + S.R.prepayBefore}.${thin(f)}`;
+    say("ezra", `${line(half, fh)}<br>${half === all ? "" : line(all, fa) + "<br>"}<i>Reasons to repay early: interest is a certain cost and Cash sitting idle earns nothing. Reasons to wait: the fee, and Cash is what pays wages and seed. A loan repaid today can only be borrowed again up to your limit and at today's rate.</i>`,
+      [["Back", ezra], ["Open the Ledger", ledger]]);
   }
   function maud() { const c = S.coach(s); say("maud", c ? c.text : "Nothing to add. The books look sound to me."); }
   function crate() {
