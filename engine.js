@@ -16,13 +16,16 @@
     factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
     crownDebt: 1000,            // owed to the Crown at Midwinter (the story's goal)
     rain: [5, 12, 13, 20, 26],
+    // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
+    // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
+    events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
     field: { x0: 5, y0: 10, w: 9, h: 4 },
   };
   const ACCTS = {
     cash: ["Cash", "A"], ar: ["Accounts receivable", "A"], inv: ["Inventory", "A"], equip: ["Equipment", "A"],
     accdep: ["Accumulated depreciation", "A"], ap: ["Accounts payable", "L"], loan: ["Loan payable", "L"], crown: ["Crown debt", "L"],
     capital: ["Owner's equity", "E"], revenue: ["Revenue", "R"], cogs: ["Cost of goods sold", "X"],
-    upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], interest: ["Interest expense", "X"],
+    upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], losses: ["Crop & stock losses", "X"], interest: ["Interest expense", "X"],
     factoring: ["Factoring fees", "X"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
@@ -39,7 +42,7 @@
     opt = opt || {};
     const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0,
       trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4 }, quiet: !!opt.story,
-      sacks: 15, seeds: 0, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
+      sacks: 15, seeds: 0, fenced: false, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
     for (let i = 0; i < f.w * f.h; i++) s.plots.push({ i, x: f.x0 + i % f.w, y: f.y0 + Math.floor(i / f.w), tilled: i < f.w, watered: false, crop: null, sprinkler: false });
@@ -70,7 +73,7 @@
 
   // ---------- derived views ----------
   function balanceSheet(b) { // b = a balance map (s.bal or s.opening)
-    const ni = -(b.revenue) - b.cogs - b.upkeep - b.depreciation - b.fines - b.interest - b.factoring;
+    const ni = -(b.revenue) - b.cogs - b.upkeep - b.depreciation - b.fines - b.losses - b.interest - b.factoring;
     const assets = b.cash + b.ar + b.inv + b.equip + b.accdep, liab = -b.ap - b.loan - b.crown, equity = -b.capital + ni;
     return { cash: b.cash, ar: b.ar, inv: b.inv, equipNet: b.equip + b.accdep, assets, ap: -b.ap, loan: -b.loan, crown: -b.crown, liab, equity, ni,
       currentAssets: b.cash + b.ar + b.inv, currentLiab: -b.ap - b.loan - b.crown };
@@ -207,7 +210,9 @@
   function sleep(s) {
     if (s.over) return err("The season is closed.");
     const d = s.day;
-    s.plots.forEach(p => { if (p.crop && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
+    const ev = R.events[d];
+    s.plots.forEach(p => { if (p.crop && ev !== "frost" && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
+    if (ev) overnight(s, ev);
     s.invoices.filter(v => v.due <= d).forEach(v => { post(s, "collect", `${NAMES[v.who]} paid invoice of ${v.amount}`, { cash: v.amount, ar: -v.amount }); use(s, "ar"); note(s, `${NAMES[v.who]} paid ${v.amount}.`); });
     s.invoices = s.invoices.filter(v => v.due > d);
     if (d % 7 === 0) {
@@ -243,6 +248,34 @@
     s.day++; makeOffers(s);
     return ok();
   }
+  // a loss is written off the books the night it happens: Inventory down, Crop & stock losses up (an expense that cuts net income)
+  function writeOff(s, what, cost) { post(s, "loss", what, { losses: cost, inv: -cost }); use(s, "inventory"); }
+  function overnight(s, ev) {
+    if (ev === "pigs") {
+      const crops = s.plots.filter(p => p.crop).sort((a, b) => b.crop.age - a.crop.age || a.i - b.i), n = Math.ceil(crops.length * R.pigShare);
+      if (s.fenced) note(s, "Pigs rooted at the fence all night and went home hungry. The fence paid for itself.");
+      else if (n > 0) { const lost = crops.slice(0, n); const cost = sum(lost.map(p => p.crop.cost)); lost.forEach(p => p.crop = null);
+        writeOff(s, `Pigs ate ${n} of ${crops.length} plots in the ground (written off at cost)`, cost); note(s, `Pigs got in and ate ${n} of your ${crops.length} growing plots: ${cost} of Inventory written off as a loss.`); }
+    } else if (ev === "rats") {
+      const k = Math.min(s.sacks, Math.max(1, Math.floor(s.sacks * R.ratShare)));
+      if (s.sacks > 0) { s.sacks -= k; writeOff(s, `Rats spoiled ${k} sacks in the barn (written off at cost)`, k * R.unitCost); note(s, `Rats got into the barn: ${k} sacks spoiled, ${k * R.unitCost} of Inventory written off. Sacks you ship don't rot.`); }
+    } else if (ev === "warm") {
+      s.plots.forEach(p => { if (p.crop && p.crop.age < R.growDays) p.crop.age++; }); note(s, "A warm, bright day: everything in the ground grew an extra day.");
+    } else if (ev === "frost") note(s, "A hard frost last night: nothing grew. Deliveries that counted on tomorrow's crop slip a day.");
+  }
+  // what Maud can see coming: the day before and the day of, so a prepared player can act
+  function warning(s) {
+    const ev = R.events[s.day] || R.events[s.day + 1], when = R.events[s.day] ? "tonight" : "tomorrow night";
+    if (ev === "pigs" && !s.fenced) return `Hobb's pigs have broken loose and are heading for the fields ${when}. A fence from Tomas costs ${R.fenceCost}; pigs would eat about a quarter of what's growing.`;
+    if (ev === "rats") return `Rats are in the village ${when}. Stock in the barn is Inventory you can lose; sacks you've shipped are safe.`;
+    if (ev === "frost") return `A frost is coming ${when}: nothing will grow that night. Check your delivery dates.`;
+    return null;
+  }
+  function buyFence(s) {
+    if (s.fenced) return err("The field is already fenced."); if (s.bal.cash < R.fenceCost) return err(`A fence costs ${R.fenceCost}; Cash is ${s.bal.cash}.`);
+    post(s, "fence", `Fence for the field (Operating expense: wages & upkeep)`, { upkeep: R.fenceCost, cash: -R.fenceCost }); s.fenced = true;
+    note(s, "Tomas's men fenced the field."); return ok();
+  }
   function insolvent(s, why) { s.over = true; s.outcome = "insolvent"; s.why = why; use(s, "insolvency", false); use(s, "overtrading", false); note(s, why); return ok(); }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
@@ -259,6 +292,7 @@
     const short = committed(s) - s.sacks - sacksComing(s);
     if (cash + collect < due) return { danger: true, text: `Cash ${cash}, and ${due} of wages, interest and Accounts payable fall due by day ${wk}. Ezra lends; the market cart buys surplus.` };
     const late = s.bills.find(b => b.late); if (late) return { danger: true, text: `Tomas's bill of ${late.amount} is overdue. Five days and he goes to the court.` };
+    const w = warning(s); if (w) return { danger: true, text: w }; // danger: true so the story's quiet stretches still show it
     if (short > 0) return { danger: short > 20, text: `Open orders need ${committed(s)} sacks; Inventory plus the field makes ${s.sacks + sacksComing(s)}. Plant ${Math.ceil(short / 3)} more plots.` };
     if (s.offers.some(o => o.who === "duke")) return { danger: false, text: `The Duke pays 21 days after delivery. Seed and wages are paid now: can Cash wait that long?` };
     if (s.bal.ar > 2 * cash && cash < 150) return { danger: false, text: `Accounts receivable ${s.bal.ar}, Cash ${cash}. Revenue isn't Cash until the invoice is paid.` };
@@ -267,6 +301,6 @@
   }
 
   root.Spring = { R, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, buyFence, warning, borrow, repay, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

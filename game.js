@@ -284,6 +284,7 @@
       ["Buy 3 for Cash (36)", buy(3, false), s.bal.cash < 36], ["Buy 9 for Cash (108)", buy(9, false), s.bal.cash < 108],
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
       ["Sprinkler: 80 Cash", () => { const r = act(() => S.buySprinkler(s)); say("tomas", r.ok ? "Waters the 8 plots around it every morning. Set it on an empty tilled plot." : r.msg); }, s.bal.cash < 80],
+      ...(!s.fenced && s.day <= 9 ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => { const r = act(() => S.buyFence(s)); say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg); }, s.bal.cash < S.R.fenceCost]] : []),
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => { const r = act(() => S.payBills(s)); say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg); }, !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -358,9 +359,15 @@
     const notes = s.log.slice(0, s.log.length - n0).reverse().map(l => l.t).slice(0, 4);
     if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks);
     pl.x = 6 * T + 8; pl.y = 7 * T + 12; pl.dir = "down"; save();
-    const morning = () => { morningBark(); story("morning"); };
+    const morning = () => { morningBark(); story("morning"); lossLesson(); };
     if (fast) return morning();
     night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning);
+  }
+  function lossLesson() { // a loss shows up in the Ledger as an expense with no Cash leaving: walk the player to the exact lines
+    const j = s.journal.find(x => x.type === "loss" && x.day === s.day - 1); if (!j || (storyOn && Story.busy)) return;
+    const n = Object.values(j.lines)[0] ? j.lines.losses : 0;
+    say("maud", `Open the Ledger and find the journal line "${j.memo}".<br>Debit Crop & stock losses ${n}, credit Inventory ${n}. Cash didn't move, but Net income fell by ${n} and so did Inventory: value you paid for is gone. That's why losses hit profit.`,
+      [["Open the Ledger", ledger], ["Later", null]]);
   }
   function night(title, notes, then) {
     const n = $("night"); n.innerHTML = `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join(""); n.classList.add("on");
@@ -425,7 +432,7 @@
   }
   function isTable(st) {
     const i = st.is; pre = "is"; return `<table class="stm"><tr><th>Income statement</th><th></th></tr>` + tr("Revenue", i.revenue, "", "revenue") + tr("Cost of goods sold", -i.cogs, "sub", "cogs") + tr("Gross profit", i.gross, "total", "gross") +
-      tr("Wages & upkeep", -i.upkeep, "sub", "opex") + (i.dep ? tr("Depreciation", -i.dep, "sub", "opex") : "") + (i.fines ? tr("Contract forfeits", -i.fines, "sub", "opex") : "") +
+      tr("Wages & upkeep", -i.upkeep, "sub", "opex") + (i.dep ? tr("Depreciation", -i.dep, "sub", "opex") : "") + (i.fines ? tr("Contract forfeits", -i.fines, "sub", "opex") : "") + (i.losses ? tr("Crop & stock losses", -i.losses, "sub", "opex") : "") +
       tr("Operating expenses", -i.opex, "", "opex") + tr("Operating income", i.operating, "total", "operating") + tr("Interest expense", -i.interest, "sub", "interest") +
       (i.factoring ? tr("Factoring fees", -i.factoring, "sub", "interest") : "") + tr("Net income", i.net, "total", "net") + `</table>`;
   }

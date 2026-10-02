@@ -10,8 +10,8 @@
   function close(s) {
     const b = s.bal, o = s.opening;
     const revenue = -b.revenue, cogs = b.cogs, gross = revenue - cogs, upkeep = b.upkeep, dep = b.depreciation;
-    const fines = b.fines, opex = upkeep + dep + fines, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
-    const is = { revenue, cogs, gross, upkeep, dep, fines, opex, operating, interest, factoring, net };
+    const fines = b.fines, losses = b.losses, opex = upkeep + dep + fines + losses, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
+    const is = { revenue, cogs, gross, upkeep, dep, fines, losses, opex, operating, interest, factoring, net };
     const start = S.balanceSheet(o), end = S.balanceSheet(b);
     const dAR = end.ar - start.ar, dInv = end.inv - start.inv, dAP = end.ap - start.ap;
     const cfo = net + dep - dAR - dInv + dAP;
