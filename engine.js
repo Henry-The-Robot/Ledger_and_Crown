@@ -15,6 +15,7 @@
     lateGrace: 3, breachPct: 0.1, // an order more than 3 days late is cancelled, with a forfeit of 10% of its value
     apDefault: 5,               // a bill 5 days overdue: Tomas takes you to the reeve's court
     apDays: 14, discDays: 7, discPct: 0.02, // Tomas's terms: "2/7, net 14" (2% off if paid within 7 days)
+    prepayBefore: 21,           // Ezra charges one week's interest on any amount repaid before day 21: the interest he was counting on
     factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
     crownDebt: 1000,            // owed to the Crown at Midwinter (the story's goal)
     rain: [5, 12, 13, 20, 26],
@@ -230,12 +231,20 @@
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
     if (amt > room) return err(`Ezra's limit is ${t.loanLimit}; you owe ${-s.bal.loan}.`);
-    post(s, "borrow", `Borrowed ${amt} from Ezra at ${t.rateBp / 100}% a week`, { cash: amt, loan: -amt }); use(s, "equation"); return ok();
+    post(s, "borrow", `Borrowed ${amt} from Ezra at ${t.rateBp / 100}% a week`, { cash: amt, loan: -amt }); use(s, "equation"); note(s, `Borrowed ${amt}: that is ${Math.round(amt * t.rateBp / 10000)} more interest every pay-day until you repay it.`); return ok();
+  }
+  // The weighing behind every repayment: interest you'd stop paying, the early-repayment fee, and how thin Cash gets afterwards.
+  function loanFacts(s, amt) {
+    amt = Math.min(amt, -s.bal.loan); const t = terms(s), weekly = Math.round(amt * t.rateBp / 10000), paydays = Math.floor(R.days / 7) - Math.floor((s.day - 1) / 7);
+    const fee = s.day < R.prepayBefore ? weekly : 0, saved = weekly * paydays, rows = forecast(s, 14, amt + fee);
+    return { amt, rateBp: t.rateBp, weekly, paydays, fee, saved, net: saved - fee, low: rows.length ? Math.min(...rows.map(r => r.close)) : s.bal.cash - amt - fee };
   }
   function repay(s, amt) {
     amt = Math.min(amt, -s.bal.loan); if (amt <= 0) return err("You owe Ezra nothing.");
-    if (s.bal.cash < amt) return err(`Cash is ${s.bal.cash}.`);
-    post(s, "repay", `Repaid ${amt} of the loan to Ezra`, { loan: amt, cash: -amt }); return ok();
+    const f = loanFacts(s, amt); if (s.bal.cash < amt + f.fee) return err(`Cash is ${s.bal.cash}${f.fee ? `; repaying ${amt} early also costs a ${f.fee} fee` : ""}.`);
+    post(s, "repay", `Repaid ${amt} of the loan to Ezra`, { loan: amt, cash: -amt });
+    if (f.fee) { post(s, "interest", `Early-repayment fee: one week's interest on the ${amt} repaid before day ${R.prepayBefore}`, { interest: f.fee, cash: -f.fee }); note(s, `Ezra took a ${f.fee} fee for repaying ${amt} early.`); }
+    use(s, "tvm"); return ok();
   }
 
   // ---------- the night: sleeping ends the day ----------
@@ -362,6 +371,6 @@
   }
 
   root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, refusePell, buyPoison, ratLoss, warning, borrow, repay, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
