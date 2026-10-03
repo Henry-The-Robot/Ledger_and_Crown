@@ -41,7 +41,7 @@
     factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
-    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
+    crane: "Bailiff Crane", mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.
   const OFFERS = [
@@ -66,7 +66,7 @@
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
     for (let i = 0; i < f.w * f.h; i++) s.plots.push({ i, x: f.x0 + i % f.w, y: f.y0 + Math.floor(i / f.w), tilled: i < f.w, watered: false, crop: null, sprinkler: false });
-    [0, 1, 2].forEach(i => s.plots[i].crop = { age: 2, cost: R.seedCost });
+    [0, 1, 2].forEach(i => s.plots[i].crop = { age: R.growDays, cost: R.seedCost }); // WS3: three plots start ripe, so the player harvests in minute 2
     const cash = 200 + (opt.bonus || 0), inv = s.sacks * R.unitCost + 3 * R.seedCost, loan = 100;
     const crown = R.crownDebt;
     post(s, "open", "Opening balances: the estate as Uncle Edric left it", { cash, inv, loan: -loan, crown: -crown, capital: -(cash + inv - loan - crown) });

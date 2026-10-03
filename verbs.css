@@ -1,0 +1,55 @@
+/* WS3 verbs (tag, bet, timeline): the UI for verbs.js. Own file; style.css is not touched.
+   Variables come from style.css with fallbacks, so this file also works alone. Tap targets are >= var(--tap, 44px);
+   nothing is hover-only (mouse and touch use the same click/pointer events). */
+.vparch, .vcard, .vstamp, .vsay, .vtl { box-sizing: border-box; font-family: var(--serif, Georgia, serif); color: var(--ink, #3b2a1e); }
+/* the parchment: a statement that builds as the player tags things */
+.vparch { position: absolute; right: 8px; top: 64px; width: min(270px, 42%); padding: var(--sp3, 12px) var(--sp3, 12px) var(--sp2, 8px);
+  background: var(--panel, #f3e8d0); border: 3px solid #7a4a22; border-radius: var(--radius, 6px); box-shadow: 0 3px 0 #4a2c14, inset 0 0 0 2px #d9a55e; z-index: 25; font-size: 15px; }
+.vparch h4 { margin: 0 0 var(--sp2, 8px); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted, #7a5a3a); }
+.vparch .vp-sec { margin-top: var(--sp2, 8px); font-weight: bold; border-bottom: 1px solid var(--muted, #7a5a3a); }
+.vparch .vp-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; animation: vpin .45s ease-out; }
+.vparch .vp-row b, .vparch .vp-tot b { font-family: var(--mono, monospace); }
+.vparch .vp-tot { display: flex; justify-content: space-between; border-top: 2px solid var(--ink, #3b2a1e); margin-top: 2px; padding-top: 2px; font-weight: bold; }
+.vparch .vp-hint { margin-top: var(--sp2, 8px); font-size: 14px; color: var(--muted, #7a5a3a); }
+.vparch .vp-where { display: block; width: 100%; min-height: var(--tap, 44px); margin-top: var(--sp2, 8px); font: bold 16px var(--serif, Georgia, serif); background: #fff5dc; border: 2px solid #9a6a3a; border-radius: var(--radius, 6px); color: var(--ink, #3b2a1e); cursor: pointer; }
+.vparch .vp-neg { color: var(--red, #9b2335); }
+@keyframes vpin { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+/* a one-line rebuke / remark that fades */
+.vsay { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); max-width: 80%; padding: var(--sp2, 8px) var(--sp3, 12px); background: var(--panel, #f3e8d0); border: 2px solid #7a4a22; border-radius: var(--radius, 6px);
+  font-size: 17px; z-index: 60; pointer-events: none; animation: vfade 3.2s ease-out forwards; }
+@keyframes vfade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+/* the stamp */
+.vstamp { position: absolute; left: 50%; top: 40%; z-index: 70; pointer-events: none; padding: var(--sp3, 12px) var(--sp4, 20px); border: 6px solid var(--red, #9b2335); color: var(--red, #9b2335); background: rgba(243,232,208,.88);
+  border-radius: var(--radius, 6px); font: bold 30px var(--serif, Georgia, serif); text-align: center; text-transform: uppercase; letter-spacing: .06em; transform: translate(-50%, -50%) rotate(-7deg); animation: vstamp .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+.vstamp small { display: block; font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink, #3b2a1e); }
+@keyframes vstamp { from { transform: translate(-50%, -50%) rotate(-7deg) scale(3); opacity: 0; } to { transform: translate(-50%, -50%) rotate(-7deg) scale(1); opacity: 1; } }
+/* HUD card for a pending bet */
+.vcard { position: absolute; left: 8px; top: 92px; z-index: 24; padding: var(--sp2, 8px) var(--sp3, 12px); background: var(--panel, #f3e8d0); border: 2px solid var(--gold, #c9962b); border-radius: var(--radius, 6px); font-size: 14px; box-shadow: 0 2px 0 #4a2c14; max-width: 46%; }
+body.touch .vcard { top: 118px; font-size: 16px; }
+/* the timeline (inside the game's panel) */
+.vtl { user-select: none; }
+.vtl .vtl-grid { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; margin: var(--sp2, 8px) 0; }
+.vtl .vtl-day { min-height: var(--tap, 44px); display: flex; flex-direction: column; gap: 3px; padding: 3px; border: 1px solid var(--muted, #7a5a3a); border-radius: 4px; background: #fffaf0; cursor: pointer; font-size: 13px; touch-action: manipulation; }
+.vtl .vtl-day.today { background: #fff3c4; } .vtl .vtl-day.drop { outline: 3px solid var(--gold, #c9962b); } .vtl .vtl-day.sel { background: #e8f0ff; }
+.vtl .vtl-day .d { font-weight: bold; font-size: 12px; color: var(--muted, #7a5a3a); }
+.vtl .vtl-card { padding: 3px 4px; border-radius: 4px; min-height: 26px; line-height: 1.15; font-size: 12.5px; color: #fff; word-break: break-word; }
+.vtl .vtl-card.in { background: var(--green, #2f6f3a); } .vtl .vtl-card.out { background: var(--red, #9b2335); }
+.vtl .vtl-card.move { background: #5b3a8a; cursor: grab; outline: 2px dashed #fff; touch-action: none; min-height: var(--tap, 44px); }
+.vtl .vtl-cash { font-family: var(--mono, monospace); font-size: 13px; margin-top: auto; padding-top: 3px; border-top: 1px solid var(--muted, #7a5a3a); }
+.vtl .vtl-cash.neg { color: var(--red, #9b2335); font-weight: bold; }
+.vtl svg.vtl-line { width: 100%; height: 130px; display: block; background: #fffaf0; border: 1px solid var(--muted, #7a5a3a); border-radius: 4px; }
+.vtl .vtl-sum { min-height: 1.4em; margin: var(--sp1, 4px) 0; font-size: 15px; }
+.vtl .vtl-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp2, 8px); margin: var(--sp2, 8px) 0; }
+.vtl .vtl-pick input { width: 90px; min-height: var(--tap, 44px); font: 18px var(--mono, monospace); }
+.vtl button { min-height: var(--tap, 44px); min-width: var(--tap, 44px); }
+/* the bet (stake picker) */
+.vbet { margin-top: var(--sp2, 8px); }
+.vbet .stk { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.vbet .stk button.on { background: var(--gold, #c9962b) !important; color: #fff; }
+/* the haggle's price track: red below your floor (the walk-away line), a marker for their offer */
+.vtrack { position: relative; height: 14px; margin: 26px 8px 18px; border-radius: 7px; background: linear-gradient(90deg, rgba(155,35,53,.55) var(--fl, 20%), rgba(47,111,58,.35) var(--fl, 20%)); border: 1px solid #7a4a22; }
+.vtrack i { position: absolute; top: -4px; bottom: -4px; width: 0; border-left: 3px solid var(--red, #9b2335); }
+.vtrack i.of { border-left-color: var(--ink, #3b2a1e); }
+.vtrack i span { position: absolute; top: -20px; left: 0; transform: translateX(-50%); white-space: nowrap; font: bold 13px var(--serif, Georgia, serif); color: var(--red, #9b2335); }
+.vtrack i.of span { top: 18px; color: var(--ink, #3b2a1e); }
+.vwalk { position: absolute; z-index: 20; pointer-events: none; }

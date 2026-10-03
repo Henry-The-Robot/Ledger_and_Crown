@@ -7,7 +7,7 @@
 window.Story = (function () {
   const S = Spring, B = Books, TR = Transcript;
   let G, st = fresh();
-  const TITLES = ["", "The keys", "First seed", "The bakery", "Hobb pays later", "Wages day", "Tomas's terms", "Ezra", "The Duke's steward", "Closing the books"];
+  const TITLES = ["", "The bailiff", "Harvest and the bakery", "First seed", "Hobb pays later", "Wages day", "Tomas's terms", "Ezra", "The Duke's steward", "Closing the books"];
   const PAGES = [
     "Spring. Best harvest in ten years. Sold every sack. So why is the chest always empty?",
     "Hobb's my best customer. Pays like clockwork, fourteen days after. I'll be fine till then.",
@@ -18,11 +18,12 @@ window.Story = (function () {
   function fresh() { return { ch: 1, stage: "intro", notebook: [], pages: [] }; }
   function init(g, saved) { G = g; st = saved || fresh(); goal(); }
   const goalText = () => ({
-    "intro": "Chapter 1 · The keys: listen to Maud",
-    "tomas2": "Chapter 2 · First seed: buy seed from Tomas (east along the path, the green roof)",
-    "plant2": "Chapter 2 · First seed: plant your seed (E on tilled soil, then E again to water)",
-    "ashby3": "Chapter 3 · The bakery: agree a price with Widow Ashby (red roof)",
-    "ship3": "Chapter 3 · The bakery: ship Ashby's sacks from your shipping crate (by the house)",
+    "intro": "Chapter 1 · The bailiff: walk with Crane and tap what the farm owns",
+    "harvest2": "Chapter 2 · Harvest: the three ripe plots are in the field (E, or tap Act)",
+    "tomas2": "Chapter 3 · First seed: buy seed from Tomas (east along the path, the green roof)",
+    "plant2": "Chapter 3 · First seed: plant your seed (E on tilled soil, then E again to water)",
+    "ashby3": "Chapter 2 · The bakery: agree a price with Widow Ashby (red roof)",
+    "ship3": "Chapter 2 · The bakery: ship Ashby's sacks from your shipping crate (by the house)",
     "hobb4": "Chapter 4 · Hobb pays later: see Hobb at the mill",
     "ship4": "Chapter 4 · Hobb pays later: ship Hobb's sacks from the crate",
     "sleep5": "Chapter 5 · Wages day: sleep, and Maud will meet you in the morning",
@@ -49,56 +50,80 @@ window.Story = (function () {
     forecast: (n, title) => ({ label: "Open the cash forecast", open: () => G.board({ title, n, noClose: true, fill: [] }) }),
   };
 
-  // ---------- chapter 1: the keys (C1.01) ----------
+  // ---------- chapter 1: the bailiff (C1.01) — WS3 cold open: the `tag` verb builds the balance sheet, then one More/Less choice ----------
+  // Replaces the two typed sums (liabilities, equity). Every number comes from the opening balances (Spring.balanceSheet), never a literal.
   async function ch1() {
-    const b = S.balanceSheet(G.s.bal);
-    await tell("You'll be Edric's heir. I'm Maud, the reeve. I kept his books for twenty years; he never listened.");
-    await tell(`He sold every sack and showed a profit every year. He still died broke.<br>The Crown wants ${S.R.crownDebt.toLocaleString("en-US")} by Midwinter, or it takes the farm.`, ["h-crown"]);
-    await page(0);
-    await tell(`What you own: Cash ${b.cash}, and Inventory ${b.inv}: 15 sacks and three plots growing, at what they cost.<br>Those are your assets: ${b.assets}.`, ["h-cash", "h-inv"]);
-    await tell(`What you owe: Ezra's loan, ${b.loan}, and the Crown's ${b.crown}. Those are liabilities.`, ["h-loan", "h-crown"]);
-    await ask("Your turn. Add up what you owe: total liabilities?", b.liab, ["Look at the gold-edged boxes at the top: they're everything you owe.", "Everything you owe counts: what Ezra lent your uncle, and the Crown's debt."], ["h-loan", "h-crown"], 0, null, `What Ezra lent your uncle, ${b.loan}, plus the Crown's debt, ${b.crown}: ${b.liab}.`, "Liabilities are everything you owe, to anyone. Find each debt and add them up. Owing 30 to one person and 50 to another: liabilities of 80.");
-    await ask(`Owner's equity is what you own minus what you owe: ${b.assets} − ${b.liab}. Yours?`, b.equity, [`${b.assets} take away ${b.liab}. It goes below zero.`, "A minus sign is allowed: type it like -100."], null, 0, null, `What you own, ${b.assets}, minus what you owe, ${b.liab}: ${b.equity}.`, "Equity is what's left for you: what you own minus what you owe. Own 50, owe 80: equity is 50 − 80 = −30.");
-    mastered("equation");
-    await tell(`${b.equity}. Edric left you less than nothing. That's why we work.`);
-    keep("equation", "Assets = Liabilities + Owner's equity", "What you own, minus what you owe, is yours. It can be below zero.", `Day 1: ${b.assets} = ${b.liab} + (${b.equity}).`);
-    to(2, "tomas2");
+    const V = Verbs, W = G.world, b = S.balanceSheet(G.s.bal), s0 = G.s, cost = S.R.unitCost;
+    V.parchReset(); V.craneOn = true;
+    await G.say("crane", "Edric's heir. The Crown sent me to list what's yours before Midwinter. Walk with me.", ["Walk with you"]);
+    const sackVal = s0.sacks * cost, cropPlots = () => s0.plots.filter(p => p.crop), cropVal = cropPlots().reduce((a, p) => a + p.crop.cost, 0);
+    G.toast("Crane taps the chest: Cash.");
+    const tagging = V.tag({
+      show: 1, hintAfter: window.__hintAfter,
+      targets: [
+        { id: "chest", tiles: [[W.CHEST.x, W.CHEST.y]], line: "Cash (the chest)", value: b.cash },
+        { id: "sacks", tiles: [[W.SACKS.x, W.SACKS.y], [W.CRATE.x, W.CRATE.y]], line: `Sacks: ${s0.sacks} at ${cost}`, value: sackVal },
+        { id: "crops", tiles: () => cropPlots().map(p => [p.x, p.y]), line: `Crops in the ground (${cropPlots().length} plots, at cost)`, value: cropVal },
+      ],
+      decoys: [
+        { tiles: [[W.FWELL.x, W.FWELL.y]], says: "That's the village's well. Not yours." },
+        { tiles: [[12, 3], [12, 2], [15, 3], [15, 2], [18, 4], [18, 3]], says: "The trees are the Duke's." },
+        { tiles: [[W.BOARD.x, W.BOARD.y], [W.BOARD.x, W.BOARD.y - 1]], says: "The notice board belongs to the village." },
+      ],
+    });
+    V.remark(`Cash, ${b.cash}.`); await V.wait(window.__fastVerbs ? 0 : 1600);
+    V.remark("Find the rest. Everything this farm owns.");
+    await tagging;
+    await V.countTotal("aTot", s0.bal.cash + sackVal + cropVal);
+    await G.say("crane", "Good. Now what it owes. I brought the papers myself.", ["Show me"]);
+    V.pinRow("liab", "Ezra's note (the loan)", b.loan); await V.wait(window.__fastVerbs ? 0 : 700);
+    V.pinRow("liab", "The Crown's writ, due at Midwinter", b.crown); await V.wait(window.__fastVerbs ? 0 : 500);
+    await V.countTotal("lTot", b.liab);
+    const c = await G.say("crane", "Before I stamp it, heir: is this farm worth more than nothing, or less?", ["More", "Less"]);
+    V.P.eq = b.equity; V.parch();
+    await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
+    const right = (c === 1) === (b.equity < 0);
+    await G.say("crane", right ? "You've a head for it. Pity." : "Less. Much less.", ["Next"]);
+    V.craneOn = false; document.querySelectorAll(".vstamp").forEach(x => x.remove());
+    await tell(`Don't mind Crane. What you own minus what you owe is yours, and yours is ${b.equity < 0 ? "below zero" : "thin"}. That's why we work.`);
+    await tell("The far field's ripe. Harvest it (walk up, press E or tap Act) and Ashby the baker will buy.");
+    if (right) mastered("equation");
+    keep("equation", "Assets = Liabilities + Owner's equity", "What you own, minus what you owe, is yours. It can be below zero.", `Day 1: ${b.assets} = ${b.liab} + (${b.equity}).${right ? "" : " You guessed more; the page says less."}`);
+    V.parchClose(); to(1, "harvest2");
   }
-  // ---------- chapter 2: first seed (C1.04: cost becomes inventory, not an expense yet) ----------
+  // ---------- chapter 3: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
   async function ch2() {
-    await G.say("tomas", "Seed is 12 a packet. One packet plants one plot; a plot gives 3 sacks of wheat.");
+    const sc = S.R.seedCost, per = S.R.sacksPerPlot;
+    await G.say("tomas", `Seed is ${sc} a packet. One packet plants one plot; a plot gives ${per} sacks of wheat.`);
     await tell("Let me buy the first three, so you can see where the coin goes.");
     G.act(() => S.buySeeds(G.s, 3, false));
-    await tell("Cash went down 36. Inventory went up 36. You didn't spend it; it changed shape.<br>Seed only becomes a cost when the grain is sold.", ["h-cash", "h-inv"]);
+    await tell(`Cash went down ${3 * sc}. Inventory went up ${3 * sc}. Changed shape, not spent.<br>Seed only becomes a cost when the grain is sold.`, ["h-cash", "h-inv"]);
     const inv0 = G.s.bal.inv;
-    await G.say("tomas", "Six more?", ["Buy 6 packets for Cash (72)"]);
+    await G.say("tomas", "Six more?", [`Buy 6 packets for Cash (${6 * sc})`]);
     G.act(() => S.buySeeds(G.s, 6, false));
-    await ask(`You record this one. Inventory was ${inv0} before these six. What's Inventory now?`, G.s.bal.inv, ["What you just paid Tomas for the packets is in the Ledger's journal. Open it.", "Bought stock goes into Inventory at what it cost you."], null, 0, [DOC.ledger], `Inventory was ${inv0}. The six packets cost 72 (6 × 12). ${inv0} + 72 = ${G.s.bal.inv}.`, "Inventory goes up by what new stock cost you. Had 20 of stock, bought 3 more at 5 each (15): Inventory is 20 + 15 = 35.");
-    mastered("inventory");
-    keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −72, Inventory +72 (now ${G.s.bal.inv}).`);
-    st.planted0 = G.s.plots.filter(p => p.crop).length; to(2, "plant2");
+    keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −${6 * sc}, Inventory +${6 * sc} (${inv0} → ${G.s.bal.inv}).`);
+    st.planted0 = G.s.plots.filter(p => p.crop).length; to(3, "plant2");
   }
-  // ---------- chapter 3: the bakery (C1.04, C0.02: revenue, COGS, gross profit, margin vs markup) ----------
+  // ---------- chapter 2: the bakery (C1.04, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
   async function ch3() {
+    const cost = S.R.unitCost, pct = p => Math.round((p - cost) / p * 100);
     const o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
     await G.say("ashby", "So you're Edric's heir. I need 6 sacks for the ovens. I'll give you 7 a sack, Cash.");
-    await tell("Each sack cost you 4: 12 of seed for 3 sacks. At 7 you keep 3 a sack. That's gross profit.<br>3 out of every 7 is 43%: your margin.", ["h-inv"]);
+    await tell(`Each sack cost you ${cost}: ${S.R.seedCost} of seed for ${S.R.sacksPerPlot} sacks. At 7 you keep ${7 - cost} a sack. That's gross profit.<br>${7 - cost} out of every 7 is ${pct(7)}%: your margin.`, ["h-inv"]);
     // The worked example goes in the notebook as it's shown, so the Try that follows can point to it.
-    keep("margin", "Gross profit, margin & markup", "Price minus cost per sack is gross profit. Divide by the price: margin. Divide by the cost: markup. Never go below the floor (your cost).", "Maud at 7: 7 − 4 = 3 profit a sack; 3 ÷ 7 = 43% margin.");
+    keep("margin", "Gross profit & margin", "Price minus cost per sack is gross profit. Divide by the price: margin. Never go below your floor (your cost per sack).", `Maud at 7: 7 − ${cost} = ${7 - cost} profit a sack; ${7 - cost} ÷ 7 = ${pct(7)}% margin.`);
+    // The floor is asked first, and it is used: it becomes the red walk-away line on the price track in the haggle.
+    await ask("Before you name a price: what's your floor? The lowest you'd take for a sack before it loses money.", cost, ["What did each sack cost you? Seed for a plot, divided by the sacks it gives."], null, 0, null, `A packet of seed is ${S.R.seedCost} and gives ${S.R.sacksPerPlot} sacks, so each sack cost ${cost}. Sell below ${cost} and you lose money.`, `Your floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.`);
     await G.say("ashby", "Times are hard, dear. Would you take 6?");
-    await ask("Work it out before you answer. Your margin at 6, in %?", 33, ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], null, 1, [DOC.notebook], "At 6 you keep 6 − 4 = 2 a sack. 2 ÷ 6 = 0.33, so 33%.", "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%.");
-    await tell("Careful with one thing. Margin divides the profit by the price. Markup divides it by the cost:<br>at 7, 3 ÷ 4 = 75% markup. Same sale, two numbers; traders mix them up.");
-    addEx("margin", "Markup at 7: 3 ÷ 4 = 75%.");
-    await ask("So at 6: what's your markup, in %?", 50, ["My notebook has markup worked at 7. Same steps at 6.", "Markup compares the same profit with what the sack cost you, not with the price."], null, 1, [DOC.notebook], "Same 2 of profit a sack, divided by what it cost, 4: 2 ÷ 4 = 0.5, so 50%.", "Markup = profit on one item ÷ what it cost you, × 100. Sell for 10 what cost 6: 4 ÷ 6 × 100 ≈ 67%.");
-    await ask("And your floor price: the lowest you'd take before a sack loses money?", 4, ["What did each sack cost you?"], null, 0, null, "A packet of seed is 12 and gives 3 sacks, so each sack cost 4. Sell below 4 and you lose money.", "Your floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.");
+    await ask("Work it out before you answer. Your margin at 6, in %?", pct(6), ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], null, 1, [DOC.notebook], `At 6 you keep 6 − ${cost} = ${6 - cost} a sack. ${6 - cost} ÷ 6 = 0.33, so ${pct(6)}%.`, "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%.");
     mastered("gross"); mastered("margin");
-    await tell("Now you know your floor. Name your price; she'll counter. You can always walk away.");
-    const deal = await G.haggle(o, { open: 6, walk: 7, line: "Well, dear? 6 sacks. What do you want for them?" });
+    await tell(`Your floor, ${cost}, is drawn on the price track in red. Sell below it and the sack costs you more than it earns. Name your price; she'll counter. You can always walk away.`);
+    const deal = await G.haggle(o, { open: 6, walk: 7, floor: cost, line: "Well, dear? 6 sacks. What do you want for them?" });
     if (!deal) { await G.say("ashby", "Come back when you've thought it over."); return; }
     const price = deal.price;
     await G.say("ashby", `${price} it is. Ship them from your crate and I'll pay on the spot.`);
-    addEx("margin", `Your deal: Ashby, 6 sacks at ${price}: ${price - 4} a sack, ${Math.round((price - 4) / price * 100)}% margin, ${Math.round((price - 4) / 4 * 100)}% markup.`);
-    to(3, "ship3");
+    addEx("margin", `Your deal: Ashby, 6 sacks at ${price}: ${price - cost} a sack, ${pct(price)}% margin.`);
+    to(2, "ship3");
   }
   // ---------- chapter 4: Hobb pays later (C1.02: accounts receivable, accrual vs cash) ----------
   async function ch4() {
@@ -106,7 +131,7 @@ window.Story = (function () {
     await tell("Before you go in: know your floor price. And listen for when he pays.");
     await G.say("hobb", `Edric's heir! Nine sacks. I pay 14 days after delivery, same as always.`);
     await tell("Your uncle loved Hobb. Hobb always paid. Eventually.");
-    const deal = await G.haggle(o, { open: 8, walk: 9, line: "Nine sacks. Name your price; I'm not a charity." });
+    const deal = await G.haggle(o, { open: 8, walk: 9, floor: S.R.unitCost, line: "Nine sacks. Name your price; I'm not a charity." });
     if (!deal) { await G.say("hobb", "Suit yourself. The offer stands till tomorrow."); return; }
     to(4, "ship4");
   }
@@ -223,9 +248,11 @@ window.Story = (function () {
   function after(evt, info) {
     if (busy) return;
     if (evt === "plant" && st.stage === "plant2" && (G.s.seeds === 0 || G.s.plots.filter(p => p.crop).length - (st.planted0 || 0) >= 6))
-      run(async () => { await tell("Good. Water them every day; four nights and it's grain. Now: the bakery wants you."); to(3, "ashby3"); });
+      run(async () => { await tell("Good. Water them every day; four nights and it's grain. Now: Hobb at the mill wants grain too."); to(4, "hobb4"); });
+    if (evt === "harvest" && st.stage === "harvest2" && !G.s.plots.some(p => p.crop && S.stage(G.s, p) === 4))
+      run(async () => { await tell(`${G.s.sacks} sacks in the barn now. Ashby at the bakery (red roof) is waiting.`); await page(0); to(2, "ashby3"); });
     if (evt === "deliver" && st.stage === "ship3" && info.who === "ashby")
-      run(async () => { await tell(`Revenue ${info.value}, Cost of goods sold ${info.sacks * 4}: gross profit ${info.value - info.sacks * 4}. And it came in as Cash, today.`, ["h-cash", "h-ni"]); to(4, "hobb4"); });
+      run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}. And it came in as Cash, today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
     if (evt === "morning" && st.stage === "sleep5") run(ch5);
     if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });

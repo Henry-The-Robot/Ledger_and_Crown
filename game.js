@@ -25,6 +25,7 @@
   BUILD.forEach(b => { b.img = A.building(b.w, b.h, Object.assign({}, b, { sign: b.sign && A.SIGNS[b.sign] })); b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
   const NPC = {}; BUILD.filter(b => b.who).forEach(b => NPC[b.who] = { who: b.who, x: b.door.x + 1, y: b.door.y + 1, dir: "down" });
   NPC.duke = { who: "duke", x: 36, y: 10, dir: "left" };
+  NPC.crane = { who: "crane", x: 7, y: 7, dir: "left" }; // WS3: the bailiff, only on screen during the cold open (Verbs.craneOn)
   NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
@@ -32,6 +33,7 @@
     abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
   const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 8 };
+  const CHEST = { x: 5, y: 7 }, SACKS = { x: 10, y: 7 }, FWELL = { x: 13, y: 7 }; // WS3 (see Story.ch1: the tag verb's targets and decoys)
   (function buildMap() {
     let r = 5; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) ground[y * MW + x] = rnd() < .05 ? "flower" + Math.floor(rnd() * 3) : "grass" + Math.floor(rnd() * 4);
@@ -47,14 +49,18 @@
     [[15, 3], [18, 4], [20, 2], [12, 3], [2, 12], [2, 17], [8, 19], [12, 21], [22, 16], [21, 22], [26, 23], [46, 16], [44, 23], [30, 23], [16, 11], [19, 13], [47, 6], [2, 22], [5, 23]].forEach(([x, y], i) => tree(x, y, i));
     [[10, 2], [21, 12], [23, 13], [36, 23], [40, 23], [15, 21], [45, 13], [11, 17], [29, 10]].forEach(([x, y]) => { solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.bush, x * T, y * T) }); });
     solid.add(key(CRATE.x, CRATE.y)); props.push({ y: CRATE.y + 1, draw: () => blit(A.crate, CRATE.x * T, CRATE.y * T) });
-    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: drawWell });
+    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: () => drawWell(WELL) });
+    // WS3: the cold-open scene: the cash chest, sacks stacked by the crate, and a farm well (a decoy for the tag verb)
+    solid.add(key(CHEST.x, CHEST.y)); props.push({ y: CHEST.y + 1, draw: () => blit(A.chest, CHEST.x * T, CHEST.y * T) });
+    solid.add(key(SACKS.x, SACKS.y)); props.push({ y: SACKS.y + 1, draw: () => { blit(A.sack, SACKS.x * T, SACKS.y * T); blit(A.sack, SACKS.x * T + 4, SACKS.y * T - 5); blit(A.sack, SACKS.x * T - 3, SACKS.y * T + 2); } });
+    solid.add(key(FWELL.x, FWELL.y)); props.push({ y: FWELL.y + 1, draw: () => drawWell(FWELL) });
     solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
   const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
-  const npcHere = n => n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
+  const npcHere = n => n.who === "crane" ? !!(window.Verbs && Verbs.craneOn) : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
     : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
     : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
@@ -80,7 +86,9 @@
   addEventListener("keyup", e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; });
   cv.addEventListener("click", e => { // click / tap to walk; clicking something walks up to it and uses it
     if (dlgOpen()) return; const r = cv.getBoundingClientRect(), sc = r.width / VW;
-    const wx = (e.clientX - r.left) / sc + cam.x, wy = (e.clientY - r.top) / sc + cam.y; pl.target = { tx: Math.floor(wx / T), ty: Math.floor(wy / T) };
+    const wx = (e.clientX - r.left) / sc + cam.x, wy = (e.clientY - r.top) / sc + cam.y;
+    if (window.Verbs && Verbs.canvasTap(Math.floor(wx / T), Math.floor(wy / T))) return; // WS3: a tap that tags a world object isn't a walk
+    pl.target = { tx: Math.floor(wx / T), ty: Math.floor(wy / T) };
   });
   function facing() { const [dx, dy] = DIRS[pl.dir]; return { x: Math.floor((pl.x + dx * 12) / T), y: Math.floor((pl.y - 4 + dy * 12) / T) }; }
   function hitFree(x, y) { return [[-5, -5], [4, -5], [-5, 0], [4, 0]].every(([a, b]) => !blocked(Math.floor((x + a) / T), Math.floor((y + b) / T))); }
@@ -114,7 +122,7 @@
     const b = buildingAt(x, y); if (b) return b.id === "house" ? desk() : talk(b.who);
     const p = plotAt(x, y);
     if (p) { const r = act(() => S.act(s, p.i));
-      if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); }
+      if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); if (r.msg === "harvest") story("harvest"); }
       else if (r.msg) say(null, r.msg); return; }
     if (x === BOARD.x && y === BOARD.y) return noticeBoard();
     if (x === WELL.x && y === WELL.y) say(null, "The town well. Cold, clear water.");
@@ -243,14 +251,19 @@
   const hearts = t => "♥".repeat(Math.round(t / 2)) + "♡".repeat(5 - Math.round(t / 2));
   // ---------- negotiation: open, counter, leverage, walk away (2-4 rounds) ----------
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
+  function floorTrack(fl, offer, top) { // a price track: red below your floor, a marker for their offer
+    const lo = Math.max(0, Math.min(fl, offer) - 2), hi = Math.max(top, offer, fl) + 2, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
+    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Your floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
+  }
   async function haggle(o, cfg) {
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
+    const fl = cfg.floor != null ? cfg.floor : S.R.unitCost; // WS3: the floor is the walk-away line, drawn on the price track
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
     while (round < 4) {
       const lev = [];
       if (fairBest > theirs && !used.fair) lev.push("fair"); if (s.trust[o.who] >= 6 && !used.rec) lev.push("rec");
       const labels = ["Ask my price", `Accept ${theirs} a sack`].concat(lev.map(l => l === "fair" ? `"The fair pays ${fairBest}"` : `"I always deliver on time"`), ["Walk away"]);
-      const r = await dlg({ who: o.who, text: `${line}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.tag ? ` (${o.tag})` : ""}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
+      const r = await dlg({ who: o.who, text: `${line}${storyOn ? floorTrack(fl, theirs, walk) : ""}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.tag ? ` (${o.tag})` : ""}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
       const pick = labels[r.i];
       if (pick === "Walk away") { toast("You walked away."); return null; }
       if (pick.startsWith("Accept")) return close(theirs);
@@ -258,14 +271,14 @@
       if (pick.startsWith('"I always')) { used.rec = 1; walk += 1; line = "True enough. You've never let me down."; continue; }
       const p = r.v; round++;
       if (p == null || isNaN(p) || p <= 0) { line = "Say a number, dear."; continue; }
-      if (p < 4 && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you 4. Sure?`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
+      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
       if (p <= theirs) return close(theirs);
       if (p <= walk) { line = "Done."; return close(p); }
       if (p > walk + 2) { s.trust[o.who] = Math.max(0, s.trust[o.who] - 1); line = `${p}? That's an insult. ${theirs} is my offer.`; continue; }
       theirs = Math.min(walk, Math.ceil((theirs + p) / 2)); line = round >= 3 ? `My last word: ${theirs}.` : `Too dear. Meet me at ${theirs}.`;
     }
     const k = await sayP(o.who, `${theirs}, take it or leave it.`, [`Accept ${theirs}`, "Walk away"]); return k === 0 ? close(theirs) : null;
-    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
+    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, price < fl ? `Deal: ${price} a sack (margin ${Math.round((price - fl) / price * 100)}%)` : `Deal: ${price} a sack`, price < fl ? "#9b2335" : "#2a5a2a"); return { price }; }
   }
   // ---------- villagers ----------
   async function talk(who) {
@@ -633,7 +646,7 @@
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
   function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); ctx.fillStyle = S.notice(s) ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); }
-  function drawWell() { const x = WELL.x * T - cam.x, y = WELL.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
+  function drawWell(W) { const x = W.x * T - cam.x, y = W.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
     ctx.fillStyle = "#2d5f9a"; ctx.fillRect(x + 3, y + 5, 10, 5); ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 1, y - 6, 2, 11); ctx.fillRect(x + 13, y - 6, 2, 11); ctx.fillStyle = "#9b2335"; ctx.fillRect(x - 1, y - 9, 18, 4); }
   function drawStall(f) { const x = (f.x - 1) * T - cam.x, y = (f.y - 1) * T - cam.y;
     ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y - 10, 2, 24); ctx.fillRect(x + 44, y - 10, 2, 24); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y + 4, 48, 10); ctx.fillStyle = "#946b3c"; ctx.fillRect(x, y + 12, 48, 2);
@@ -666,6 +679,7 @@
     ctx.fillStyle = "#f2efe6"; for (let k = 0; k < 4; k++) { const a = ang + k * Math.PI / 2; ctx.fillRect(Math.round(mx + Math.cos(a) * 13) - 2, Math.round(my + Math.sin(a) * 13) - 2, 5, 5); }
     [BUILD[0], BUILD[1], BUILD[5]].forEach((b, k) => { for (let j = 0; j < 3; j++) { const t = (frame / 90 + j / 3 + k * .3) % 1; ctx.fillStyle = `rgba(235,235,235,${.6 * (1 - t)})`; ctx.fillRect(Math.round((b.x + b.w) * T - 18 - cam.x + Math.sin(t * 6) * 2), Math.round(b.y * T - 4 - t * 18 - cam.y), 3 + t * 3, 3 + t * 3); } });
     if (S.rain(s.day)) { ctx.fillStyle = "rgba(40,60,110,.18)"; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = "rgba(200,220,255,.55)"; for (let k = 0; k < 70; k++) { const rx = (k * 53 + frame * 3) % VW, ry = (k * 97 + frame * 6) % VH; ctx.fillRect(rx, ry, 1, 4); } }
+    if (window.Verbs) Verbs.draw(ctx, cam, frame); // WS3: frames round tagged things
     const f = facing(), p = plotAt(f.x, f.y), n = npcAt(f.x, f.y), b = buildingAt(f.x, f.y);
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
     const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
@@ -700,6 +714,7 @@
   if (TOUCH) initTouch();
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
+    dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
     interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
@@ -708,6 +723,7 @@
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10) });
+      if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       hud(); if (storyOn) Story.start();
     };
