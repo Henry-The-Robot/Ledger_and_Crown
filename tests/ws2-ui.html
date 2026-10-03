@@ -19,7 +19,7 @@ function load(q, w, h) { return new Promise(res => { const f = document.createEl
     out.push(`[${name}] dialog text >= 18px: ${cs("#dlg .tx", "fontSize") >= 18}; portrait >= 96px: ${rect("#dlg canvas").width >= 96}; input mode on touch is none: ${d.body.classList.contains("touch") ? d.getElementById("num").getAttribute("inputmode") === "none" : "n/a"}`);
     const pad = k => [...d.querySelectorAll("#dlg .np button")].find(b => b.textContent === k);
     pad("1").click(); pad("5").click(); pad("⌫").click(); pad("−").click(); pad("−").click(); pad("2").click(); out.push(`[${name}] pad types 1,5,backspace,minus,minus,2 -> "${d.getElementById("num").value}" (want "12")`);
-    const ok = d.querySelector("#dlg .np .ok"); out.push(`[${name}] pad keys >= 44px tall: ${[...d.querySelectorAll("#dlg .np button")].every(b => b.getBoundingClientRect().height >= 44)}`);
+    const ok = d.querySelector("#dlg .np .ok"); out.push(`[${name}] pad keys >= 44px tall: ${[...d.querySelectorAll("#dlg .np button")].filter(b => b.getBoundingClientRect().height > 0).every(b => b.getBoundingClientRect().height >= 44)} (the pad Check is hidden on desktop, where the inline Check is the one)`);
     ok.click(); await sleep(60); out.push(`[${name}] pad Check submits (right answer, dialog moves on): ${d.getElementById("dlg").style.display !== "none" ? "still open (toast + closes next)" : "closed"}`); G.closeDlg();
     out.push(`[${name}] books strip closes again: ${!d.getElementById("books").classList.contains("open")}`);
     const x0 = G.pl.x; d.getElementById("travelbtn").click(); await sleep(30); out.push(`[${name}] Travel button opens a map with 6 stops: ${d.querySelectorAll("#travel [data-i]").length === 6}`);

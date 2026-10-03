@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><title>One Check button per ask</title></head><body><pre id="out">running</pre>
+<!-- An ask shows exactly one Check: touch keeps the number pad's, desktop keeps the inline one. The hidden one still works (the pad calls it; Enter calls it).
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/one-check.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const vis = (w, el) => !!el && w.getComputedStyle(el).display !== "none" && el.getBoundingClientRect().width > 0;
+async function run(touch) {
+  const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = `../game.html?sandbox&new=1&touch=${touch}`; document.body.appendChild(f); await new Promise(r => f.onload = r); await sleep(300);
+  const w = f.contentWindow, d = w.document, G = w.G, errs = []; w.addEventListener("error", e => errs.push(e.message)); G.closeDlg(); G.hidePanel();
+  let done = null; G.ask("maud", "What is 2+3?", 5, ["hint"], null, 0, null, "w", "h").then(v => done = v); await sleep(80);
+  const checks = [...d.querySelectorAll("#dlg button")].filter(b => /^\s*\d?\s*Check\s*$/.test(b.textContent) && vis(w, b)), label = touch ? "touch" : "desktop";
+  out.push(`${label}: exactly one visible Check (${checks.length}): ${checks.length === 1}`);
+  out.push(`${label}: it is the ${touch ? "number pad's" : "inline"} one: ${touch ? checks[0].classList.contains("ok") : !checks[0].classList.contains("ok")}`);
+  out.push(`${label}: the other Check is not visible but still in the page: ${touch ? !vis(w, d.querySelector("#dlg .ch button")) && !!d.querySelector("#dlg .ch button") : !vis(w, d.querySelector("#dlg .np .ok")) && !!d.querySelector("#dlg .np .ok")}`);
+  d.getElementById("num").value = "5"; checks[0].click(); await sleep(60); out.push(`${label}: pressing the visible Check answers the question: ${done !== null}`);
+  // a haggle-style box (first choice is the action): same rule, other choices stay visible
+  let h = null; G.dlg({ who: "ashby", text: "Name your price", input: "your price", choices: ["Ask my price", "Accept 8 a sack", "Walk away"] }).then(r => h = r); await sleep(60);
+  const labels = [...d.querySelectorAll("#dlg .ch button")].filter(b => vis(w, b)).map(b => b.textContent.replace(/^\d/, ""));
+  out.push(`${label}: haggle box keeps Accept and Walk away${touch ? "" : " and Ask my price"} (${JSON.stringify(labels)}): ${labels.includes("Accept 8 a sack") && labels.includes("Walk away") && labels.includes("Ask my price") === !touch}`);
+  out.push(`${label}: errors ${JSON.stringify(errs)}`); f.remove();
+}
+(async () => { try { await run(1); await run(0); } catch (e) { out.push("EXCEPTION " + e.message); } document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); })();
+</script></body></html>
