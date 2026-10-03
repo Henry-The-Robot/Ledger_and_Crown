@@ -269,7 +269,12 @@
     if (FAIR[who]) return fairDeal(who);
     if (who === "pell") return pellTalk(); if (who === "pedlar") return pedlarTalk();
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
-    const o = s.offers.find(x => x.who === who && x.deposit) || s.offers.find(x => x.who === who), open = S.openOrders(s).find(x => x.who === who);
+    const mine = s.offers.filter(x => x.who === who).sort((a, b) => (b.deposit ? 1 : 0) - (a.deposit ? 1 : 0)), open = S.openOrders(s).find(x => x.who === who);
+    let o = mine[0];
+    if (mine.length > 1) { // two live orders from one buyer (e.g. Ashby's deposit order and her regular one on day 11): the player picks, neither is hidden
+      const k = await sayP(who, "I have more than one order for you.", mine.map(x => `${x.sacks} sacks at ${x.price}${x.deposit ? `, ${Math.round(x.deposit * 100)}% paid up front` : x.terms ? `, paid in ${x.terms} days` : ", Cash on delivery"}`).concat(["Not now"]));
+      if (k >= mine.length) return; o = mine[k];
+    }
     if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
     const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
