@@ -10,17 +10,17 @@
   function close(s) {
     const b = s.bal, o = s.opening;
     const revenue = -b.revenue, cogs = b.cogs, gross = revenue - cogs, upkeep = b.upkeep, dep = b.depreciation;
-    const fines = b.fines, opex = upkeep + dep + fines, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
-    const is = { revenue, cogs, gross, upkeep, dep, fines, opex, operating, interest, factoring, net };
+    const fines = b.fines, losses = b.losses, opex = upkeep + dep + fines + losses, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
+    const is = { revenue, cogs, gross, upkeep, dep, fines, losses, opex, operating, interest, factoring, net };
     const start = S.balanceSheet(o), end = S.balanceSheet(b);
-    const dAR = end.ar - start.ar, dInv = end.inv - start.inv, dAP = end.ap - start.ap;
-    const cfo = net + dep - dAR - dInv + dAP;
+    const dAR = end.ar - start.ar, dInv = end.inv - start.inv, dAP = end.ap - start.ap, dDep = end.deposits - start.deposits;
+    const cfo = net + dep - dAR - dInv + dAP + dDep;
     const capex = sumType(s, "equip", "cash"); // negative
     const borrowed = sumType(s, "borrow", "cash"), repaid = sumType(s, "repay", "cash");
     const cfi = capex, cff = borrowed + repaid, change = cfo + cfi + cff;
     // direct check: every cash line outside investing/financing is operating cash flow
     const cfoDirect = s.journal.filter(j => ["open", "equip", "borrow", "repay"].indexOf(j.type) < 0).reduce((a, j) => a + (j.lines.cash || 0), 0);
-    const cf = { net, dep, dAR, dInv, dAP, cfo, cfoDirect, capex, cfi, borrowed, repaid, cff, change, cashStart: start.cash, cashEnd: end.cash,
+    const cf = { net, dep, dAR, dInv, dAP, dDep, cfo, cfoDirect, capex, cfi, borrowed, repaid, cff, change, cashStart: start.cash, cashEnd: end.cash,
       reconciles: change === end.cash - start.cash && cfo === cfoDirect };
     return { is, start, end, cf, day: s.day, outcome: s.outcome, balanced: start.assets === start.liab + start.equity && end.assets === end.liab + end.equity };
   }
@@ -49,7 +49,7 @@
         ask: "What's your current ratio (current assets ÷ current liabilities)?", options: three([f1(r), 1 / r >= .1 ? f1(1 / r) : f1(r / 2), String(end.currentAssets - end.currentLiab), f1(r + 1)]), answer: f1(r) });
     } else qs.push({ id: "wc", also: ["pct"], lines: ["bs1:cash", "bs1:ar", "bs1:inv"], q: `No debts at all. Current assets ${end.currentAssets}.`, ask: "So what's your working capital?",
       options: three([String(end.currentAssets), String(end.cash), "0", String(end.ar)]), answer: String(end.currentAssets) });
-    const moves = [["Accounts receivable rose " + cf.dAR, cf.dAR, "ar"], ["Inventory rose " + cf.dInv, cf.dInv, "inv"], ["Accounts payable fell " + -cf.dAP, -cf.dAP, "ap"],
+    const moves = [["Accounts receivable rose " + cf.dAR, cf.dAR, "ar"], ["Inventory rose " + cf.dInv, cf.dInv, "inv"], ["Accounts payable fell " + -cf.dAP, -cf.dAP, "ap"], ["Customer deposits fell " + -cf.dDep, -cf.dDep, "dep"],
       ["the sprinkler cost " + -cf.capex, -cf.capex, "capex"], ["net loan repayments of " + -cf.cff, -cf.cff, "cff"]].filter(m => m[1] > 0).sort((a, b) => b[1] - a[1]);
     if (cf.change < is.net && moves.length) {
       const opts = moves.slice(0, 3).map(m => m[0]); if (opts.length < 3) opts.push("Net income was overstated");
@@ -57,7 +57,7 @@
       qs.push({ id: "cfs", also: ["accrual", moves[0][2] === "ar" ? "ar" : moves[0][2] === "inv" ? "inventory" : "wc"], lines: ["is:net", "cf:net", "cf:change", "cf:" + moves[0][2]],
         q: `Net income ${is.net}, yet Cash moved only ${cf.change}.`, ask: "Where did most of the difference go?", options: opts, answer: moves[0][0] });
     } else {
-      const src = [["borrowing " + cf.borrowed, cf.borrowed], ["Accounts payable rose " + cf.dAP, cf.dAP], ["Inventory fell " + -cf.dInv, -cf.dInv], ["Accounts receivable fell " + -cf.dAR, -cf.dAR], ["depreciation " + cf.dep, cf.dep]].sort((a, b) => b[1] - a[1]);
+      const src = [["borrowing " + cf.borrowed, cf.borrowed], ["Accounts payable rose " + cf.dAP, cf.dAP], ["customer deposits rose " + cf.dDep, cf.dDep], ["Inventory fell " + -cf.dInv, -cf.dInv], ["Accounts receivable fell " + -cf.dAR, -cf.dAR], ["depreciation " + cf.dep, cf.dep]].sort((a, b) => b[1] - a[1]);
       if (cf.change > is.net && src[0][1] > 0) qs.push({ id: "cfs", also: ["accrual"], lines: ["is:net", "cf:cfo", "cf:cff", "cf:change"], q: `Cash rose ${cf.change}, more than your net income of ${is.net}.`, ask: "What added the most Cash beyond profit?",
         options: [src[0][0], src[1][0], "Revenue was higher than recorded"], answer: src[0][0] });
     }
@@ -73,6 +73,21 @@
     s.trust.ezra = Math.max(0, Math.min(10, s.trust.ezra + correct * 2 - asked));
     return S.terms(s);
   }
-  root.Books = { close, highlight, review, reviewResult };
+  // For an insolvent ending: name what the player actually did, from their own journal, instead of a generic banner.
+  function postmortem(s) {
+    const b = S.balanceSheet(s.bal), lines = [], recent = s.journal.filter(j => j.day >= s.day - 7 && (j.lines.cash || 0) < 0);
+    const spent = {}; recent.forEach(j => { spent[j.type] = (spent[j.type] || 0) - j.lines.cash; });
+    const label = { seed: "seed", upkeep: "wages, fences and upkeep", interest: "interest and fees", fine: "contract forfeits", refund: "refunded deposits", repay: "loan repayments", equip: "the sprinkler", payap: "Tomas's bills" };
+    const top = Object.keys(spent).filter(k => label[k]).sort((x, y) => spent[y] - spent[x]).slice(0, 2);
+    let advice = "Keep a reserve for the next pay-day before you spend on anything else.";
+    if (b.ar > 3 * Math.max(1, b.cash)) { lines.push(`Accounts receivable were ${b.ar} but Cash was ${b.cash}: you had sold grain nobody had paid for yet. Profit isn't Cash.`); advice = "Sell an invoice to Ezra (factoring), or take orders paid on delivery while you wait for the slow payers."; }
+    if (top.length) lines.push(`In the last week your Cash went mostly on ${top.map(k => `${label[k]} (${spent[k]})`).join(" and ")}.`);
+    const dep = s.journal.find(j => j.type === "deposit");
+    if (dep && (s.journal.some(j => j.type === "refund") || /deposit/.test(s.why || ""))) { lines.push("You took a customer's deposit, spent it, and then couldn't deliver or refund it. Deposit Cash is a debt, not income."); advice = "Treat deposit Cash as already spoken for: keep it aside until the grain ships."; }
+    if (b.fines > 0 || s.bal.fines > 0) lines.push(`Missed deliveries cost ${s.bal.fines} in forfeits.`);
+    if (s.rescued) lines.push("Ezra's emergency loan had already been used: it bought time, not a way out.");
+    return { lines, advice };
+  }
+  root.Books = { close, highlight, review, reviewResult, postmortem };
   if (typeof module !== "undefined") module.exports = root.Books;
 })(typeof window !== "undefined" ? window : globalThis);

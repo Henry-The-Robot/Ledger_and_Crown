@@ -52,3 +52,4 @@ tr.total td{border-top:1px solid var(--ink);font-weight:bold}
 .hint{font-size:13px;color:var(--faint)}
 .pill-good{color:var(--good);font-weight:bold}.pill-bad{color:var(--bad);font-weight:bold}
 @media(max-width:800px){.g2,.g3{grid-template-columns:1fr}.page{padding:14px}}
+#hud .wood{cursor:help}

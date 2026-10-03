@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Loan advice dialog</title></head><body><pre id="out">running</pre>
+<!-- Opens Ezra in the sandbox, checks the repay prices and the "Should I repay early?" advice render, and the Back button returns.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/loan-advice.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  w.G.closeDlg(); w.G.hidePanel(); w.G.talk("ezra"); await sleep(50);
+  const txt = () => d.getElementById("dlg").textContent, btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent));
+  out.push(`ezra mentions the early fee: ${/one week's interest/.test(txt())}`);
+  btn(/Should I repay early/).click(); await sleep(50);
+  out.push(`advice shows interest saved and fee: ${/pay-day/.test(txt()) && /early fee/.test(txt())}`, `advice shows reasons to wait: ${/Reasons to wait/.test(txt())}`);
+  btn(/Back/).click(); await sleep(50); out.push(`back returns to Ezra: ${/Your credit/.test(txt())}`, `errors: ${JSON.stringify(errs)}`);
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>

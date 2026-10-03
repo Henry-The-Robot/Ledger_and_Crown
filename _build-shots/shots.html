@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Screenshot driver</title><style>html,body{margin:0;background:#222}iframe{border:0;display:block;width:1280px;height:800px}</style></head>
+<body><iframe id="f"></iframe>
+<!-- Sets up one scene in the real game (sandbox) so headless Chrome can screenshot it.
+     Run: chrome --headless --allow-file-access-from-files --window-size=1280,800 --virtual-time-budget=8000 --screenshot=<out.png> "file:///.../_build-shots/shots.html?shot=board"
+     shot = board | preview | predict | frost | close | closebot -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), shot = new URLSearchParams(location.search).get("shot"), f = document.getElementById("f");
+f.src = "../game.html?sandbox&new=1";
+f.onload = async () => {
+  await sleep(400);
+  const w = f.contentWindow, S = w.Spring, s = w.G.s, G = w.G, d = w.document;
+  G.closeDlg(); G.hidePanel();
+  const upTo = n => { while (s.day < n && !s.over) S.sleep(s); G.hud(); };
+  if (shot === "board") { upTo(6); s.sacks = 12; G.noticeBoard(); }
+  else if (shot === "preview") { upTo(3); G.commit(c => S.buySprinkler(c)); }
+  else if (shot === "predict") { upTo(2); while (!(S.forecast(s, 1)[0].cin || S.forecast(s, 1)[0].cout) && !s.over) S.sleep(s); G.sleepNow(); }
+  else if (shot === "frost") { upTo(23); G.talk("maud"); /* the night overlay is a timed CSS fade that headless virtual time skips past; the warning Maud gives on frost day is what we can capture */ }
+  else if (shot === "close" || shot === "closebot") { G.play("careful", 28); }
+  if (shot === "closebot") { const pb = d.getElementById("panelBody"); pb.scrollTop = pb.scrollHeight; }
+};
+</script></body></html>
