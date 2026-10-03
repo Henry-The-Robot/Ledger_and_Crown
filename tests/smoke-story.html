@@ -30,7 +30,7 @@ function pump(w) { // do the one thing the screen is asking for; true if somethi
     const btns = [...dlg.querySelectorAll("button")].filter(b => !b.disabled), num = d.getElementById("num");
     if (num && w.__want !== undefined) { num.value = w.__want; typed++; btns[0].click(); return true; }
     if (num) { const a = btns.find(b => /Accept/.test(b.textContent)); haggles++; (a || btns[0]).click(); return true; }
-    const pref = btns.find(b => /Offer 45|^.?\d?Continue/.test(b.textContent)); (pref || btns[0]).click(); return true;
+    const pref = btns.find(b => /Offer \d+ \(half\)|^.?\d?Continue/.test(b.textContent)); (pref || btns[0]).click(); return true;
   }
   return false;
 }

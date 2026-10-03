@@ -199,24 +199,25 @@ window.Story = (function () {
     to(8, "sleep8");
   }
   // ---------- chapter 8: the Duke's steward (C2.09 overtrading; case W.T. Grant). Maud asks; she doesn't show. ----------
-  function ch8arrive() { if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", 90, 10, 21, 12, 4); to(8, "duke8"); }
+  function ch8arrive() { if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", S.R.duke.sacks, S.R.duke.price, S.R.duke.terms, S.R.duke.dueIn, 4); to(8, "duke8"); }
   async function ch8() {
     const o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(9, "run9"); return; }
-    await G.say("duke", "His Grace orders 90 sacks at 10: 900 of Revenue. Due in 12 days; he pays 21 days after delivery.");
+    const D = S.R.duke, half = Math.round(D.sacks / 6) * 3;
+    await G.say("duke", `His Grace orders ${D.sacks} sacks at ${D.price}: ${(D.sacks * D.price).toLocaleString("en-US")} of Revenue. Due in ${D.dueIn} days; he pays ${D.terms} days after delivery.`);
     await page(3);
     await tell("This is the order that killed your uncle. I won't tell you what to do. I'll ask.");
-    const need = Math.max(0, Math.ceil((90 + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * 12;
+    const need = Math.max(0, Math.ceil((D.sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * 12;
     const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a);
     await G.board({ title: `What if: you take it and buy ${need} packets of seed today (${extra})`, show: 14, fill: [], extra, maud: "Read your own board. Then answer me." });
     await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the closing Cash column for the smallest number.", "A minus sign means the chest is empty before then."], null, 0, [{ label: "Open the what-if forecast", open: () => G.board({ title: `What if: you take it and buy ${need} packets of seed today (${extra})`, show: 14, fill: [], extra }) }], `Going down the closing Cash column, the smallest number is ${low.close}, on day ${low.day}.`, "Open the forecast and read down the Closing Cash column. The smallest number is your lowest point; a minus number is smaller than any plus.");
-    const c = await G.say("duke", "Well? His Grace doesn't wait.", ["Take all 90", "Offer 45 (half)", "Decline"]);
-    if (c === 1) { S.addOffer(G.s, "duke", 45, 10, 21, 12, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
+    const c = await G.say("duke", "Well? His Grace doesn't wait.", [`Take all ${D.sacks}`, `Offer ${half} (half)`, "Decline"]);
+    if (c === 1) { S.addOffer(G.s, "duke", half, D.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
     else if (c === 0) G.act(() => S.accept(G.s, o.id)); else S.decline(G.s, o.id);
     const wise = low.close >= 0 ? true : c > 0;
     if (wise) mastered("overtrading");
     await tell(c === 0 && low.close < 0 ? `Your own board says Cash goes to ${low.close}. Edric did the same. Borrow, or sell his invoice to Ezra for 85% (factoring), or it ends the same way.`
       : c === 0 ? "Your board says you can carry it. Then carry it." : "Growth you can't fund isn't growth. Edric never learned that.");
-    keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. Forecast before you say yes.", `The Duke's 90 sacks: lowest Cash ${low.close} on day ${low.day} if taken. You chose: ${["all 90", "half", "to decline"][c]}.`);
+    keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. Forecast before you say yes.", `The Duke's ${D.sacks} sacks: lowest Cash ${low.close} on day ${low.day} if taken. You chose: ${[`all ${D.sacks}`, "half", "to decline"][c]}.`);
     to(9, "run9");
   }
   // ---------- chapter 9: closing the books (C1.08), guided ----------
