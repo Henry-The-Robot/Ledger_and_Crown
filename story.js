@@ -330,6 +330,8 @@ window.Story = (function () {
     else { addEx("overtrading", `The double order, ${sacks} sacks: lowest Cash ${low.close}, ${money(delta)} tied up (the first tied up ${money(st.tied1 || 0)}). You chose: ${choice}.`); pin("duke2", "Corvin's double order", `${money(delta)} tied up (was ${money(st.tied1 || 0)})`, `Day ${G.s.day} · second order`); }
     if (n === 1) to(8, "page8"); else to(8, "tomas9");
   }
+  // after the first Market Day's floor bet (market.js): the notebook splits the cost from the real floor (curriculum foundation 5.3)
+  function keepFloor(alt, offer) { if (!G || !st) return; const cost = S.R.unitCost; keep("opportunity", "The real floor", "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.", `Day ${G.s.day}: Ashby offered ${offer} and the fair had paid ${alt}, so the floor is ${alt}, not ${cost}.`, `floor ${alt}, not ${cost}`, `Day ${G.s.day} · the fair`); }
   async function ch9t() { await tvmScene(true); to(9, "run9"); } // week 3: Tomas offers again; Ezra's rate has moved, and the answer can flip
   const ch8 = () => dukeScene(1), ch8b = () => dukeScene(2);
   // That night: Maud finds Edric's page (the midpoint turn): the same order every spring.
@@ -515,5 +517,5 @@ window.Story = (function () {
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
   return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    testScene, noteDeposit, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
+    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();

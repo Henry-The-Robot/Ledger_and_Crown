@@ -1,5 +1,10 @@
 # Changelog
 
+## Stability (quality gate)
+- Coming back to a finished season (reload, new tab) no longer starts a silent new game: Maud offers Continue, which returns to the closing books, the Reeve's Court (unless already passed) and the ending, or a new game. A season ended by selling the farm returns to its ending.
+- The notebook gains "The real floor" after the first Market Day's floor bet (cost vs the best sale you give up), with a clue card.
+- Tests: `stability.html` (real-time runner).
+
 ## v0.4.1 candidate: editor pass and day loop (work order items 6-8)
 - Every Maud box is at most two sentences (27 lines fixed or split); the longest choiceless run in the story is 4 boxes (was 5); `test-editor.js` keeps both true.
 - Teaching-line audit against the curriculum foundation: Crane's equity question, the Market Day price-rise explanation, the guarantee as a contingent liability, the standing-order wording. See `docs/EDITOR-REPORT.md`.

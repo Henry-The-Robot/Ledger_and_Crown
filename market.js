@@ -339,6 +339,7 @@ if (typeof document !== "undefined") (function (root) {
       docs: [{ label: "Open the fair's takings", open: () => { G.showPanel("fairhist", `<h1>Your last fair</h1><table class="stm"><tr><th>Hour</th><th>Price</th><th>Sacks sold</th></tr>${fair.points.map((p, i) => `<tr><td>${i + 1}</td><td class="num">${p.price}</td><td class="num">${p.units}</td></tr>`).join("")}</table><p>${fair.units} sacks for ${fair.revenue} in all.</p><button class="btn alt" id="fhclose">Back</button>`); const b = $("fhclose"); if (b) b.onclick = () => G.hidePanel(); } }],
       how: "What would the same sack fetch at the fair? The best sale you'd give up sets the real floor, not what the sack cost.", stake: { min: 0, max: 3 }, tol: 1, answer: () => alt, reveal: "now", kind: "floor",
       explain: () => `The fair paid you ${alt} a sack on average. Ashby's ${offer} keeps ${offer - cost} but gives up ${alt - offer}: your real floor is ${alt}, not ${cost}.` });
+    if (root.Story && Story.keepFloor) Story.keepFloor(alt, offer); // the notebook keeps the lesson whether or not you won the bet
     m.floorBet.win = !!(r && r.win); if (r && r.win && !window.__walked && root.Transcript) root.Transcript.master("opportunity", s.day);
     G.hud(); G.save();
   }

@@ -786,7 +786,7 @@
     ez.insertAdjacentHTML("beforeend", endBtn());
     wire(); save();
     // WS6 finale slot: if the Ledger Duel (court.js, another builder) is loaded it runs now; otherwise the close + verdict above stand
-    if (storyOn && window.Court && Court.run && s.outcome !== "insolvent") await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
+    if (storyOn && window.Court && Court.run && s.outcome !== "insolvent" && !(s.exam && s.exam.passed)) await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));
     $("mline").innerHTML = `<b>Maud:</b> ${text}`; $("ez").innerHTML = `<button class="btn gold" id="rnext">Next</button>`; $("rnext").onclick = () => { $("ez").innerHTML = ""; res(); }; }); }
@@ -914,6 +914,8 @@
       hud(); if (storyOn) Story.start();
     };
     if (saved && storyOn && !saved.s.over && !q.has("new")) { s = saved.s; hud(); dlg({ who: "maud", text: `Welcome back. Day ${saved.s.day}, chapter ${saved.story.ch}.`, choices: ["Continue", "Start a new game"] }).then(r => begin(r.i === 0 ? saved : null)); }
+    // a finished season: coming back (a reload, a new tab) returns to the books, the Reeve's Court and the ending instead of silently starting over
+    else if (saved && storyOn && saved.s.over && !q.has("new")) { s = saved.s; hud(); const o = saved.s.outcome; dlg({ who: "maud", text: o === "sold" ? "Welcome back. The farm is sold, but its ending is still here." : o === "insolvent" ? "Welcome back. The season ended badly: the post-mortem is still here." : "Welcome back. The spring is over: the books, the Reeve's Court and the ending are waiting.", choices: ["Continue", "Start a new game"] }).then(r => { if (r.i !== 0) return begin(null); begin(saved); setTimeout(() => { if (o === "sold") Story.showEnding("sold"); else closeBooks(); }, 60); }); }
     else begin(null);
   }
   // ---------- sound: a tap on any button, and the score follows what's happening ----------
