@@ -16,7 +16,7 @@ f.onload = async () => {
   while (s.day < 13) S.sleep(s);
   w.G.talk("pedlar"); await sleep(50); out.push(`pedlar quotes 35 and the rat loss: ${/35 Cash/.test(txt()) && /spoil about/.test(txt())}`);
   btn(/Offer 25/).click(); await sleep(50); out.push(`pedlar counters 30: ${/Thirty/.test(txt())}`);
-  const u0 = s.bal.upkeep; btn(/Buy at 30/).click(); await sleep(80);
+  const u0 = s.bal.upkeep; btn(/Buy at 30/).click(); await sleep(60); btn(/Do it/).click(); await sleep(80);
   out.push(`bought for 30 as upkeep: ${s.poison && s.bal.upkeep === u0 + 30}`, `maud explains insurance: ${/insurance/.test(txt())}`, `errors: ${JSON.stringify(errs)}`);
   document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
 };

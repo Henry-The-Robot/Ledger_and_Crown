@@ -73,6 +73,21 @@
     s.trust.ezra = Math.max(0, Math.min(10, s.trust.ezra + correct * 2 - asked));
     return S.terms(s);
   }
-  root.Books = { close, highlight, review, reviewResult };
+  // For an insolvent ending: name what the player actually did, from their own journal, instead of a generic banner.
+  function postmortem(s) {
+    const b = S.balanceSheet(s.bal), lines = [], recent = s.journal.filter(j => j.day >= s.day - 7 && (j.lines.cash || 0) < 0);
+    const spent = {}; recent.forEach(j => { spent[j.type] = (spent[j.type] || 0) - j.lines.cash; });
+    const label = { seed: "seed", upkeep: "wages, fences and upkeep", interest: "interest and fees", fine: "contract forfeits", refund: "refunded deposits", repay: "loan repayments", equip: "the sprinkler", payap: "Tomas's bills" };
+    const top = Object.keys(spent).filter(k => label[k]).sort((x, y) => spent[y] - spent[x]).slice(0, 2);
+    let advice = "Keep a reserve for the next pay-day before you spend on anything else.";
+    if (b.ar > 3 * Math.max(1, b.cash)) { lines.push(`Accounts receivable were ${b.ar} but Cash was ${b.cash}: you had sold grain nobody had paid for yet. Profit isn't Cash.`); advice = "Sell an invoice to Ezra (factoring), or take orders paid on delivery while you wait for the slow payers."; }
+    if (top.length) lines.push(`In the last week your Cash went mostly on ${top.map(k => `${label[k]} (${spent[k]})`).join(" and ")}.`);
+    const dep = s.journal.find(j => j.type === "deposit");
+    if (dep && (s.journal.some(j => j.type === "refund") || /deposit/.test(s.why || ""))) { lines.push("You took a customer's deposit, spent it, and then couldn't deliver or refund it. Deposit Cash is a debt, not income."); advice = "Treat deposit Cash as already spoken for: keep it aside until the grain ships."; }
+    if (b.fines > 0 || s.bal.fines > 0) lines.push(`Missed deliveries cost ${s.bal.fines} in forfeits.`);
+    if (s.rescued) lines.push("Ezra's emergency loan had already been used: it bought time, not a way out.");
+    return { lines, advice };
+  }
+  root.Books = { close, highlight, review, reviewResult, postmortem };
   if (typeof module !== "undefined") module.exports = root.Books;
 })(typeof window !== "undefined" ? window : globalThis);

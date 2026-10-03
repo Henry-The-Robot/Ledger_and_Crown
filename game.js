@@ -28,7 +28,7 @@
   const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
     abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
-  const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19];
+  const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 8 };
   (function buildMap() {
     let r = 5; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) ground[y * MW + x] = rnd() < .05 ? "flower" + Math.floor(rnd() * 3) : "grass" + Math.floor(rnd() * 4);
@@ -45,6 +45,7 @@
     [[10, 2], [21, 12], [23, 13], [36, 23], [40, 23], [15, 21], [45, 13], [11, 17], [29, 10]].forEach(([x, y]) => { solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.bush, x * T, y * T) }); });
     solid.add(key(CRATE.x, CRATE.y)); props.push({ y: CRATE.y + 1, draw: () => blit(A.crate, CRATE.x * T, CRATE.y * T) });
     solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: drawWell });
+    solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
@@ -112,6 +113,7 @@
     if (p) { const r = act(() => S.act(s, p.i));
       if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); }
       else if (r.msg) say(null, r.msg); return; }
+    if (x === BOARD.x && y === BOARD.y) return noticeBoard();
     if (x === WELL.x && y === WELL.y) say(null, "The town well. Cold, clear water.");
   }
   function act(fn) { // run an engine action, then float the Cash change and feed the transcript
@@ -289,7 +291,7 @@
   }
   async function pedlarTalk() {
     if (s.poison) return say("pedlar", "Your barn's baited. The rats'll curse your name.");
-    const price = S.R.poisonCost, loss = S.ratLoss(s), buy = p => () => { const r = act(() => S.buyPoison(s, p)); say(r.ok ? "maud" : "pedlar", r.ok ? `Poison costs Cash now and is an operating expense: it goes in the Ledger as upkeep. The rats might never have come, or might have cost you ${loss}. That's what insurance is: a certain cost against an uncertain loss.` : r.msg); };
+    const price = S.R.poisonCost, loss = S.ratLoss(s), buy = p => () => commit(c => S.buyPoison(c, p), r => say(r.ok ? "maud" : "pedlar", r.ok ? `Poison costs Cash now and is an operating expense: it goes in the Ledger as upkeep. The rats might never have come, or might have cost you ${loss}. That's what insurance is: a certain cost against an uncertain loss.` : r.msg));
     const pick = await sayP("pedlar", `Rat poison, friend. ${price} Cash, and not a penny less. Rats are coming to every barn on this road.<br><i>(Rats in your barn right now would spoil about ${loss} of grain.)</i>`, [`Buy at ${price}`, "Offer 25", "Not today"]);
     if (pick === 0) buy(price)();
     else if (pick === 1) { const k = await sayP("pedlar", "Twenty-five? Thirty, and that's my last word.", ["Buy at 30", "Walk away"]); if (k === 0) buy(30)(); }
@@ -303,23 +305,80 @@
     if (!deal) { S.decline(s, o.id); return; }
     fairDay[who] = s.day; act(() => S.deliver(s, o.id)); story("deliver", o);
   }
+  // ---------- the notice board: market outlook and a small decision on some days ----------
+  function noticeBoard() {
+    const o = S.marketOutlook(s), now = S.marketPrice(s.day), n = S.notice(s), top = o.slice().sort((a, b) => b.price - a.price)[0];
+    const arrow = p => p > now ? " ▲" : p < now ? " ▼" : "";
+    const tip = !top ? "" : top.price > now ? `Prices are heading up: ${top.price} by day ${top.day}. Grain you don't have to ship before then could fetch more.` : top.price < now ? "Prices are slipping. Better to ship what you've promised and not hold surplus." : "Prices hold steady.";
+    const text = `<b>Village notices</b><br>Going price today: <b>${now}</b> a sack.<br>${o.length ? o.map(x => `Day ${x.day}: ${x.price}${arrow(x.price)}`).join(" · ") : "The season is nearly over."}<br><i>${tip}</i>${n ? `<br><br><b>${n.title}</b><br>${n.text}` : ""}`;
+    const opts = n ? n.options.map((label, i) => [label, () => { const r = act(() => S.answerNotice(s, i)); say(r.ok ? "maud" : null, r.ok ? noticeLesson(n.id, r.msg) : r.msg); }]) : [];
+    say(null, text, opts.concat([["Close", null]]));
+  }
+  function noticeLesson(id, msg) { // revealed after the choice, never before: the lesson lands because the player committed first
+    return ({ tinker: { blind: "Two of the six were mouldy. You paid 60 for four good packets: 15 each, dearer than Tomas. A bargain you can't inspect isn't a bargain. The write-off is in the Ledger as a loss, and the 12 you saved shows up against Cost of goods sold.", inspected: "Smart: you paid 5 to learn two were mouldy, then bought only the four good ones for 40. The fee is an operating expense; the inspection made the cheap seed cheaper than Tomas's." , pass: "Fine. Tomas's seed costs more but you can trust it." },
+      trader: { sold: "Cash today, at a slightly better price than the market cart. But those sacks can't fill tomorrow's order, so check what you've promised first.", pass: "Holding your grain is a bet that a better order comes. Check the notice board for where the price is going." },
+      hands: { hired: "25 is an operating expense now for crops that ripen a day sooner. Worth it only if a day earlier means a sale or a deadline you'd otherwise miss.", pass: "Fair. Not every cost buys enough." } }[id] || {})[msg] || "Done.";
+  }
+  // ---------- the Ledger tour: how to read it, in the player's own books ----------
+  async function ledgerTour() {
+    const j0 = s.journal[0], debits = Object.values(j0.lines).filter(v => v > 0).reduce((a, v) => a + v, 0), b = S.balanceSheet(s.bal), docs = [{ label: "Open the Ledger", open: ledger }];
+    await sayP("maud", "The Ledger is a list of every posting, newest first. Each posting touches at least two accounts. <b>Debits</b> and <b>credits</b> are the two columns, and in every posting they add up to the same number. That's why Assets always equal Liabilities plus Owner's equity.", ["Show me"]);
+    await ask("maud", `Your farm's very first posting was: <b>${dr(j0)}</b>.<br>Add up just the <b>Dr</b> (debit) amounts. What do they total?`, debits, ["Debits are the lines that start with Dr. Add only those.", "Everything the farm had at the start went on the debit side. Cash and Inventory are two of them."], null, 0, docs, `Dr amounts: ${Object.entries(j0.lines).filter(([, v]) => v > 0).map(([k, v]) => `${S.ACCTS[k][0]} ${v}`).join(" + ")} = ${debits}. The Cr side must match: that's the rule.`, "Add the Dr lines.");
+    await ask("maud", `Now today's balance sheet. Your <b>Total assets</b> are ${b.assets}. If the books balance, what must <b>Liabilities + Owner's equity</b> add up to?`, b.assets, ["The balance sheet always balances: both sides are the same number.", "Assets = Liabilities + Owner's equity."], null, 0, docs, `Assets ${b.assets} = Liabilities ${b.liab} + Owner's equity ${b.equity}. Every posting keeps this true.`, "The two sides always match.");
+    await sayP("maud", "Three habits that make the Ledger useful:<br>1. Before a big choice, read what it will post. The game shows you the entry first.<br>2. After something odd happens (a loss, a deposit), find its line in the journal.<br>3. Click any number at the top of the screen and I'll tell you what it is and where it came from.", ["Got it"]);
+    s.tour = true;
+  }
+  // ---------- click a number: what it is, how it's made, and the latest entries behind it ----------
+  const WHY = { cash: ["Cash", ["cash"], "Money in hand. It pays wages, seed and bills. Revenue isn't Cash until customers actually pay."],
+    ni: ["Net income", ["revenue", "cogs", "upkeep", "depreciation", "fines", "losses", "interest", "factoring"], "Revenue minus every expense so far. It's profit on paper, not Cash: a sale on credit raises it before a coin arrives."],
+    ar: ["Accounts receivable", ["ar"], "Grain you've delivered that customers haven't paid for yet. It's an asset: earned, but not in your hand."],
+    inv: ["Inventory", ["inv"], "Sacks, seed and growing crops, all at cost. It turns into an expense (Cost of goods sold) only when the grain is sold."],
+    ap: ["Accounts payable", ["ap"], "What you owe Tomas for seed on account. It's a liability, and paying it early can earn a 2% discount."],
+    loan: ["Loan payable", ["loan"], "What you owe Ezra. It costs interest every pay-day, and repaying early before day 21 costs a fee."],
+    crown: ["Crown debt, Midwinter", ["crown"], "What the Crown is owed at Midwinter. It's a liability that doesn't cost interest, but it's due all at once."],
+    fund: ["Toward the Crown", ["cash", "ar", "inv", "ap", "loan", "deposits"], "If Midwinter were tomorrow: Cash + Receivables + Inventory, minus what you owe. It shows whether you could pay the Crown."],
+    due: ["Due by pay-day", ["upkeep", "interest", "ap"], "Wages, interest and Tomas's bills due by the next pay-day. If Cash is lower than this, you'll need to borrow or collect first."],
+    mkt: ["Market price", [], "What a sack goes for today. It moves with the season, so a buyer's offer is worth more or less depending on the day."], day: ["Spring", [], "The day of the season. Wages and interest fall due every 7th day."] };
+  function explain(id) {
+    const w = WHY[id]; if (!w) return;
+    const b = S.balanceSheet(s.bal), v = { cash: b.cash, ni: b.ni, ar: b.ar, inv: b.inv, ap: b.ap, loan: b.loan, crown: b.crown, fund: S.crownFund(s).net }[id];
+    const rows = s.journal.filter(j => w[1].some(k => k in j.lines)).slice(-4).reverse().map(j => `<tr><td>${j.day}</td><td>${j.memo}<div class="hint">${dr(j)}</div></td></tr>`).join("");
+    showPanel("explain", `<h1>${w[0]}${v != null ? `: ${v}` : ""}</h1><p>${w[2]}</p>${rows ? `<h3>The latest postings behind it</h3><table class="stm">${rows}</table>` : ""}<p class="hint">Click Close, or press Esc.</p>`);
+  }
+  // ---------- see the books before you commit: what an action will record, in the player's own numbers ----------
+  const LESSON = { seed: "Seed is Inventory, an asset. It only becomes an expense (Cost of goods sold) when the grain is sold.", equip: "Equipment is an asset: it sits on the balance sheet and wears out as Depreciation, instead of hitting profit all at once.",
+    borrow: "A loan raises Cash and a liability by the same amount. Your equity doesn't change; the cost shows up later as interest.", repay: "Repaying shrinks Cash and the liability together. It's not an expense unless there's a fee.",
+    interest: "Interest is an expense: it lowers Net income and Cash.", upkeep: "Wages, fences and poison are Operating expenses: they lower Net income now.", deposit: "Cash goes up but not Revenue: you owe grain, so the deposit is a liability.",
+    factor: "Selling an invoice swaps a Receivable for less Cash. The difference is a Factoring fee, an expense.", payap: "Paying a bill shrinks Cash and Accounts payable together.", sale: "Revenue is recorded when the grain is delivered, not when the money arrives.", cogs: "Cost of goods sold moves the grain's cost out of Inventory into expenses." };
+  const dr = e => Object.entries(e.lines).map(([k, v]) => `${v > 0 ? "Dr" : "Cr"} ${S.ACCTS[k][0]} ${Math.abs(v)}`).join(" · ");
+  function commit(fn, after) { // fn(state) runs an engine action on the state it is given; first on a copy to show the entry, then for real
+    s.seen = s.seen || {}; const p = S.preview(s, fn);
+    if (!p.ok) { const r = act(() => fn(s)); if (after) after(r); else say(null, r.msg); return; }
+    const types = [...new Set(p.entries.map(e => e.type))], n = Math.min(...types.map(t => s.seen[t] || 0)), big = p.moved > .4 * Math.max(1, s.bal.cash);
+    const run = () => { const r = act(() => fn(s)); if (after) after(r); else if (!r.ok) say(null, r.msg); };
+    if (n >= 2 && !big) return run();
+    types.forEach(t => s.seen[t] = (s.seen[t] || 0) + 1);
+    const lesson = types.map(t => LESSON[t]).filter(Boolean)[0], nums = [`Cash ${p.cash[0]} → ${p.cash[1]}`, p.dNet ? `Net income ${p.dNet > 0 ? "+" : ""}${p.dNet}` : "Net income unchanged", `Liabilities ${p.dLiab > 0 ? "+" : ""}${p.dLiab}`];
+    dlg({ who: "maud", text: `<b>Before you do it, here's what the books will record:</b><br>${p.entries.map(e => `<div class="hint">${e.memo}<br><b>${dr(e)}</b></div>`).join("")}<div>${nums.join(" · ")}</div>${lesson ? `<div class="hint"><i>${lesson}</i></div>` : ""}`, choices: ["Do it", "Not now"] })
+      .then(r => { if (r.i === 0) run(); });
+  }
   function tomas() {
     const t = S.terms(s), owed = -s.bal.ap, b0 = s.bills[0];
-    const buy = (n, acct) => () => { const r = act(() => S.buySeeds(s, n, acct)); r.ok ? tomas() : say("tomas", r.msg); };
+    const buy = (n, acct) => () => commit(c => S.buySeeds(c, n, acct), r => r.ok ? tomas() : say("tomas", r.msg));
     say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. ${t.apDays ? `On account: 14 days, or 2% off within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
       ["Buy 3 for Cash (36)", buy(3, false), s.bal.cash < 36], ["Buy 9 for Cash (108)", buy(9, false), s.bal.cash < 108],
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
-      ["Sprinkler: 80 Cash", () => { const r = act(() => S.buySprinkler(s)); say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg); }, s.bal.cash < 80],
+      ["Sprinkler: 80 Cash", () => commit(c => S.buySprinkler(c), r => say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg)), s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
-      ...(!s.fenced && s.day <= 9 ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => { const r = act(() => S.buyFence(s)); say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg); }, s.bal.cash < S.R.fenceCost]] : []),
-      [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => { const r = act(() => S.payBills(s)); say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg); }, !owed], ["Leave", null]]);
+      ...(!s.fenced && s.day <= 9 ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
+      [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => commit(c => S.payBills(c), r => say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg)), !owed], ["Leave", null]]);
   }
   function ezra() {
     const t = S.terms(s), owed = -s.bal.loan, room = t.loanLimit - owed, inv = s.invoices.slice().sort((a, b) => b.amount - a.amount)[0];
-    const go = fn => () => { const r = act(fn); r.ok ? ezra() : say("ezra", r.msg); };
-    const opts = [["Borrow 50", go(() => S.borrow(s, 50)), room < 50], ["Borrow 100", go(() => S.borrow(s, 100)), room < 100], ["Repay 50", go(() => S.repay(s, 50)), !owed || s.bal.cash < Math.min(50, owed) + S.loanFacts(s, 50).fee]];
+    const go = fn => () => commit(fn, r => r.ok ? ezra() : say("ezra", r.msg));
+    const opts = [["Borrow 50", go(c => S.borrow(c, 50)), room < 50], ["Borrow 100", go(c => S.borrow(c, 100)), room < 100], ["Repay 50", go(c => S.repay(c, 50)), !owed || s.bal.cash < Math.min(50, owed) + S.loanFacts(s, 50).fee]];
     if (owed) opts.push(["Should I repay early?", () => repayAdvice(owed)]);
-    if (inv && (!storyOn || Story.state.ch >= 8)) opts.push([`Sell ${S.NAMES[inv.who]}'s invoice (${inv.amount}) for ${Math.round(inv.amount * .85)} today`, go(() => S.factor(s, inv.id))]);
+    if (inv && (!storyOn || Story.state.ch >= 8)) opts.push([`Sell ${S.NAMES[inv.who]}'s invoice (${inv.amount}) for ${Math.round(inv.amount * .85)} today`, go(c => S.factor(c, inv.id))]);
     opts.push(["Leave", null]);
     const wk = Math.round(owed * t.rateBp / 10000);
     say("ezra", `Your credit: ${hearts(s.trust.ezra)}. I lend up to ${t.loanLimit} at ${t.rateBp / 100}% a week. You owe me ${owed}${owed ? `: that's ${wk} of interest every pay-day until it's repaid. Repay before day ${S.R.prepayBefore} and I charge one week's interest on what you repay.` : "."}`, opts);
@@ -349,8 +408,8 @@
     atDesk = true; hud();
     const c = S.coach(s);
     dlg({ who: null, text: `Your desk: Edric's ledger, the forecast board, Maud's notebook.${c && c.danger ? `<br><b>Maud's note:</b> ${c.text}` : ""}`,
-      choices: [`Sleep (end day ${s.day})`, "Ledger", "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", "Back to the road"] })
-      .then(r => { const f = [sleepNow, ledger, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, () => { atDesk = false; hud(); }][r.i]; f && f(); });
+      choices: [`Sleep (end day ${s.day})`, "Ledger", "Ledger tour: how to read it", "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", "Back to the road"] })
+      .then(r => { const f = [sleepNow, ledger, ledgerTour, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, () => { atDesk = false; hud(); }][r.i]; f && f(); });
   }
   function plan() {
     const o = S.openOrders(s), need = S.committed(s) - s.sacks - S.sacksComing(s);
@@ -396,12 +455,26 @@
   function transcript() { if (panelKind && panelKind.k === "transcript") return hidePanel(); showPanel("transcript", TR.html() + `<p class="hint">Click Close, or press T or Esc.</p>`); }
   // ---------- the night ----------
   let fast = q.has("auto") || q.has("fast");
-  function sleepNow() {
+  let guess = null; // a prediction the player made before sleeping, revealed with the morning's real number
+  async function sleepNow() {
+    const f = S.forecast(s, 1)[0];
+    if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9)) { atDesk = false;
+      const bits = [f.cin ? `${f.cin} comes in (invoices due)` : "", f.wages ? `${f.wages} of wages and interest goes out` : "", f.bills ? `${f.bills} of Tomas's bills goes out` : "", f.fines ? `${f.fines} of forfeits goes out` : ""].filter(Boolean).join("; ");
+      const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}. Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
+      guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; }
+    doSleep();
+  }
+  function revealPrediction() {
+    if (!guess) return; const g = guess, right = g.v === s.bal.cash; guess = null;
+    TR.use("wc", right, s.day - 1);
+    say("maud", right ? `Right: ${s.bal.cash}. You read the night correctly.` : `You said ${g.v}; Cash is ${s.bal.cash}.<br>${g.before} + ${g.f.cin} collected − ${g.f.wages} wages and interest − ${g.f.bills} bills${g.f.fines ? ` − ${g.f.fines} forfeits` : ""} = ${g.f.close}${g.f.close !== s.bal.cash ? ", plus whatever else happened overnight" : ""}. Start from today's Cash, add what comes in, take away what goes out.`);
+  }
+  function doSleep() {
     atDesk = false; const n0 = s.log.length; act(() => S.sleep(s));
     const notes = s.log.slice(0, s.log.length - n0).reverse().map(l => l.t).slice(0, 4);
     if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks);
     pl.x = 6 * T + 8; pl.y = 7 * T + 12; pl.dir = "down"; save();
-    const morning = () => { morningBark(); story("morning"); lossLesson(); };
+    const morning = () => { morningBark(); story("morning"); lossLesson(); revealPrediction(); };
     if (fast) return morning();
     night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning);
   }
@@ -426,6 +499,7 @@
     const b = S.balanceSheet(s.bal), wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk), wd = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(s.day - 1) % 7];
     document.body.classList.toggle("desk", atDesk);
     const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span>${v}</span>`;
+    if (!hud.wired) { hud.wired = 1; $("hud").addEventListener("click", e => { const el = e.target.closest(".wood"); if (el && el.id && !dlgOpen() && !panelOpen()) explain(el.id.replace(/^h-/, "")); }); }
     $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : "")) + box("fund", "Toward the Crown", S.crownFund(s).net + " / " + S.R.crownDebt) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
@@ -449,7 +523,7 @@
   // Mouse-only play: every panel you can leave gets a clickable Close at the top and bottom, and a click on
   // the dark backdrop closes it. Task panels (forecast with cells to fill, journal pages, the close) keep
   // their own buttons, because they finish a step of the story.
-  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript"]);
+  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript", "explain"]);
   function showPanel(k, html, locked) {
     panelKind = { k, locked };
     const x = CLOSABLE.has(k) && !locked;
@@ -490,20 +564,23 @@
     const jr = s.journal.slice(-9).reverse().map(j => `<tr><td>${j.day}</td><td>${j.memo}<div class="hint">${Object.entries(j.lines).map(([k, v]) => `${v > 0 ? "Dr" : "Cr"} ${S.ACCTS[k][0]} ${Math.abs(v)}`).join(" · ")}</div></td></tr>`).join("");
     showPanel("ledger", `<h1>The Ledger <span class="hint">day ${s.day} · click Close or press Esc</span></h1><div class="grid g3">${bsTable(b, "Balance sheet today")}${isTable(st)}
       <div><h3>Inventory at cost</h3><div class="hint">${s.sacks} sacks × 4 + ${s.seeds} seed × 12 + ${s.plots.filter(p => p.crop).length} plots growing × 12 = ${b.inv}</div></div></div>
-      ${s.promises && s.promises.length ? `<h3 style="margin-top:10px">Promised, not booked</h3><table class="stm">${s.promises.map(p => `<tr><td>${p.text}</td><td class="num">${p.amount}</td></tr>`).join("")}</table><div class="hint">A promise of future money isn't an asset until it's paid, so it isn't on the balance sheet. Accountants disclose it in a note.</div>` : ""}
+      ${!s.tour ? `<p><button class="btn alt" id="tourbtn">New to the Ledger? Take the 2-minute tour</button></p>` : ""}${s.promises && s.promises.length ? `<h3 style="margin-top:10px">Promised, not booked</h3><table class="stm">${s.promises.map(p => `<tr><td>${p.text}</td><td class="num">${p.amount}</td></tr>`).join("")}</table><div class="hint">A promise of future money isn't an asset until it's paid, so it isn't on the balance sheet. Accountants disclose it in a note.</div>` : ""}
       <h3 style="margin-top:10px">Journal (latest postings)</h3><table class="stm">${jr}</table>`);
+    const tb = $("tourbtn"); if (tb) tb.onclick = () => { hidePanel(); ledgerTour(); };
   }
   // ---------- closing the books: guided (chapter 9), then Ezra's loan review ----------
   function midwinter() { // the stakes: could this farm pay the Crown if Midwinter were tomorrow?
-    const f = S.crownFund(s), row = (l, v, neg) => `<tr><td>${l}</td><td class="num">${neg ? "−" : ""}${v}</td></tr>`, big = { paid: ["The farm is yours.", "ok"], promise: ["Only a promise saves you.", "warn"], short: ["The Crown takes the farm.", "banner"] }[f.verdict];
+    const f = S.crownFund(s), row = (l, v, neg) => `<tr><td>${l}</td><td class="num">${neg ? "−" : ""}${v}</td></tr>`, big = { paid: ["The farm is yours.", "ok"], bridge: ["Ezra will bridge the gap.", "warn"], promise: ["Only a promise saves you.", "warn"], short: ["The Crown takes the farm.", "banner"] }[f.verdict];
     const lines = { paid: `You'd clear the Crown's ${f.crown} with ${f.gap} to spare. But every customer has to pay, and Edric's invoices were good too.`,
+      bridge: `You're ${-f.gap} short of the Crown. Ezra will lend the gap at the current rate (about ${f.bridge} a week in interest) to be repaid from next year's harvest. The farm survives, in debt, and every week of that interest comes out of next year's profit.`,
       promise: `You're ${-f.gap} short of the Crown. Pell's pig money (${f.hoped}) would cover it, but a promise isn't Cash until he pays.`, short: `You're ${-f.gap} short of the Crown's ${f.crown}. Look at what ate your profit: losses, interest, forfeits and Receivables you haven't collected.` }[f.verdict];
     return `<div class="${big[1]}" style="margin:6px 0"><b>If Midwinter were tomorrow: ${big[0]}</b><div class="hint">${lines}</div><table class="stm">${f.have.map(r => row(r[0], r[1])).join("")}${f.owe.filter(r => r[1]).map(r => row(r[0], r[1], 1)).join("")}${row("The Crown's debt", f.crown, 1)}<tr class="total"><td>${f.gap >= 0 ? "Left over" : "Short by"}</td><td class="num">${Math.abs(f.gap)}</td></tr></table></div>`;
   }
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
     ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
-    const banner = s.outcome === "insolvent" ? `<div class="banner">Insolvent on day ${s.day}. ${s.why}</div>` : "";
+    const pm = s.outcome === "insolvent" ? B.postmortem(s) : null;
+    const banner = s.outcome === "insolvent" ? `<div class="banner">Insolvent on day ${s.day}. ${s.why}<br><b>What happened:</b><ul>${pm.lines.map(l => `<li>${l}</li>`).join("")}</ul><b>Next time:</b> ${pm.advice}</div>` : "";
     const guided = storyOn && Story.state.stage !== "done";
     showPanel("close", `<h1>Closing the books: Spring, year one</h1>${banner}<div class="grid g3" id="stmts"><div id="sec-is">${isTable(st)}</div><div id="sec-bs0">${bsTable(st.start, "Balance sheet, start of spring", "bs0")}</div><div id="sec-bs1">${bsTable(st.end, s.outcome === "insolvent" ? "Balance sheet, day " + s.day : "Balance sheet, end of spring")}<div class="hint">Owner's equity ${st.end.equity} = ${st.start.equity} at the start + Net income ${st.is.net}</div></div></div>
       <div class="grid g2" style="margin-top:8px"><div id="sec-cf">${cfTable(st)}</div><div><div class="maudline" id="mline"><b>Maud:</b> ${guided ? "Let's close the books together." : h.text}</div><div id="ez"></div></div></div>`, true);
@@ -545,6 +622,7 @@
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
+  function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); ctx.fillStyle = S.notice(s) ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); }
   function drawWell() { const x = WELL.x * T - cam.x, y = WELL.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
     ctx.fillStyle = "#2d5f9a"; ctx.fillRect(x + 3, y + 5, 10, 5); ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 1, y - 6, 2, 11); ctx.fillRect(x + 13, y - 6, 2, 11); ctx.fillStyle = "#9b2335"; ctx.fillRect(x - 1, y - 9, 18, 4); }
   function drawStall(f) { const x = (f.x - 1) * T - cam.x, y = (f.y - 1) * T - cam.y;
@@ -580,7 +658,7 @@
     if (S.rain(s.day)) { ctx.fillStyle = "rgba(40,60,110,.18)"; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = "rgba(200,220,255,.55)"; for (let k = 0; k < 70; k++) { const rx = (k * 53 + frame * 3) % VW, ry = (k * 97 + frame * 6) % VH; ctx.fillRect(rx, ry, 1, 4); } }
     const f = facing(), p = plotAt(f.x, f.y), n = npcAt(f.x, f.y), b = buildingAt(f.x, f.y);
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
-    $("hint").textContent = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
+    $("hint").textContent = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
       p ? "E: " + (!p.tilled ? "till" : p.sprinkler ? "pick up sprinkler" : !p.crop ? (s.sprinklersHeld ? "place sprinkler" : s.seeds ? "plant seed" : "no seed: buy from Tomas") : S.stage(s, p) === 4 ? "harvest" : p.watered || S.rain(s.day) ? "watered" : "water") : "";
   }
   let last = 0;
@@ -589,7 +667,7 @@
   addEventListener("resize", fit);
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
-    interactTile, talk, crate, desk, sleepNow, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; }, hidePanel,
+    interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt),
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {

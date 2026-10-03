@@ -53,7 +53,7 @@ window.Story = (function () {
   async function ch1() {
     const b = S.balanceSheet(G.s.bal);
     await tell("You'll be Edric's heir. I'm Maud, the reeve. I kept his books for twenty years; he never listened.");
-    await tell("He sold every sack and showed a profit every year. He still died broke.<br>The Crown wants 1,000 by Midwinter, or it takes the farm.", ["h-crown"]);
+    await tell(`He sold every sack and showed a profit every year. He still died broke.<br>The Crown wants ${S.R.crownDebt.toLocaleString("en-US")} by Midwinter, or it takes the farm.`, ["h-crown"]);
     await page(0);
     await tell(`What you own: Cash ${b.cash}, and Inventory ${b.inv}: 15 sacks and three plots growing, at what they cost.<br>Those are your assets: ${b.assets}.`, ["h-cash", "h-inv"]);
     await tell(`What you owe: Ezra's loan, ${b.loan}, and the Crown's ${b.crown}. Those are liabilities.`, ["h-loan", "h-crown"]);

@@ -35,9 +35,9 @@ async function tFull() {
   // three days through the real UI
   for (let day = 0; day < 3; day++) {
     for (const who of ["ashby", "hobb"]) { G.talk(who); const a = btn(d, /Accept/); if (a) a.click(); else G.closeDlg(); }
-    G.talk("tomas"); const b3 = btn(d, /Buy 9 for Cash/) || btn(d, /Buy 3 for Cash/); if (b3) b3.click(); G.closeDlg();
+    G.talk("tomas"); const b3 = btn(d, /Buy 9 for Cash/) || btn(d, /Buy 3 for Cash/); if (b3) b3.click(); await sleep(40); const yes = btn(d, /Do it/); if (yes) yes.click(); await sleep(40); G.closeDlg();
     for (const p of G.s.plots) { for (let k = 0; k < 3; k++) G.interactTile(p.x, p.y); if (G.s.plots.filter(q => q.crop).length > 12) break; }
-    G.crate(); let ship; while ((ship = btn(d, /^.?\d*Ship/))) { ship.click(); await sleep(5); } G.closeDlg();
+    G.crate(); let ship; const clicked = new Set(); while ((ship = btn(d, /^.?\d*Ship/)) && !clicked.has(ship)) { clicked.add(ship); ship.click(); await sleep(5); } G.closeDlg();
     G.interactTile(6, 6); const sl = btn(d, /Sleep/); sl.click(); await sleep(20);
   }
   const s = G.s; log(`UI days: now day ${s.day}, Cash ${s.bal.cash}, Revenue ${-s.bal.revenue}, crops growing ${s.plots.filter(p => p.crop).length}, journal postings ${s.journal.length}`);

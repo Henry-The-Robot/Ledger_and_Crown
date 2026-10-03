@@ -17,7 +17,8 @@
     apDays: 14, discDays: 7, discPct: 0.02, // Tomas's terms: "2/7, net 14" (2% off if paid within 7 days)
     prepayBefore: 21,           // Ezra charges one week's interest on any amount repaid before day 21: the interest he was counting on
     factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
-    crownDebt: 1000,            // owed to the Crown at Midwinter (the story's goal)
+    crownDebt: 1250,            // owed to the Crown at Midwinter (the story's goal); a careful season ends close to it, so the last weeks matter
+    bridgeMax: 250, rescueRateBp: 200, // Ezra will bridge a small gap at Midwinter; his one emergency loan costs 2 points a week more
     rain: [5, 12, 13, 20, 26],
     // the going price per sack by day (index = day - 1): steady at first, then a glut around days 10-13, a Duke-fuelled rise by day 17, a dip, a late rally
     market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
@@ -58,7 +59,7 @@
     opt = opt || {};
     const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0,
       trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4, pell: 4, pedlar: 4 }, pell: null, poison: false, promises: [], quiet: !!opt.story,
-      sacks: 15, seeds: 0, fenced: false, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
+      sacks: 15, seeds: 0, fenced: false, rescued: false, seen: {}, notices: {}, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
     for (let i = 0; i < f.w * f.h; i++) s.plots.push({ i, x: f.x0 + i % f.w, y: f.y0 + Math.floor(i / f.w), tilled: i < f.w, watered: false, crop: null, sprinkler: false });
@@ -68,7 +69,7 @@
     post(s, "open", "Opening balances: the estate as Uncle Edric left it", { cash, inv, loan: -loan, crown: -crown, capital: -(cash + inv - loan - crown) });
     s.opening = Object.assign({}, s.bal);
     makeOffers(s);
-    note(s, "Spring, day 1. Cash " + cash + ", 15 sacks in the barn, Edric's 100 loan from Ezra, and 1,000 owed to the Crown at Midwinter.");
+    note(s, "Spring, day 1. Cash " + cash + ", 15 sacks in the barn, Edric's 100 loan from Ezra, and " + R.crownDebt.toLocaleString("en-US") + " owed to the Crown at Midwinter.");
     return s;
   }
   function newWeek() { return { revenue: 0, cogs: 0, sacksSold: 0 }; }
@@ -177,9 +178,9 @@
     note(s, `Delivered ${o.sacks} sacks to ${NAMES[o.who]}${onTime ? "" : " (late)"}: Revenue ${v}, Cost of goods sold ${c}.`);
     return ok();
   }
-  function sellSpot(s, n) {
+  function sellSpot(s, n, price) {
     n = Math.min(n, s.sacks); if (n <= 0) return err("Nothing to sell.");
-    const v = n * R.spotPrice, c = n * R.unitCost; s.sacks -= n;
+    const v = n * (price || R.spotPrice), c = n * R.unitCost; s.sacks -= n;
     post(s, "sale", `Sold ${n} surplus sacks to the market cart for Cash`, { cash: v, revenue: -v });
     post(s, "cogs", `Cost of the ${n} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += n; return ok();
@@ -226,7 +227,7 @@
     const b = balanceSheet(s.bal), hoped = sum((s.promises || []).map(p => p.amount));
     const have = [["Cash", b.cash], ["Accounts receivable (if every customer pays)", b.ar], ["Inventory (at cost)", b.inv]], owe = [["Accounts payable", b.ap], ["Loan payable", b.loan], ["Customer deposits (grain still owed)", b.deposits]];
     const net = sum(have.map(r => r[1])) - sum(owe.map(r => r[1])), gap = net - R.crownDebt;
-    return { have, owe, net, hoped, crown: R.crownDebt, gap, verdict: gap >= 0 ? "paid" : gap + hoped >= 0 ? "promise" : "short" };
+    return { have, owe, net, hoped, crown: R.crownDebt, gap, verdict: gap >= 0 ? "paid" : gap + hoped >= 0 ? "promise" : gap >= -R.bridgeMax ? "bridge" : "short", bridge: gap < 0 ? Math.round(-gap * terms(s).rateBp / 10000) : 0 };
   }
   function borrow(s, amt) {
     const t = terms(s), room = t.loanLimit + s.bal.loan; // bal.loan is negative
@@ -252,12 +253,14 @@
     if (s.over) return err("The season is closed.");
     const d = s.day;
     const ev = R.events[d];
+    if (s.boost === d) s.plots.forEach(p => { if (p.crop && p.crop.age < R.growDays) p.crop.age++; });
     s.plots.forEach(p => { if (p.crop && ev !== "frost" && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
     if (ev) overnight(s, ev);
     s.invoices.filter(v => v.due <= d).forEach(v => { post(s, "collect", `${NAMES[v.who]} paid invoice of ${v.amount}`, { cash: v.amount, ar: -v.amount }); use(s, "ar"); note(s, `${NAMES[v.who]} paid ${v.amount}.`); });
     s.invoices = s.invoices.filter(v => v.due > d);
     if (d % 7 === 0) {
       const t = terms(s), interest = Math.round(-s.bal.loan * t.rateBp / 10000);
+      if (s.bal.cash < wages(s) + interest) rescue(s, wages(s) + interest - s.bal.cash);
       if (s.bal.cash < wages(s) + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${wages(s) + interest} of wages and interest. The hands walk off.`);
       post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: wages(s), cash: -wages(s) });
       if (interest) { post(s, "interest", `Week ${d / 7} interest on Ezra's loan`, { interest, cash: -interest }); use(s, "tvm"); }
@@ -279,8 +282,10 @@
       if (d > o.due + R.lateGrace) { // breach of contract: cancelled, trust lost, a forfeit of 10% of the order (C2.09's overtrading trap)
         o.status = "cancelled"; bump(s, o.who, -2); if (o.who === "duke") bump(s, "ezra", -1);
         const fine = Math.round(o.value * R.breachPct);
+        if (s.bal.cash < fine) rescue(s, fine - s.bal.cash);
         if (s.bal.cash < fine) return insolvent(s, `${NAMES[o.who]} sues for the ${fine} forfeit on the broken order, and Cash is ${s.bal.cash}.`);
-        const refund = o.paid || 0; if (s.bal.cash < fine + refund) return insolvent(s, `${NAMES[o.who]} wants the ${refund} deposit back plus a ${fine} forfeit, and Cash is ${s.bal.cash}.`);
+        const refund = o.paid || 0; if (s.bal.cash < fine + refund) rescue(s, fine + refund - s.bal.cash);
+        if (s.bal.cash < fine + refund) return insolvent(s, `${NAMES[o.who]} wants the ${refund} deposit back plus a ${fine} forfeit, and Cash is ${s.bal.cash}.`);
         if (refund) post(s, "refund", `Refunded ${NAMES[o.who]}'s ${refund} deposit: the grain never came`, { deposits: refund, cash: -refund });
         post(s, "fine", `Forfeit to ${NAMES[o.who]}: order cancelled, ${o.sacks} sacks never came`, { fines: fine, cash: -fine });
         note(s, `${NAMES[o.who]} cancelled the order and took a ${fine} forfeit.`);
@@ -333,6 +338,42 @@
     post(s, "fence", `Fence for the field (Operating expense: wages & upkeep)`, { upkeep: R.fenceCost, cash: -R.fenceCost }); s.fenced = true;
     note(s, "Tomas's men fenced the field."); return ok();
   }
+  // Ezra's emergency loan: once per season, just enough Cash to get through a payday you can't cover, at a rate that teaches what desperation costs.
+  function rescue(s, need) {
+    if (s.rescued) return false; const amt = Math.ceil(need / 10) * 10 + 10;
+    s.rescued = true; s.rateAdj = (s.rateAdj || 0) - R.rescueRateBp; bump(s, "ezra", -2);
+    post(s, "borrow", `Ezra's emergency loan of ${amt}: you couldn't cover a payment (his rate is now ${terms(s).rateBp / 100}% a week)`, { cash: amt, loan: -amt });
+    use(s, "insolvency", false); note(s, `Cash ran out. Ezra lent ${amt} on the spot, but he now charges ${terms(s).rateBp / 100}% a week, and he won't do it twice.`); return true;
+  }
+  // What the books WOULD record, without recording it: run the action on a copy and diff. Teaching tool: see the entry before you commit.
+  function preview(s, fn) {
+    const c = JSON.parse(JSON.stringify(s)), n0 = c.journal.length, b0 = balanceSheet(c.bal), r = fn(c), b1 = balanceSheet(c.bal), entries = c.journal.slice(n0);
+    return { ok: !!(r && r.ok), msg: r && r.msg, entries, cash: [b0.cash, b1.cash], dNet: b1.ni - b0.ni, dAssets: b1.assets - b0.assets, dLiab: b1.liab - b0.liab, dEquity: b1.equity - b0.equity,
+      moved: sum(entries.map(e => Math.abs(e.lines.cash || 0))) };
+  }
+  // The village notice board: the going price for the next few days, plus one small decision on some days.
+  const NOTICE_DAYS = { 2: "tinker", 6: "trader", 12: "hands" };
+  function marketOutlook(s) { return [1, 2, 3].filter(k => s.day + k <= R.days).map(k => ({ day: s.day + k, price: marketPrice(s.day + k) })); }
+  function notice(s) {
+    const id = NOTICE_DAYS[s.day]; if (!id || s.notices[s.day] != null) return null;
+    return { id, ...{
+      tinker: { title: "A tinker's cart of seed", text: "A tinker is selling 6 packets of seed for 60: ten a packet, cheaper than Tomas. He won't let you open them first, though. Or he'll let you inspect them for a fee of 5.", options: ["Buy all 6 unseen (60)", "Pay 5 to inspect first", "Walk past"] },
+      trader: { title: "A grain trader on the road", text: `A trader will buy up to 9 spare sacks today for ${R.spotPrice + 1} each, Cash. Sacks you sell now can't fill tomorrow's orders.`, options: ["Sell what I can spare (up to 9)", "Keep my grain"] },
+      hands: { title: "Hands for hire", text: "Day-labourers will weed and water every crop in the ground tonight for 25 Cash: everything growing gains a day.", options: ["Hire them (25)", "No, thanks"] } }[id] };
+  }
+  function answerNotice(s, i) {
+    const n = notice(s); if (!n) return err("Nothing to answer."); s.notices[s.day] = i;
+    if (n.id === "tinker") {
+      if (i === 0) { if (s.bal.cash < 60) { s.notices[s.day] = null; return err(`That's 60; Cash is ${s.bal.cash}.`); } post(s, "seed", "Bought 6 packets of seed from a tinker for Cash (60 for 72 of standard cost: the 12 saved is a purchase discount)", { inv: 72, cash: -60, cogs: -12 }); s.seeds += 6;
+        const bad = 2; s.seeds -= bad; writeOff(s, `${bad} of the tinker's 6 packets were mouldy (written off at their standard cost of 12)`, 24); note(s, "Two of the tinker's six packets were mouldy. You paid 60 for 4 good ones: 15 a packet, more than Tomas charges."); return ok("blind"); }
+      if (i === 1) { if (s.bal.cash < 45) { s.notices[s.day] = null; return err(`Inspection (5) plus the 4 good packets (40) is 45; Cash is ${s.bal.cash}.`); } post(s, "upkeep", "Paid the tinker 5 to inspect his seed (Operating expense)", { upkeep: 5, cash: -5 });
+        post(s, "seed", "Bought the 4 good packets of seed from the tinker for Cash (40 for 48 of standard cost)", { inv: 48, cash: -40, cogs: -8 }); s.seeds += 4; note(s, "Inspected: two packets were mouldy. You bought the 4 good ones for 40, 11.25 a packet including the fee."); return ok("inspected"); }
+      return ok("pass");
+    }
+    if (n.id === "trader") { if (i !== 0) return ok("pass"); const k = Math.min(9, s.sacks); if (k <= 0) { s.notices[s.day] = null; return err("The barn is empty."); } sellSpot(s, k, R.spotPrice + 1); note(s, `Sold ${k} sacks to the trader at ${R.spotPrice + 1}.`); return ok("sold"); }
+    if (n.id === "hands") { if (i !== 0) return ok("pass"); if (s.bal.cash < 25) { s.notices[s.day] = null; return err(`That's 25; Cash is ${s.bal.cash}.`); } post(s, "upkeep", "Day-labourers weeded and watered every crop (Operating expense)", { upkeep: 25, cash: -25 }); s.boost = s.day; note(s, "The labourers will be at the crops tonight."); return ok("hired"); }
+    return err("");
+  }
   function insolvent(s, why) { s.over = true; s.outcome = "insolvent"; s.why = why; use(s, "insolvency", false); use(s, "overtrading", false); note(s, why); return ok(); }
   function specialOffers(s) { // the deposit customers: cash now, grain later
     if (s.quiet) return;
@@ -363,6 +404,8 @@
     if (cash + collect < due) return { danger: true, text: `Cash ${cash}, and ${due} of wages, interest and Accounts payable fall due by day ${wk}. Ezra lends; the market cart buys surplus.` };
     const late = s.bills.find(b => b.late); if (late) return { danger: true, text: `Tomas's bill of ${late.amount} is overdue. Five days and he goes to the court.` };
     const w = warning(s); if (w) return { danger: true, text: w }; // danger: true so the story's quiet stretches still show it
+    const frost = Object.keys(R.events).map(Number).find(d => R.events[d] === "frost" && d >= s.day && d <= s.day + 4);
+    if (frost && short + 3 > 0 && openOrders(s).some(o => o.due >= frost && o.due <= frost + 2)) return { danger: true, text: `Frost on day ${frost}: nothing grows that night, and an order is due day ${openOrders(s).find(o => o.due >= frost && o.due <= frost + 2).due}. Be sure the sacks are in the barn before the frost, not in the field.` };
     if (short > 0) return { danger: short > 20, text: `Open orders need ${committed(s)} sacks; Inventory plus the field makes ${s.sacks + sacksComing(s)}. Plant ${Math.ceil(short / 3)} more plots.` };
     if (s.offers.some(o => o.who === "duke")) return { danger: false, text: `The Duke pays 21 days after delivery. Seed and wages are paid now: can Cash wait that long?` };
     if (s.bal.ar > 2 * cash && cash < 150) return { danger: false, text: `Accounts receivable ${s.bal.ar}, Cash ${cash}. Revenue isn't Cash until the invoice is paid.` };
@@ -371,6 +414,6 @@
   }
 
   root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
