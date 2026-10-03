@@ -41,15 +41,20 @@ function load(q, w, h) { return new Promise(res => { const f = document.createEl
     G.interactTile(38, 19); await sleep(60); P(`tapping the stall again today: Maud says it is done: ${/had your fair today/.test(d.getElementById("dlg").textContent)}`); G.closeDlg();
     // day 14: Grisby and Maud's bet
     s.day = 14; G.hud(); await sleep(30); const j0 = s.journal.length; M.open(); await sleep(40);
-    const st2 = M.debug.st; click("mk-open"); await sleep(40);
+    const st2 = M.debug.st; d.querySelector('[data-st="price+"]').click(); click("mk-open"); await sleep(40);
     P(`day 14: Maud's bet is offered: ${st2.phase === "bet"} with ${d.querySelectorAll("#mkt [data-bet]").length} choices; buttons >= 44px: ${JSON.stringify(small())}`);
     const ans = M.betAnswer(s, st2.price, st2.bring).answer, c14 = s.bal.cash; d.querySelector(`[data-bet="${ans}"]`).click(); await sleep(40);
     P(`bet placed on the model's answer "${ans}": stake 2 posted (Cash ${c14} -> ${s.bal.cash}); Grisby's stall on screen: ${st2.f.grisby}`);
     click("mk-fast"); await sleep(30); while (st2.phase !== "tally") { click("mk-next"); await sleep(30); }
-    P(`tally with the bet: ${/Maud's bet/.test(d.getElementById("mkt").textContent)}, won: ${/You won/.test(d.getElementById("mkt").textContent)}; Grisby line: ${/Grisby took|Grisby held/.test(d.getElementById("mkt").textContent)}; transcript competitor ${w.Transcript.state("competitor")}`);
+    P(`tally with the bet: ${/Maud's bet/.test(d.getElementById("mkt").textContent)}, won: ${/You won/.test(d.getElementById("mkt").textContent)}; Grisby line: ${/Grisby (took|sold)/.test(d.getElementById("mkt").textContent)}; transcript competitor ${w.Transcript.state("competitor")}`);
     const bs2 = S.balanceSheet(s.bal); P(`books after day 14 still tie: ${bs2.assets === bs2.liab + bs2.equity}, cash-flow reconciles ${w.Books.close(s).cf.reconciles}; journal +${s.journal.length - j0} postings, all balanced: ${s.journal.slice(j0).every(e => Object.values(e.lines).reduce((a, v) => a + v, 0) === 0)}`);
     click("mk-done"); await sleep(30);
     P(`two fairs remembered: ${s.market.fairs.length === 2}; chart now has the earlier fair's dots too (see screenshot); JS errors: ${JSON.stringify(errs)}`);
+    // quitting mid-afternoon must not let the same fair be played again (the first posted hour records the fair; the save keeps it)
+    s.day = 21; G.hud(); const sacks21 = s.sacks; M.open(); await sleep(30); const st3 = M.debug.st; click("mk-open"); await sleep(30); click("mk-fast"); await sleep(30);
+    const fairsMid = s.market.fairs.some(x => x.day === 21), cashMid = s.bal.cash; M.close(); await sleep(30);
+    P(`day 21: after ONE hour the fair is already recorded (${fairsMid}) and a quit-and-reload cannot replay it: stall available again ${M.available(s)} (want false); hour 1 sales stayed on the books (barn ${sacks21} -> ${s.sacks})`);
+    const saved = JSON.parse(JSON.stringify(s)); P(`a saved copy still carries the fair: ${saved.market.fairs.some(x => x.day === 21)}; transcript competitor only for a price above the going price: ${w.Transcript.state("competitor")} (day 14 raised it)`); void st3; void cashMid;
     f.remove();
   }
   } catch (e) { out.push("EXCEPTION " + e.message + " " + e.stack); }

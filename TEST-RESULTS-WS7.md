@@ -28,6 +28,14 @@ Key lines from `node tests/test-market-day.js` (every check ok, final line "ALL 
   Gate in the test: >= +15% at 12 and 18 sacks (passes). At 24 sacks the gain falls under 15% (reported, not gated): with plentiful stock the going price is already close to best, which is the lesson. Oracle (best single price per fair, 18 sacks) is 360, so the hour-by-hour pricer beats the best flat price (385) too.
 - season Net income: 1750 (smart) vs 1653 (fixed); careful still closes the season with four fairs in it; careful closes and overtrader is insolvent with no fairs played (verdicts unchanged); statements tie out across all four fairs.
 
+## Critic round 1 and what changed (all fixed or answered)
+- Quit-and-reload mid-fair replayed the same villagers for extra takings: now every hour posts AND upserts the fair's record (`Market.commit` after each hour), so the stall is "had" from the first posted hour. Headless test: after one hour the fair is recorded, `available()` is false, the saved copy carries it.
+- "Smart beats fixed-8" was weak: added the honest baseline, the best constant price in hindsight (9 -> 360 gross); smart 385 is 6.9% above it, gated at >= 5%.
+- Chart mixed fairs with and without Grisby: the fit now uses only hours played under the same conditions, is drawn only across the prices tried, and the note says eight villagers an hour is a small sample.
+- Grisby overstated: the tally and between-hours text now count only sales to villagers who would have paid YOUR price (`stolen`). New tests: at 9 with 60 sacks he costs real takings (189 vs 207 with no rival); at 11 he costs nothing. He still matters little at the going price by the spec's own rule (see limits).
+- Transcript credit now needs an actual experiment (a second price; a price above the going price where Grisby answers), not just attending.
+- Also: Fast toggles off in the pause; one animation loop only; legend not shown on set-up; board labels 6px; chart text larger; header clears the Menu button; chart labels moved beside the dots.
+
 ## Headless Chrome (`--virtual-time-budget`)
 `tests/market-day.html` (desktop mouse 1280x800 and iPad touch 1194x834), plays a fair end to end through the real UI. Results identical on both:
 - ribbon shows "To the stall" only on fair days (44px desktop, 46px touch); set-up steppers work; all buttons >= 44px on set-up, between-hours, bet and tally screens

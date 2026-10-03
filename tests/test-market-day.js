@@ -50,6 +50,9 @@ ok([7, 14, 21].every(d => M.isDay(d, {})) && !M.isDay(8, {}) && M.isDay(28, {}) 
   ok(M.decide(co, 10, 9, 5).to === "me" && M.decide(hu, 10, 9, 5).to === "me", "comfortable and hurried villagers don't comparison-shop: they stay with you");
   const s = game(14, 30), f = M.newFair(s), h = M.playHour(f, 10); ok(h.grisbyPrice === 9 && h.toGrisby >= 0, "the hour record carries Grisby's price after seeing yours");
   const noRival = M.flat(game(7, 60), 9, 60), rival = M.flat(game(14, 60), 9, 60); ok(rival.toGrisby > 0, `at 9 (1 over the going price) Grisby takes thrifty sales from you (${rival.toGrisby} sacks)`); ok(noRival.toGrisby === 0, "with no rival nothing goes to Grisby");
+  ok(rival.stolen > 0 && rival.stolen <= rival.toGrisby, `'stolen' counts only villagers who'd have paid your price (${rival.stolen} of ${rival.toGrisby} sacks he sold)`);
+  { const w = M.flat(game(7, 60), 9, 60), g = M.flat(game(14, 60), 9, 60); ok(g.revenue < w.revenue, `at 9 with 60 sacks Grisby costs you real takings (${g.revenue} vs ${w.revenue} with no rival)`);
+    const hi = M.flat(game(14, 60), 11, 60), hi0 = M.flat(game(7, 60), 11, 60); ok(hi.revenue === hi0.revenue, "at 11 nobody thrifty would have paid you anyway, so he costs you nothing: a higher price escapes him"); }
   const at = p => M.flat(game(14, 60), p, 60).toGrisby; ok(at(8) === 0 && at(6) === 0, "at or under the going price Grisby holds and takes nothing (ties stay with you)"); }
 
 // ---- Maud's bet is computed from the same model ----
@@ -86,6 +89,10 @@ for (const stock of [12, 18, 24]) {
   ok(ni(smart) > ni(fixed), `season Net income is higher with the smart pricer (${ni(smart)} vs ${ni(fixed)}; the fairs' extra gross profit is ${smart.gross - fixed.gross}, the rest is the bot borrowing less)`);
   ok(smart.s.outcome === "closed" && fixed.s.outcome === "closed", "the careful farmer still closes the season with fairs in it (verdict unchanged)");
   const b = S.balanceSheet(smart.s.bal); ok(b.assets === b.liab + b.equity && B.close(smart.s).cf.reconciles, "the season's statements tie out with four fairs in it");
+  // the honest baseline: the best constant price a player could have found by hindsight (same price every hour of every fair)
+  let bestFixed = null; for (let p = 5; p <= 12; p++) { const r = season(() => M.bots.fixed(p), 18); if (!bestFixed || r.gross > bestFixed.gross) bestFixed = { p, gross: r.gross }; }
+  console.log(`     best constant price in hindsight: ${bestFixed.p} -> ${bestFixed.gross}; smart ${smart.gross} (${((smart.gross / bestFixed.gross - 1) * 100).toFixed(1)}% more)`);
+  ok(smart.gross >= bestFixed.gross * 1.05, "the smart pricer also beats the BEST constant price by at least 5% (changing the price between hours pays, not just 'charge more')");
   const bestFlat18 = [7, 14, 21, 28].map(d => M.bestFlat((() => { const s = game(d, 18); return s; })(), 18).t.gross).reduce((a, x) => a + x, 0);
   console.log(`     oracle (best single price per fair, 18 sacks): ${bestFlat18}; smart ${smart.gross}; fixed-8 ${fixed.gross}`); }
 

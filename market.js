@@ -67,11 +67,14 @@
       ev.push(Object.assign({}, v, d));
     });
     const units = ev.reduce((a, e) => a + (e.to === "me" ? e.qty : 0), 0), lost = ev.filter(e => e.to === "grisby" && e.react === "bought").reduce((a, e) => a + e.qty, 0);
+    // 'stolen' = sales Grisby made to villagers who would have paid YOUR price (reserve >= yours): the ones he really cost you.
+    // The rest of 'toGrisby' bought from him only because he was cheaper than they would have paid you for, so you never had them.
+    const stolen = ev.filter(e => e.to === "grisby" && e.react === "bought" && e.reserve >= price).reduce((a, e) => a + Math.min(e.qty, 1 + (price <= e.reserve - 2 ? 1 : 0)), 0);
     const rec = { hour: f.hour, price, grisbyPrice: g, stockStart: stock0, units, revenue: units * price, gross: units * (price - f.cost), soldOutAt: ev.find(e => e.react === "soldout") ? ev.findIndex(e => e.react === "soldout") : -1,
-      toGrisby: lost, segSeen, segBought, events: ev, counts: ev.reduce((c, e) => (c[e.react] = (c[e.react] || 0) + 1, c), {}) };
+      toGrisby: lost, stolen, segSeen, segBought, events: ev, counts: ev.reduce((c, e) => (c[e.react] = (c[e.react] || 0) + 1, c), {}) };
     f.hours.push(rec); f.hour++; return rec;
   }
-  const totals = f => ({ units: f.hours.reduce((a, h) => a + h.units, 0), revenue: f.hours.reduce((a, h) => a + h.revenue, 0), gross: f.hours.reduce((a, h) => a + h.gross, 0), unsold: f.stock, toGrisby: f.hours.reduce((a, h) => a + h.toGrisby, 0) });
+  const totals = f => ({ units: f.hours.reduce((a, h) => a + h.units, 0), revenue: f.hours.reduce((a, h) => a + h.revenue, 0), gross: f.hours.reduce((a, h) => a + h.gross, 0), unsold: f.stock, toGrisby: f.hours.reduce((a, h) => a + h.toGrisby, 0), stolen: f.hours.reduce((a, h) => a + h.stolen, 0) });
   // What the afternoon would earn if you kept ONE price all afternoon (the model's own answer: used for Maud's bet and for the oracle in the tests)
   function flat(s, price, stock) { const f = newFair(s, { stock }); for (let h = 0; h < CFG.hours; h++) playHour(f, price); return totals(f); }
   function bestFlat(s, stock) { let best = null; for (let p = 1; p <= 20; p++) { const t = flat(s, p, stock); if (!best || t.gross > best.t.gross) best = { price: p, t }; } return best; }
@@ -84,12 +87,14 @@
     S.post(s, "cogs", `Cost of the ${h.units} sacks sold at the fair`, { cogs: c, inv: -c });
     s.sacks -= h.units; s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += h.units;
   }
-  function commit(s, f) { // post every unposted hour, remember the fair (for the demand curve), and credit the transcript
+  // Post every unposted hour and (re)write the fair's record. The UI calls this after EVERY hour, so a fair is "had" from its first posted hour:
+  // quitting and reloading mid-afternoon cannot replay the same villagers for more takings (the saved game already has the sales and the record).
+  function commit(s, f) {
     f.hours.forEach(h => { if (!h.posted) { commitHour(s, f, h); h.posted = true; } });
-    const m = s.market || (s.market = { fairs: [], named: false, bets: 0, wins: 0 });
-    const t = totals(f); const rec = { day: f.day, market: f.market, grisby: f.grisby, stock0: f.stock0, units: t.units, revenue: t.revenue, gross: t.gross, toGrisby: t.toGrisby,
+    const m = s.market || (s.market = { fairs: [], named: false, bet: null });
+    const t = totals(f); const rec = { day: f.day, market: f.market, grisby: f.grisby, stock0: f.stock0, units: t.units, revenue: t.revenue, gross: t.gross, toGrisby: t.toGrisby, stolen: t.stolen,
       points: f.hours.map(h => ({ price: h.price, units: h.units, short: h.soldOutAt >= 0 })) };
-    if (!m.fairs.some(x => x.day === f.day)) m.fairs.push(rec);
+    const i = m.fairs.findIndex(x => x.day === f.day); if (i >= 0) m.fairs[i] = rec; else m.fairs.push(rec);
     return t;
   }
   const history = s => (s.market && s.market.fairs) || [];
@@ -221,7 +226,7 @@ if (typeof document !== "undefined") (function (root) {
     st = { phase: "setup", price: S.marketPrice(s.day), bring: Math.min(barn, Math.max(spare, Math.min(barn, 12)), 18), barn, committed, spare, f: null, rec: null, hourT: 0, fast: false, evs: null, bet: null, last: 0, cash0: s.bal.cash };
     document.body.classList.add("mk-open");
     const el = document.createElement("div"); el.id = "mkt"; el.innerHTML = `<div class="mk-card"><div class="mk-top" id="mk-top"></div><div class="mk-sceneBox" id="mk-sceneBox"><canvas id="mk-cv" width="${LW}" height="${LH}"></canvas></div><div class="mk-panel" id="mk-panel"></div></div>`;
-    $("wrap").appendChild(el); layout(); render(); loop.t = 0; requestAnimationFrame(loop);
+    $("wrap").appendChild(el); layout(); render(); loop.t = 0; if (!loop.on) { loop.on = true; requestAnimationFrame(loop); }
   }
   function close() {
     const el = root_(); if (el) el.remove(); document.body.classList.remove("mk-open"); st = null;
@@ -254,7 +259,7 @@ if (typeof document !== "undefined") (function (root) {
       p.innerHTML = `<div class="mk-row"><div class="mk-box"><h3>Sacks to bring</h3>${stepper("bring", st.bring, "sacks", "Sacks")}<div class="mk-note">${s.sacks} in the barn.${st.committed ? ` Open orders still need <b>${st.committed}</b>.` : ""}</div>${over ? `<div class="mk-note bad" id="mk-warn">That dips into sacks you promised to customers.</div>` : ""}</div>
         <div class="mk-box board"><h3>Chalk board: a sack of wheat</h3>${stepper("price", st.price, "coins", "Price")}<div class="mk-note" id="mk-margin">${marginLine(st.price)}</div></div></div>
         <div class="mk-row"><div class="mk-help">${s.market && s.market.fairs.length ? "" : `Eight villagers walk by each hour. You can change your price once an hour. Watch the faces.`}${M.grisbyIn(s.day) ? ` <b>Grisby</b> watches your board and sets his price after you.` : ""}</div>
-        <div class="mk-actions">${btn("mk-leave", "Not today", "alt")}${btn("mk-open", "Open the stall", "gold")}</div></div>${legend()}`;
+        <div class="mk-actions">${btn("mk-leave", "Not today", "alt")}${btn("mk-open", "Open the stall", "gold")}</div></div>`;
     } else if (st.phase === "bet") {
       const q = st.betQ; p.innerHTML = `<div class="mk-maud"><canvas id="mk-maud" width="16" height="16"></canvas><div><div class="mk-nm">Maud the reeve</div><div class="mk-say">Two coin says I know what one more coin on your board does. Say you chalk <b>${st.price + 1}</b> instead of <b>${st.price}</b> for the whole afternoon, with your ${st.bring} sacks${M.grisbyIn(s.day) ? " and Grisby watching" : ""}. Will your takings <b>rise</b>, <b>fall</b>, or <b>stay the same</b>?</div></div></div>
         <div class="mk-actions wide">${btn("mk-b-up", "Takings rise", "", 'data-bet="up"')}${btn("mk-b-down", "Takings fall", "", 'data-bet="down"')}${btn("mk-b-same", "Stay the same", "", 'data-bet="same"')}${btn("mk-b-no", "No bet", "alt", 'data-bet="no"')}</div>`;
@@ -263,9 +268,9 @@ if (typeof document !== "undefined") (function (root) {
       const r = st.f.hours[st.f.hours.length - 1], hnext = st.f.hour + 1, c = r.counts;
       const nudge = r.soldOutAt >= 0 ? `You ran out of sacks partway through the hour: the buyers after that walked away.` : (c.hesitated || 0) >= 2 ? `${c.hesitated} villagers hesitated. A coin less may have won them.` : (c.dear || 0) >= 4 ? `Most of the crowd called it too dear.` : (c.bought || 0) >= 7 ? `Nearly everyone bought. Was your price too low?` : "";
       p.innerHTML = `<div class="mk-row"><div class="mk-box"><h3>Hour ${r.hour + 1} of ${CFG().hours}: ${r.units} sacks at ${r.price}</h3><div class="mk-faces">${["bought", "hesitated", "dear", "soldout"].filter(k => c[k]).map(k => `<span>${iconHTML(k, 26)} <b>${c[k]}</b></span>`).join("")}</div>
-        <div class="mk-note">${r.grisbyPrice != null ? `Grisby held ${r.grisbyPrice}${r.toGrisby ? `; he took ${r.toGrisby} sacks of sales` : ""}. ` : ""}${nudge}</div></div>
+        <div class="mk-note">${r.grisbyPrice != null ? `Grisby asked ${r.grisbyPrice}${r.stolen ? `; ${r.stolen} sack${r.stolen === 1 ? "" : "s"} went to him that would have been yours` : r.price > st.f.market ? "; he didn't take anyone who'd have paid you" : ""}. ` : ""}${nudge}</div></div>
         <div class="mk-box board"><h3>Price for hour ${hnext}</h3>${stepper("price", st.price, "coins", "Price")}<div class="mk-note" id="mk-margin">${marginLine(st.price)}</div></div></div>
-        <div class="mk-row"><div class="mk-help">${M.grisbyIn(s.day) ? "Grisby will see your new price before the hour starts." : ""}</div><div class="mk-actions">${btn("mk-fast", st.fast ? "Fast: on" : "Fast", "alt")}${btn("mk-next", `Open hour ${hnext}`, "gold")}</div></div>${legend()}`;
+        <div class="mk-row"><div class="mk-help">${M.grisbyIn(s.day) ? "Grisby will see your new price before the hour starts." : ""}</div><div class="mk-actions">${btn("mk-fast", st.fast ? "Fast: on (tap to turn off)" : "Fast: off", "alt")}${btn("mk-next", `Open hour ${hnext}`, "gold")}</div></div>${legend()}`;
     } else if (st.phase === "walk") {
       p.innerHTML = `<div class="mk-row"><div class="mk-box"><h3>Hour ${st.f.hour} of ${CFG().hours} at ${st.rec.price}</h3><div class="mk-prog"><i id="mk-prog"></i></div><div class="mk-note">Your price is chalked for this hour. ${st.f.grisby ? `Grisby is asking ${st.rec.grisbyPrice}.` : ""}</div></div>
         <div class="mk-actions">${btn("mk-fast", "Fast", "alt")}</div></div>${legend()}`;
@@ -278,7 +283,7 @@ if (typeof document !== "undefined") (function (root) {
     p.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { const k = b.dataset.st, d = k.endsWith("+") ? 1 : -1, w = k.slice(0, -1);
       if (w === "price") st.price = Math.max(1, Math.min(M.CFG.maxPrice, st.price + d)); else st.bring = Math.max(1, Math.min(G.s.sacks, st.bring + d)); upd(); });
     const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
-    on("mk-leave", close); on("mk-open", startAfternoon); on("mk-next", nextHour); on("mk-fast", () => { st.fast = true; if (st.phase === "walk") finishHour(); else render(); });
+    on("mk-leave", close); on("mk-open", startAfternoon); on("mk-next", nextHour); on("mk-fast", () => { if (st.phase === "walk") { st.fast = true; finishHour(); } else { st.fast = !st.fast; render(); } }); // in the pause, Fast toggles whether the next hours play instantly
     on("mk-done", close);
     p.querySelectorAll("[data-bet]").forEach(b => b.onclick = () => placeBet(b.dataset.bet));
   }
@@ -302,7 +307,7 @@ if (typeof document !== "undefined") (function (root) {
   function nextHour() { beginHour(); }
   function finishHour() { // the hour is over: its sales go on the books
     if (st.phase !== "walk") return; const s = G.s, rec = st.rec;
-    st.hourT = 1; G.act(() => { M.commitHour(s, st.f, rec); rec.posted = true; return { ok: true }; });
+    st.hourT = 1; G.act(() => { M.commit(s, st.f); return { ok: true }; }); // posts this hour and records the fair, so a reload can't replay it
     if (st.f.hour >= CFG().hours) { st.phase = "tally"; finishFair(); } else st.phase = "pause";
     render(); drawFrame(0);
   }
@@ -312,9 +317,9 @@ if (typeof document !== "undefined") (function (root) {
     st.tally = { t, newBest: prev.length > 0 && t.gross > best, firstFair: prev.length === 0 };
     const prices = new Set(f.hours.map(h => h.price)).size, bet = s.market.bet && s.market.bet.day === s.day ? s.market.bet : null;
     G.act(() => { // earn the ideas: seeing a demand curve, segments, and a rival
-      s.uses.push({ id: "segments", day: s.day, well: true });
-      if (prices >= 2) s.uses.push({ id: "demand", day: s.day, well: true });
-      if (f.grisby) s.uses.push({ id: "competitor", day: s.day, well: true });
+      // evidence of doing, not of showing up: only an actual experiment counts (a second price; a price above the going price, where Grisby answers)
+      if (prices >= 2) { s.uses.push({ id: "segments", day: s.day, well: true }); s.uses.push({ id: "demand", day: s.day, well: true }); }
+      if (f.grisby && f.hours.some(h => h.price > f.market)) s.uses.push({ id: "competitor", day: s.day, well: true });
       if (bet && bet.guess && bet.guess === bet.answer) { S.wagerWin(s, 2, "Maud's bet on your fair price"); if (root.Transcript) root.Transcript.master("demand", s.day); }
       return { ok: true }; });
     top();
@@ -322,18 +327,19 @@ if (typeof document !== "undefined") (function (root) {
 
   // ---------- the tally ----------
   function chartSVG(s, f) {
-    const past = M.history(s).filter(x => x.day !== f.day).flatMap(x => x.points.map(p => Object.assign({ old: true }, p)));
+    const past = M.history(s).filter(x => x.day !== f.day).flatMap(x => x.points.map(p => Object.assign({ old: true, grisby: x.grisby }, p)));
     const cur = f.hours.map((h, i) => ({ price: h.price, units: h.units, short: h.soldOutAt >= 0, n: i + 1, take: h.revenue })), all = past.concat(cur);
     let lo = Math.min(...all.map(p => p.price)) - 1, hi = Math.max(...all.map(p => p.price)) + 1; if (hi - lo < 4) { lo -= 1; hi += 1; } lo = Math.max(0, lo);
     const ymax = Math.max(10, Math.ceil((Math.max(...all.map(p => p.units)) + 1) / 2) * 2), W = 460, H = 270, L = 52, R = 16, Tp = 16, B = 44;
     const X = p => L + (p - lo) / (hi - lo) * (W - L - R), Y = u => H - B - u / ymax * (H - B - Tp);
     let g = ""; for (let p = Math.ceil(lo); p <= hi; p++) g += `<line x1="${X(p)}" x2="${X(p)}" y1="${Tp}" y2="${H - B}" class="gl"/><text x="${X(p)}" y="${H - B + 17}" class="tk" text-anchor="middle">${p}</text>`;
     for (let u = 0; u <= ymax; u += 2) g += `<line x1="${L}" x2="${W - R}" y1="${Y(u)}" y2="${Y(u)}" class="gl"/><text x="${L - 8}" y="${Y(u) + 4}" class="tk" text-anchor="end">${u}</text>`;
-    const fit = M.demandFit(all); let line = "";
-    if (fit && fit.slope < 0) { const x1 = lo + .3, x2 = hi - .3, y1 = Math.max(0, fit.icpt + fit.slope * x1), y2 = Math.max(0, fit.icpt + fit.slope * x2); line = `<line x1="${X(x1)}" y1="${Y(y1)}" x2="${X(x2)}" y2="${Y(y2)}" class="fit"/>`; }
+    // the line is fitted only through hours played under the same conditions as this fair (with or without Grisby), and drawn only across the prices you actually tried
+    const same = all.filter(p => !p.old || p.grisby === f.grisby), fit = M.demandFit(same), usable = same.filter(p => !p.short); let line = "";
+    if (fit && fit.slope < 0) { const x1 = Math.min(...usable.map(p => p.price)), x2 = Math.max(...usable.map(p => p.price)), cl = v => Math.max(0, Math.min(ymax, v)); line = `<line x1="${X(x1)}" y1="${Y(cl(fit.icpt + fit.slope * x1))}" x2="${X(x2)}" y2="${Y(cl(fit.icpt + fit.slope * x2))}" class="fit"/>`; }
     const stack = {}; // hours that landed on the same spot stack their labels instead of printing over each other
     const dots = all.map(p => { const key = p.price + "," + p.units, lvl = p.old ? 0 : (stack[key] = (stack[key] == null ? 0 : stack[key] + 1)), dx = lvl ? (lvl % 2 ? 1 : -1) * 22 * Math.ceil(lvl / 2) : 0; // a little sideways jitter so same-spot hours stay visible
-      return `<circle cx="${X(p.price) + dx}" cy="${Y(p.units)}" r="${p.old ? 6 : 9}" class="${p.old ? "old" : "cur"}${p.short ? " short" : ""}"/>` + (p.old ? "" : `<text x="${X(p.price) + dx}" y="${Y(p.units) - 14}" class="lb" text-anchor="middle">hour ${p.n}</text><text x="${X(p.price) + dx}" y="${Y(p.units) + 4}" class="in" text-anchor="middle">${p.n}</text>`); }).join("");
+      return `<circle cx="${X(p.price) + dx}" cy="${Y(p.units)}" r="${p.old ? 6 : 9}" class="${p.old ? "old" : "cur"}${p.short ? " short" : ""}"/>` + (p.old ? "" : `<text x="${X(p.price) + dx + 14}" y="${Y(p.units) + 4}" class="lb" text-anchor="start">hour ${p.n}</text><text x="${X(p.price) + dx}" y="${Y(p.units) + 4}" class="in" text-anchor="middle">${p.n}</text>`); }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="mk-chart" role="img" aria-label="Price against sacks sold per hour">${g}${line}${dots}<text x="${(W + L) / 2}" y="${H - 6}" class="ax" text-anchor="middle">Price per sack (coins)</text><text transform="translate(14 ${(H - B) / 2 + Tp}) rotate(-90)" class="ax" text-anchor="middle">Sacks sold in the hour</text></svg>`;
   }
   function tally(p) {
@@ -346,10 +352,11 @@ if (typeof document !== "undefined") (function (root) {
     const nameLine = st.nameLine, betLine = bet && bet.guess ? `<div class="mk-maudline ${bet.guess === bet.answer ? "win" : "lose"}"><b>Maud's bet:</b> you said takings would <b>${bet.guess}</b>. At ${bet.price} all afternoon the model gives ${bet.now} takings; at ${bet.price + 1}, ${bet.then}. Takings ${bet.answer === "up" ? "rise" : bet.answer === "down" ? "fall" : "stay the same"}. ${bet.guess === bet.answer ? "You won: 2 coin back, and 2 more." : "You lose the 2 coin."}<br><i>A price rise wins when the sacks you lose are fewer than the extra coin on each sack that stays.</i></div>` : "";
     const seg = ["thrifty", "comfortable", "hurry"].filter(k => segSeen[k]).map(k => `<li><span class="sw ${k}"></span> ${M.SEG_NAMES[k]}: ${segBought[k] || 0} of ${segSeen[k]} bought</li>`).join("");
     const left = `<h2>The takings</h2><table class="mk-tab"><tr><th>Hour</th><th>Price</th><th>Sacks sold</th><th>Takings</th><th>Gross profit</th></tr>${rows}<tr class="tot"><td>Total</td><td></td><td class="num">${t.units}</td><td class="num">${t.revenue}</td><td class="num">${t.gross}</td></tr></table>
-      <div class="mk-note">Gross profit is what you keep after the sacks' cost (${cost} each). ${t.unsold ? `<b>${t.unsold} sacks unsold</b>: back to the barn.` : "<b>Sold out.</b>"} ${f.grisby ? `Grisby took ${t.toGrisby} sacks of sales from you.` : ""}</div>
+      <div class="mk-note">Gross profit is what you keep after the sacks' cost (${cost} each). ${t.unsold ? `<b>${t.unsold} sacks unsold</b>: back to the barn.` : "<b>Sold out.</b>"} ${f.grisby ? (t.stolen ? `Grisby took ${t.stolen} sack${t.stolen === 1 ? "" : "s"} from villagers who would have paid your price.` : t.toGrisby ? `Grisby sold ${t.toGrisby} sack${t.toGrisby === 1 ? "" : "s"}, but only to villagers your price had already lost.` : "Grisby sold nothing to your crowd.") : ""}</div>
       <ul class="mk-seg">${seg}</ul>${st.tally.newBest ? `<div class="mk-best">Your best fair yet: ${t.gross} gross profit.</div>` : st.tally.firstFair ? "" : `<div class="mk-note">Best earlier fair: ${Math.max(...past.map(x => x.gross))} gross profit.</div>`}`;
     p.innerHTML = `<div class="mk-tally"><div class="mk-tl">${left}</div><div class="mk-tr"><h2>Your demand curve</h2>${chartSVG(s, f)}<div class="mk-note">${past.length ? `Solid dots: this fair. Faded dots: earlier fairs.` : `Solid dots: this fair.`} A hollow dot is an hour you ran out of sacks, so it says nothing about demand.${fitNote()}</div></div></div>${nameLine}${betLine}<div class="mk-actions">${btn("mk-done", "Pack up the stall", "gold")}</div>`;
-    function fitNote() { const pts = M.history(s).flatMap(x => x.points); const fit = M.demandFit(pts); return fit && fit.slope < 0 ? ` The line is the fit through your hours: about ${(-fit.slope).toFixed(1)} fewer sacks for each coin more.` : ""; }
+    function fitNote() { const pts = M.history(s).filter(x => x.grisby === f.grisby).flatMap(x => x.points), fit = M.demandFit(pts);
+      return fit && fit.slope < 0 ? ` The dashed line runs through your hours ${f.grisby ? "with Grisby across the lane" : "without a rival"}: roughly ${(-fit.slope).toFixed(1)} fewer sacks an hour for each coin more. Eight villagers an hour is a small sample, so read it as a guide.` : ""; }
   }
 
   // ---------- drawing the afternoon ----------
@@ -368,7 +375,7 @@ if (typeof document !== "undefined") (function (root) {
       for (let i = 0; i < 9; i++) { ctx.fillStyle = i % 2 ? "#f4ead0" : awnCol(label); ctx.fillRect(cx - 36 + i * 8, awn, 8, 10); } ctx.fillStyle = "#3b2a1e"; ctx.fillRect(cx - 36, awn + 10, 72, 1);
       // the price board
       ctx.fillStyle = "#3b2a1e"; ctx.fillRect(cx + 40, counterY - 8, 28, 24); ctx.fillStyle = "#2f4a3a"; ctx.fillRect(cx + 41, counterY - 7, 26, 22);
-      ctx.fillStyle = "#f4ead0"; ctx.font = "bold 5px monospace"; ctx.textAlign = "center"; ctx.fillText(label, cx + 54, counterY - 1); ctx.font = "bold 12px monospace"; ctx.fillText(board == null ? "–" : String(board), cx + 54, counterY + 12); ctx.textAlign = "left";
+      ctx.fillStyle = "#f4ead0"; ctx.font = "bold 6px monospace"; ctx.textAlign = "center"; ctx.fillText(label, cx + 54, counterY); ctx.font = "bold 12px monospace"; ctx.fillText(board == null ? "–" : String(board), cx + 54, counterY + 12); ctx.textAlign = "left";
     };
     const awnCol = l => l === "GRISBY" ? "#9b2335" : "#2f6f62";
     // Grisby's stall (across the lane, from week 2), then yours; villagers walk the lane between them
@@ -395,7 +402,7 @@ if (typeof document !== "undefined") (function (root) {
     const pg = $("mk-prog"); if (pg && st.phase === "walk") pg.style.width = Math.round(st.hourT * 100) + "%";
   }
   function loop(ts) {
-    if (!st) return; const dt = Math.min(.05, (ts - (loop.t || ts)) / 1000); loop.t = ts;
+    if (!st) { loop.on = false; return; } const dt = Math.min(.05, (ts - (loop.t || ts)) / 1000); loop.t = ts; // one loop at a time (reopening within a frame can't start a second)
     if (st.phase === "walk" && !st.hold) { st.hourT += dt / HOUR_S; if (st.hourT >= 1 || st.fast) finishHour(); }
     st && (st.time = (st.time || 0) + dt, drawFrame(st.time), liveStats());
     requestAnimationFrame(loop);
