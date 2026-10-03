@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Teaching layer UI</title></head><body><pre id="out">running</pre>
+<!-- Sandbox: books preview before a purchase (and the lesson line), the Ledger tour, click-a-number explanations, the notice board, predict-before-sleep, the
+     insolvency post-mortem. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=40000 --dump-dom tests/teach-ui.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f);
+f.onload = async () => { try {
+  const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
+  const S = w.Spring, s = w.G.s, G = w.G, txt = () => d.getElementById("dlg").textContent, panel = () => d.getElementById("panelBody").textContent;
+  const btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent)), shown = () => d.getElementById("dlg").style.display === "flex";
+  G.closeDlg(); G.hidePanel();
+  // 1. books preview before buying seed
+  G.talk("tomas"); await sleep(40); btn(/Buy 3 for Cash/).click(); await sleep(60);
+  out.push(`preview shows the entry: ${/Before you do it/.test(txt()) && /Dr Inventory 36/.test(txt()) && /Cr Cash 36/.test(txt())}`, `preview shows the lesson: ${/Seed is Inventory/.test(txt())}`, `nothing posted yet: ${s.seeds === 0}`);
+  btn(/Not now/).click(); await sleep(30); out.push(`"Not now" leaves the books alone: ${s.seeds === 0 && s.bal.cash === 200}`);
+  G.talk("tomas"); await sleep(40); btn(/Buy 3 for Cash/).click(); await sleep(60); btn(/Do it/).click(); await sleep(60);
+  out.push(`"Do it" posts it: ${s.seeds === 3 && s.bal.cash === 164}`); G.closeDlg();
+  // 2. click a HUD number
+  d.getElementById("h-cash").click(); await sleep(40); out.push(`clicking Cash explains it: ${/Money in hand/.test(panel()) && /latest postings/.test(panel())}`); G.hidePanel();
+  // 3. ledger tour
+  G.ledgerTour(); await sleep(40); btn(/Show me/).click(); await sleep(40);
+  out.push(`tour asks for the debits: ${/first posting/.test(txt()) && /debit/.test(txt())}`);
+  const j0 = s.journal[0], debits = Object.values(j0.lines).filter(v => v > 0).reduce((a, v) => a + v, 0);
+  d.getElementById("num").value = debits; btn(/Check/).click(); await sleep(60);
+  out.push(`tour accepts the right total and moves on: ${/balance sheet/.test(txt())}`); G.closeDlg();
+  // 4. notice board
+  while (s.day < 2) S.sleep(s); G.interactTile(18, 8); await sleep(40);
+  out.push(`board shows the market outlook and the tinker: ${/Village notices/.test(txt()) && /Day 3/.test(txt()) && /tinker/.test(txt())}`);
+  btn(/Pay 5 to inspect/).click(); await sleep(60);
+  out.push(`inspecting teaches after the choice: ${/Smart/.test(txt())}`, `four good packets bought: ${s.seeds === 7}`); G.closeDlg();
+  // 5. predict before sleeping, with an invoice due tonight
+  s.invoices.push({ id: 9999, who: "hobb", amount: 30, due: s.day }); s.bal.ar += 30; s.bal.revenue -= 30; s.bal.capital += 0;
+  G.sleepNow(); await sleep(60); out.push(`asks for a guess when money moves tonight: ${/What will Cash be when you wake/.test(txt())}`);
+  d.getElementById("num").value = 1; btn(/Check my guess/).click(); await sleep(2500);
+  out.push(`reveals the real number and the arithmetic: ${/You said 1/.test(txt()) && /collected/.test(txt())}`); G.closeDlg();
+  // 6. insolvency post-mortem
+  const t = S.newGame(); t.rescued = true; S.buySeeds(t, 16); while (t.day < 7) S.sleep(t); S.sleep(t); const pm = w.Books.postmortem(t);
+  out.push(`post-mortem has lines and advice: ${t.outcome === "insolvent" && pm.lines.length > 0 && pm.advice.length > 0}`, `errors: ${JSON.stringify(errs)}`);
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); f.remove();
+};
+</script></body></html>
