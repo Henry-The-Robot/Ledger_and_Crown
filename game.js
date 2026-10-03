@@ -61,8 +61,8 @@
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
   const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
-  const npcHere = n => n.who === "crane" ? !!(window.Verbs && Verbs.craneOn) : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
-    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
+  const npcHere = n => n.who === "crane" ? !!(window.Verbs && Verbs.craneOn) : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.pellDays(s)[0] && s.day <= S.pellDays(s)[1] // WS6: the visitor windows follow this game's seeded pig and rat nights
+    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.pedlarDays(s)[0] && s.day <= S.pedlarDays(s)[1]
     : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
   const blocked = (x, y) => x < 0 || y < 0 || x >= MW || y >= MH || solid.has(key(x, y)) || !!npcAt(x, y);
@@ -419,7 +419,7 @@
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
       ["Sprinkler: 80 Cash", () => commit(c => S.buySprinkler(c), r => say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg)), s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
-      ...(!s.fenced && s.day <= S.R.pigDay ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
+      ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => commit(c => S.payBills(c), r => say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg)), !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -676,6 +676,7 @@
     const mw = s.outcome === "insolvent" ? "" : midwinter();
     if (s.outcome === "insolvent") ez.innerHTML = `<p>Ezra won't lend to an estate that couldn't pay its wages. The farm goes to auction.</p><button class="btn gold" id="again">Try spring again</button>`;
     else ez.innerHTML = mw + `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
+    ez.insertAdjacentHTML("beforeend", endBtn());
     wire(); save();
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));
@@ -685,7 +686,9 @@
     rows.forEach(r => { if (!r.dataset.line) return; r.classList.add("pick"); r.onclick = () => {
       if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
-  function wire() { const a = $("again"), g = $("goEzra"); if (a) a.onclick = restart; if (g) g.onclick = review; }
+  // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close; "The Audit (coming)" stands in for the WS8 finale
+  const endBtn = () => storyOn ? `<p class="hint">The Audit (coming): Crane and Corvin before the magistrate.</p><p><button class="btn alt" id="goEnd">How it ends</button></p>` : "";
+  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); }
   function review() {
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
@@ -693,7 +696,7 @@
       if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length); localStorage.removeItem(SAVE);
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${right === qs.length ? "You know your own books. Good." : right ? "You know some of your books." : "You don't know your own books. That costs you."}<br>
           Summer terms: lend up to <b>${after.loanLimit}</b> at <b>${after.rateBp / 100}% a week</b> (spring: ${before.loanLimit} at ${before.rateBp / 100}%).</div>
-          <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>`; return wire(); }
+          <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>${endBtn()}`; return wire(); }
       const qq = qs[i]; qq.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("ask")));
       ez.innerHTML = `<div class="ezq"><b>Ezra</b> <span class="hint">(${i + 1} of ${qs.length}; each answer moves your summer rate)</span><br>${qq.q} ${qq.ask}</div>` +
         qq.options.slice().sort(() => Math.random() - .5).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
@@ -794,7 +797,8 @@
     const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10) });
+      // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
+      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? 1 + Math.floor(Math.random() * 2147483646) : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       hud(); if (storyOn) Story.start();

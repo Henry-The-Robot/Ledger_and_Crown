@@ -326,6 +326,28 @@ window.Story = (function () {
     await G.say("crane", `Master Vale sends his regards, heir. He asks me to say the Crown's collector is a patient man. ${farmName()} can be mine any day for ${money(o.price)}.`, ["Next"]);
     pin("crane-vale", "Crane works for Vale", "“Master Vale sends his regards”", `Day ${G.s.day} · Crane, week 3`);
   }
+  // ---------- week 4 (item 6): Maud's last scene. Edric's cash book, the second ledger he kept and never read beside the first. ----------
+  // Rows are rebuilt from the player's own journal: cumulative Net income (the Ledger) and Cash (the chest) at the end of each week.
+  function cashBookRows(s) {
+    const PL = ["revenue", "cogs", "upkeep", "depreciation", "fines", "losses", "interest", "factoring"], rows = [];
+    for (const day of [7, 14, 21, s.day]) { if (rows.length && rows[rows.length - 1].day === day) continue; if (day > s.day) continue; let cash = 0, ni = 0;
+      s.journal.filter(j => j.day <= day).forEach(j => { cash += j.lines.cash || 0; PL.forEach(k => { ni -= j.lines[k] || 0; }); });
+      rows.push({ day, cash, ni }); }
+    return rows;
+  }
+  async function cashBook() {
+    const V = Verbs, s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1];
+    await tell("Edric kept a second book, and I never gave it to you until you could read it. A cash book: what the chest held, week by week. He never read it beside the Ledger.");
+    await new Promise(res => {
+      G.showPanel("page", `<div class="journal"><div class="hint">Edric's cash book, the second ledger</div><table class="stm" style="font-style:normal"><tr><th>End of</th><th>Ledger: Net income so far</th><th>The chest: Cash</th><th>The Ledger says you have, the chest says you don't</th></tr>` +
+        rows.map(r => `<tr><td>day ${r.day}</td><td class="num">${V.fmt(r.ni)}</td><td class="num">${V.fmt(r.cash)}</td><td class="num">${V.fmt(r.ni - r.cash)}</td></tr>`).join("") +
+        `</table><p>Every spring the Ledger climbs and the chest does not. The gap is the same place every time: in sacks no one has paid for, and in Corvin's invoice.</p><p class="sig">— E.</p></div><button class="btn gold" id="pgok">Keep it</button>`);
+      document.getElementById("pgok").onclick = () => { G.hidePanel(); res(); };
+    });
+    pin("cashbook", "Edric's cash book", `Ledger ${V.fmt(last.ni)}, chest ${V.fmt(last.cash)} on day ${last.day}`, `Day ${s.day} · the second ledger`, "book");
+    st.book = true;
+    await tell("From here I'm quiet. If the farm is in danger, you'll hear it from me. Otherwise it's your books and your argument.");
+  }
   // ---------- chapter 9: closing the books (C1.08), guided ----------
   async function close(stm, h) { // the game shows the statements one at a time; the player finds where the cash went
     await G.reveal("is", `Your income statement: Revenue, minus the cost of what you sold, minus running costs. Net income ${stm.is.net}. Edric's always looked like this.`);
@@ -432,6 +454,7 @@ window.Story = (function () {
     if (busy) return true;
     const m = { tomas: { tomas2: ch2, tomas6: ch6, tomas9: ch9t }, ashby: { ashby3: ch3 }, hobb: { hobb4: ch4 }, ezra: { ezra7: ch7 }, duke: { duke8: ch8, duke9: ch8b } }[who];
     if (m && m[st.stage]) { run(m[st.stage]); return true; }
+    if (who === "maud" && weekOf(G.s.day) === 4) { run(async () => { const c = S.coach(G.s); await tell(c && c.danger ? c.text : "Maud only nods toward the door. This week she speaks only when the farm is in danger."); }); return true; } // week 4: silent but for danger
     if (who === "maud" && st.ch < 9 && st.stage !== "done") { run(() => tell(`Next: ${goalText().split(": ").slice(1).join(": ")}`)); return true; }
     return false;
   }
@@ -454,6 +477,7 @@ window.Story = (function () {
       else if (st.stage === "page8") await chPage();
       else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
       else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
+      else if (st.stage === "run9" && d >= 22 && !st.book) await cashBook(); // week 4: the cash book, Maud's last word
     });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run

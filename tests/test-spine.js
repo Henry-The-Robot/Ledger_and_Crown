@@ -22,4 +22,18 @@ ok(res.careful === "paid", "careful still ends paid with the escalating orders: 
 ok(lost(res.overtrader), "overtrader still loses with the escalating orders: " + res.overtrader);
 ok(lost(res.reckless), "reckless still loses: " + res.reckless);
 console.log(JSON.stringify(res));
+// Item 9: seeded events. Same seed = same game; every day inside its window; never two events on one night; seed 0 is the canonical calendar.
+{ const W = S.R.windows; let allIn = true, distinct = true, differ = new Set(); const ends = { careful: {}, overtrader: {} };
+  for (let seed = 1; seed <= 40; seed++) { const ev = S.eventsFor(seed), days = Object.keys(ev).map(Number), kinds = Object.values(ev);
+    if (days.length !== 4) distinct = false;
+    for (const d of days) { const [lo, hi] = W[ev[d]]; if (d < lo || d > hi) allIn = false; }
+    differ.add(JSON.stringify(ev));
+    for (const k of ["careful", "overtrader"]) { const r = run(k, seed).end; ends[k][r] = (ends[k][r] || 0) + 1; } }
+  ok(JSON.stringify(S.eventsFor(7)) === JSON.stringify(S.eventsFor(7)) && JSON.stringify(S.newGame({ seed: 7 }).events) === JSON.stringify(S.eventsFor(7)), "same seed, same event calendar (and it is stored in the game)");
+  ok(allIn && distinct, "40 seeds: pigs 7-11, rats 14-18, warm 17-21, frost 21-25, four different nights each");
+  ok(differ.size > 10, `different seeds give different games (${differ.size} distinct calendars in 40)`);
+  ok(JSON.stringify(S.eventsFor(0)) === JSON.stringify(S.R.events) && JSON.stringify(S.newGame().events) === JSON.stringify(S.R.events), "seed 0 (default, bots, sandbox) is the canonical 9/16/19/23");
+  console.log("careful over 40 seeds:", JSON.stringify(ends.careful), " overtrader:", JSON.stringify(ends.overtrader));
+  ok((ends.careful.paid || 0) >= 25 && !ends.careful.insolvent && !ends.careful.short, `careful survives every seed and pays the Crown on most (${ends.careful.paid || 0}/40; the rest are bridged: the bot never buys the fence or the poison)`);
+  ok((ends.overtrader.paid || 0) <= 4, `the overtrader loses on almost every seed (paid on ${ends.overtrader.paid || 0}/40)`); }
 process.exit(fail ? 1 : 0);

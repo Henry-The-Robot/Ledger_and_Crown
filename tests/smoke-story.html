@@ -68,7 +68,7 @@ async function drive(w, until) {
 }
 (async () => {
   try {
-    const [f, w] = await load("?fast=1&savetest=1&new=1"); w.__fastVerbs = true; await sleep(150); w.localStorage.removeItem("lc_transcript_v1");
+    const [f, w] = await load("?fast=1&savetest=1&new=1&seed=3"); w.__fastVerbs = true; // WS6: a fixed seed keeps the drawn event days (and so this run) reproducible await sleep(150); w.localStorage.removeItem("lc_transcript_v1");
     // Every Try must be answerable and fully equipped: numeric answer and tolerance, docs list, working, Explain-how.
     const realAsk = w.G.ask, badAsks = []; w.G.ask = function (who, text, answer, hints, sp, tol, docs, work, how) {
       const why = [typeof answer !== "number" || isNaN(answer) ? "answer" : "", tol != null && typeof tol !== "number" ? "tol" : "", docs != null && !Array.isArray(docs) ? "docs" : "",
@@ -104,7 +104,8 @@ async function drive(w, until) {
     const road = [...d.querySelectorAll("#hud .deskonly")].length;
     log(`Desk/Road: ${road} desk-only HUD boxes hidden on the road`);
     log(`Try beats with a missing or misplaced setting: ${w.__badAsks.length} ${JSON.stringify(w.__badAsks)}`);
-    // WS6: the four-week frame, the case board, the name, the ribbon
+    // WS6: the four-week frame, the case board, the name, the ribbon, the seeded events
+    log(`WS6 seed ${w.G.s.seed}: event nights ${JSON.stringify(w.G.s.events)} (stored in the save: ${!!JSON.parse(w.localStorage.getItem("lc_spring_save_v3") || "{}").s})`);
     log(`WS6 weeks: cards shown for weeks ${JSON.stringify(st.weeks)}; farm "${st.farm}" (name overlay clicked ${named}x); ribbon "${d.getElementById("goal").textContent}"`);
     log(`WS6 case board: ${st.clues.length} clues pinned: ${st.clues.map(c => c.id).join(", ")}; Crane's offer pinned ${st.clues.some(c => c.id === "offer")}; Crane=Vale pinned ${st.clues.some(c => c.id === "crane-vale")}; Edric's page 6 pinned ${st.clues.some(c => c.id === "page5")}; case button "${(d.getElementById("casebtn") || {}).textContent}"`);
     // every ending's epilogue is reachable through the ?ending= test hook
