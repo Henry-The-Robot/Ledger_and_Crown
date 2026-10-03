@@ -4,6 +4,15 @@ All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Fixed (iPad feedback, 2026-10-03)
+- **"Thornfield, as the Crown sees it" never went away.** The card was created without an id, so `getElementById` never found it: every update made a new card and nothing could close it. It now has an id, it can't be re-created once its lesson ends, a lesson stage change closes it, it has a cross, and tapping it closes it once you are done collecting. On an iPad it sits below the HUD rows instead of over the Travel button.
+- **The notice board sat on the road.** Moved one tile north (18,7), beside the road.
+- **Scaling on an iPad.** The map used to be a fixed 16:10 box with light bars round it. On touch it now scales in half steps and shows as much map as the screen holds (wider in landscape, taller in portrait), and the page behind it is dark.
+
+### Changed
+- No on-screen arrows or Act button on an iPad: taps do everything. `?pad=1` brings them back. The "E: ..." hint is hidden on touch.
+- Dialog number boxes use the on-screen number pad only (it has its own minus key), so the extra ± button is gone from them; forecast boxes keep theirs.
+
 ### Added (WS2: UI kit, iPad-first)
 - Design tokens in `style.css` (`--bg --panel --panel-edge --ink --muted --gold --green --red --font-body --font-num --sp1..5 --radius --shadow --tap`); game UI in new `ui.css`.
 - One-row HUD (Day, Cash, Crown fund meter, goal, Travel, Books); balance-sheet boxes moved to a collapsible Books strip that opens when a lesson spotlights one. HUD numbers 20px, dialog text 18px, 96px portrait with name plate.

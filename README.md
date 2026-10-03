@@ -22,12 +22,10 @@ iPad controls. Portrait and landscape both work.
 
 - **Tap the map** to walk there. Tap a person, a plot, the crate, the notice board or the house door and you
   walk up to it and use it.
-- **On-screen pad (bottom left)**: hold an arrow to walk. **Act (bottom right)** does what the label says
-  (Till, Plant, Water, Harvest, Talk to Tomas, ...). They hide while a conversation or a panel is open.
+- There is **no on-screen pad or Act button**: tap a person, plot, crate, door or the notice board and you walk up and use it. (Add `?pad=1` to the address if you want a pad and an Act button.)
 - **Tap any number at the top** to see what it means and where it came from. **☰ Menu** (top right) replaces the
   Esc key; Notebook and Transcript are the two buttons at the bottom.
-- **Typing a number**: the box moves to the top of the screen so the keyboard doesn't cover it, and a **±**
-  button sits beside it, because the iPad number pad has no minus key.
+- **Typing a number**: dialogs have their own on-screen number pad (with a minus key), so the iPad keyboard never covers the box.
 - **Full-screen**: tap Share, then **Add to Home Screen**. The game then opens like an app, with no Safari bars.
   It still saves locally in that app (a home-screen app keeps its own saved game, separate from Safari's).
 - A keyboard still works if one is attached. Add `?touch=1` to the address to force iPad mode on another device,

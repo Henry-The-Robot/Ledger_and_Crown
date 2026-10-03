@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><title>iPad controls</title></head><body><pre id="out">running</pre>
-<!-- ?touch=1 puts the game in iPad mode: on-screen pad and Act button, big tap targets, a minus-sign button beside number boxes, the typing box docked
+<!-- ?touch=1 puts the game in iPad mode: the optional on-screen pad and Act button (?pad=1; off by default), big tap targets, a minus-sign button beside number boxes, the typing box docked
      above the keyboard, tapping the top-bar numbers. Also checks the page is set up for iPad (viewport, home-screen meta, manifest) and that desktop mode
      has none of it. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/ipad.html -->
 <script>
@@ -7,7 +7,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
 function load(q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1180px"; f.style.height = "820px"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => res(f); }); }
 const ptr = (w, el, type) => el.dispatchEvent(new w.PointerEvent(type, { bubbles: true, pointerId: 1 }));
 (async () => { try {
-  const f = await load("?sandbox&new=1&touch=1"), w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
+  const f = await load("?sandbox&new=1&touch=1&pad=1"), w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
   const G = w.G, s = G.s, txt = () => d.getElementById("dlg").textContent;
   out.push(`touch mode on: ${d.body.classList.contains("touch")}; pad and Act exist: ${!!d.getElementById("dpad") && !!d.getElementById("act")}`);
   const x0 = G.pl.x; const right = d.querySelector('#dpad [data-d="right"]'); ptr(w, right, "pointerdown"); for (let k = 0; k < 30; k++) G.tick(1 / 60); const moved = G.pl.x - x0; ptr(w, right, "pointerup"); G.tick(1 / 60); const stop = G.pl.x;
@@ -18,11 +18,12 @@ const ptr = (w, el, type) => el.dispatchEvent(new w.PointerEvent(type, { bubbles
   const tcHidden = w.getComputedStyle(d.getElementById("tc")).display === "none"; out.push(`pad hides while a dialog is open: ${tcHidden}`);
   const minH = Math.min(...[...d.querySelectorAll("#dlg button")].map(b => b.getBoundingClientRect().height)); out.push(`dialog buttons are 44px or taller: ${minH >= 44} (${Math.round(minH)})`); G.closeDlg();
   G.ask("maud", "Type minus twelve", -12, ["hint"], null, 0, null, "w", "h"); await sleep(60);
-  const inp = d.getElementById("num"), sgn = d.querySelector("#dlg .sgn"); inp.focus(); inp.dispatchEvent(new w.FocusEvent("focusin", { bubbles: true })); inp.value = "12";
-  out.push(`a ± button sits beside the number box: ${!!sgn}`); sgn.click(); out.push(`± makes it negative: ${inp.value === "-12"}`); sgn.click(); out.push(`± again makes it positive: ${inp.value === "12"}`);
-  out.push(`typing box docks to the top: ${d.getElementById("dlg").classList.contains("kb")}`); G.closeDlg(); out.push(`and un-docks when closed: ${!d.getElementById("dlg").classList.contains("kb")}`);
+  const inp = d.getElementById("num"), key = k => d.querySelector(`#dlg .np button[data-k="${k}"]`);
+  out.push(`the dialog has the on-screen number pad with a minus key: ${!!key("−") && !!key("1")}; and no second ± button: ${!d.querySelector("#dlg .sgn")}`);
+  out.push(`the iPad keyboard stays closed (inputmode none): ${inp.getAttribute("inputmode") === "none"}`);
+  key("1").click(); key("2").click(); key("−").click(); out.push(`pad types 12 then minus makes -12: ${inp.value === "-12"}`); key("−").click(); out.push(`minus again flips it back: ${inp.value === "12"}`);
   const hud = d.getElementById("h-cash"); out.push(`top-bar numbers can be tapped (pointer-events on): ${w.getComputedStyle(hud).pointerEvents !== "none"}`);
-  const sc = parseFloat(d.getElementById("c").style.width) / 320; out.push(`map scales in half steps to fill the iPad: ${sc === 3.5} (${sc})`);
+  const cvs = d.getElementById("c"), sc = parseFloat(cvs.style.width) / cvs.width; out.push(`map scales in half steps to fill the iPad: ${sc === 3.5} (${sc})`);
   G.board({ title: "t", show: 3, fill: [0] }); await sleep(60); out.push(`forecast boxes get a ± too: ${!!d.querySelector("#panelBody .sgn")}`); G.hidePanel();
   const bad = await load("?sandbox&new=1&touch=0"), w2 = bad.contentWindow; await sleep(300);
   out.push(`desktop mode (touch=0) has no pad: ${!w2.document.getElementById("dpad") && !w2.document.body.classList.contains("touch")}`);

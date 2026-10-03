@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><title>iPad polish</title></head><body><pre id="out">running</pre>
+<!-- Feedback from a real iPad: (1) no on-screen arrows or Act button by default, taps do everything; (2) the notice board must not sit on the road;
+     (3) "Thornfield, as the Crown sees it" must always be dismissible and must never come back after its lesson; (4) the view fills the screen in both
+     orientations instead of floating in a letterbox. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=40000 --dump-dom tests/ipad-polish.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+function load(q, w, h) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = w + "px"; f.style.height = h + "px"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => res(f); }); }
+(async () => { try {
+  const f = await load("?sandbox&new=1&touch=1", 1180, 760), w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
+  const G = w.G;
+  out.push(`no arrows or Act button by default: ${!d.getElementById("dpad") && !d.getElementById("act") && !d.getElementById("tc")}`);
+  G.tick(1 / 60); out.push(`no "E: ..." / "Tap Act" hint on touch: ${d.getElementById("hint").textContent === ""}`);
+  // the board is beside the road, not on it: walk the whole road
+  const B = G.world.BOARD; out.push(`notice board is off the road row (y=8): ${B.y !== 8} (board at ${B.x},${B.y})`);
+  G.pl.x = 7 * 16 + 8; G.pl.y = 8 * 16 + 12; G.pl.dir = "right"; G.pl.target = null; G.keys.right = true; for (let k = 0; k < 400; k++) G.tick(1 / 60); G.keys.right = false;
+  out.push(`the road is open from the house to town (walked to x=${Math.round(G.pl.x / 16)} past the board at ${B.x}): ${G.pl.x > (B.x + 2) * 16}`);
+  G.pl.x = B.x * 16 + 8; G.pl.y = 8 * 16 + 12; G.pl.dir = "up"; G.pl.target = null; G.interactTile(B.x, B.y); await sleep(50);
+  out.push(`the board still opens when tapped: ${/Village notices/.test(d.getElementById("dlg").textContent)}`); G.closeDlg();
+  // full-screen fit, landscape
+  const c = d.getElementById("c"), cw = parseFloat(c.style.width), ch = parseFloat(c.style.height);
+  out.push(`landscape: map fills the width (${cw}px of ${w.innerWidth}) and the height (${ch}px of ${w.innerHeight}): ${w.innerWidth - cw < 8 && w.innerHeight - ch < 8}`);
+  out.push(`landscape shows more map, not a letterbox (view ${c.width}x${c.height}): ${(c.width > 320 || c.height > 200) && c.width >= 320 && c.height >= 200}`);
+  // portrait
+  const p = await load("?sandbox&new=1&touch=1", 820, 1100), wp = p.contentWindow, cp = wp.document.getElementById("c"); await sleep(300);
+  out.push(`portrait: map fills the width (${parseFloat(cp.style.width)} of ${wp.innerWidth}) and shows more map downwards (view ${cp.width}x${cp.height}): ${wp.innerWidth - parseFloat(cp.style.width) < 8 && cp.height > 200}`);
+  out.push(`desktop is unchanged (320x200 view): ${(await (async () => { const q = await load("?sandbox&new=1&touch=0", 1280, 800); await sleep(300); const k = q.contentWindow.document.getElementById("c"); return k.width === 320 && k.height === 200; })())}`);
+  out.push(`page background is dark (no light bars round the map): ${w.getComputedStyle(d.body).backgroundColor === "rgb(31, 42, 26)"}`);
+  // the Crown's page
+  const V = w.Verbs; V.parchReset(); V.pinRow("assets", "Cash (the chest)", 200); V.P.aTot = 200; V.parch();
+  out.push(`the page shows while the lesson runs: ${!!d.getElementById("vparch")}`);
+  V.parchClose(); V.pinRow("assets", "Late row", 1); V.parch(); V.P.eq = 5; V.parch();
+  out.push(`once closed, nothing brings it back: ${!d.getElementById("vparch")}`);
+  V.parchReset(); V.pinRow("assets", "Cash", 200); out.push(`a new lesson can open it again: ${!!d.getElementById("vparch")}`);
+  out.push(`finished (not collecting): has a cross: ${!!d.querySelector("#vparch .vp-x")}`); d.querySelector("#vparch .vp-x").click(); out.push(`the cross closes it: ${!d.getElementById("vparch")}`);
+  V.parchReset(); V.pinRow("assets", "Cash", 200); d.getElementById("vparch").click(); out.push(`tapping anywhere on it closes it: ${!d.getElementById("vparch")}`);
+  V.parchReset(); V.pinRow("assets", "Cash", 200); V.pinRow("assets", "Sacks", 60); out.push(`a second row updates the same page, not a new card: ${d.querySelectorAll(".vparch").length === 1}`);
+  w.eval("Story.state.stage = 'x'"); w.eval("Story.close && 0"); V.parchClose(); out.push(`no stray cards left: ${d.querySelectorAll(".vparch").length === 0}`);
+  out.push(`errors: ${JSON.stringify(errs)}`);
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>

@@ -53,3 +53,9 @@ body.touch .vcard { top: 118px; font-size: 16px; }
 .vtrack i span { position: absolute; top: -20px; left: 0; transform: translateX(-50%); white-space: nowrap; font: bold 13px var(--serif, Georgia, serif); color: var(--red, #9b2335); }
 .vtrack i.of span { top: 18px; color: var(--ink, #3b2a1e); }
 .vwalk { position: absolute; z-index: 20; pointer-events: none; }
+
+/* The Crown's page can always be put away: a tap anywhere on it (once you're not collecting) or the cross closes it. On an iPad it sits below the HUD rows, not over the Travel button. */
+.vparch { cursor: pointer; }
+.vparch .vp-x { position: absolute; right: 6px; top: 6px; width: 40px; height: 40px; border: 2px solid #9a6a3a; border-radius: 50%; background: #fff5dc; color: #3b2a1e; font: bold 18px var(--serif, Georgia, serif); line-height: 1; padding: 0; cursor: pointer; }
+.vparch h4 { padding-right: 46px; }
+body.touch .vparch { top: 124px; max-height: calc(100% - 140px); overflow: auto; }
