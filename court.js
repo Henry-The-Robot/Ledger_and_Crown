@@ -176,8 +176,8 @@ window.Court = (function () {
   }
   async function endScene(o) {
     const f = o.flags || {}, t = o.trust || {}, vane = f.vane;
-    await say("crane", `Item: the drawer. Item: the seal Edric could not read. Item: I can read it now. I have wanted to for a year.${f.craneVane ? " I told you at the well it was not my master's mark." : ""}`, "Go on");
-    await say("crane", "It is a note-buyer's mark. Corvin Vane's. He bought the Crown's paper on this farm at forty on the coin, and held it since before Edric died. I carried his first offer to your door. I did not want to. I counted the coins in the envelope twice, and it was too many.", "Go on");
+    await say("crane", `Item: the drawer. Item: the seal Edric could not read. Item: I can read it now; I have wanted to for a year.${f.craneVane ? " Item: I told you at the well it was not my master's mark." : ""}`, "Go on");
+    await say("crane", "Item: a note-buyer's mark, Corvin Vane's. Item: he bought the Crown's paper on this farm at forty on the coin, and has held it since before Edric died. Item: I carried his first offer to your door, and I did not want to. Item: I counted the coins in the envelope twice, and it was too many.", "Go on");
     await say("maud", "Under the seal is Edric's guarantee for Ashby, with Ezra's name beneath his as witness. Ezra is exact, not unkind; he has known since the day.", "Go on");
     if (f.maudConfessed) await say("maud", "I was at the assizes that winter. I have stopped forgiving myself for it, which is not the same as stopping.", "Go on");
     await say("vane", `Heir of Edric. Spring is over and offers do come due. ${vane === "refused" ? "You said no in the square. The offer stands until Midwinter, but I did hope an ordinary day in court might soften you." : vane === "asked" ? "You asked what 'on demand' meant. A court has now told you, rather better than I would have." : vane === "waiting" ? "You took the winter. It is nearly winter." : "I have brought the pen again."} The writ forgiven, the millstream mine, and a mortgage on the whole farm, payable on demand.`, "...");
