@@ -58,7 +58,7 @@
 
   function newGame(opt) {
     opt = opt || {};
-    const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0,
+    const s = { day: 1, over: false, outcome: null, nextId: 1, journal: [], bal: {}, log: [], uses: [], story: !!opt.story, rateAdj: 0, rescueAdj: 0,
       trust: { maud: 2, ezra: opt.ezraTrust != null ? opt.ezraTrust : 4, ashby: 4, hobb: 4, tomas: 4, duke: 4, mira: 4, abbey: 4, pell: 4, pedlar: 4 }, pell: null, poison: false, promises: [], quiet: !!opt.story,
       sacks: 15, seeds: 0, fenced: false, rescued: false, seen: {}, notices: {}, sprinklersHeld: 0, plots: [], offers: [], orders: [], invoices: [], bills: [], week: newWeek() };
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
@@ -98,7 +98,7 @@
   }
   function terms(s) { // what Ezra and Tomas offer, from their trust (and, for Ezra, from the forecast you showed him)
     const e = s.trust.ezra, t = s.trust.tomas;
-    return { loanLimit: 100 + 50 * e, rateBp: Math.max(50, 350 - 25 * e - (s.rateAdj || 0)), apDays: t >= 3 ? R.apDays : 0, apLimit: 60 + 30 * t };
+    return { loanLimit: 100 + 50 * e, rateBp: Math.max(50, 350 - 25 * e - (s.rateAdj || 0) + (s.rescueAdj || 0)), apDays: t >= 3 ? R.apDays : 0, apLimit: 60 + 30 * t };
   }
   // Cash forecast: the same night order as sleep() (collections, then week-end wages + interest, then bills due),
   // assuming you do nothing else. extraOut: cash you plan to spend today (e.g. seed for a big order).
@@ -342,7 +342,7 @@
   // Ezra's emergency loan: once per season, just enough Cash to get through a payday you can't cover, at a rate that teaches what desperation costs.
   function rescue(s, need) {
     if (s.rescued) return false; const amt = Math.ceil(need / 10) * 10 + 10;
-    s.rescued = true; s.rateAdj = (s.rateAdj || 0) - R.rescueRateBp; bump(s, "ezra", -2);
+    s.rescued = true; s.rescueAdj = R.rescueRateBp; // separate from rateAdj, which the story's forecast lesson overwrites bump(s, "ezra", -2);
     post(s, "borrow", `Ezra's emergency loan of ${amt}: you couldn't cover a payment (his rate is now ${terms(s).rateBp / 100}% a week)`, { cash: amt, loan: -amt });
     use(s, "insolvency", false); note(s, `Cash ran out. Ezra lent ${amt} on the spot, but he now charges ${terms(s).rateBp / 100}% a week, and he won't do it twice.`); return true;
   }
