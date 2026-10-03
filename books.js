@@ -10,17 +10,17 @@
   function close(s) {
     const b = s.bal, o = s.opening;
     const revenue = -b.revenue, cogs = b.cogs, gross = revenue - cogs, upkeep = b.upkeep, dep = b.depreciation;
-    const fines = b.fines, opex = upkeep + dep + fines, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
-    const is = { revenue, cogs, gross, upkeep, dep, fines, opex, operating, interest, factoring, net };
+    const fines = b.fines, losses = b.losses, opex = upkeep + dep + fines + losses, operating = gross - opex, interest = b.interest, factoring = b.factoring, net = operating - interest - factoring;
+    const is = { revenue, cogs, gross, upkeep, dep, fines, losses, opex, operating, interest, factoring, net };
     const start = S.balanceSheet(o), end = S.balanceSheet(b);
-    const dAR = end.ar - start.ar, dInv = end.inv - start.inv, dAP = end.ap - start.ap;
-    const cfo = net + dep - dAR - dInv + dAP;
+    const dAR = end.ar - start.ar, dInv = end.inv - start.inv, dAP = end.ap - start.ap, dDep = end.deposits - start.deposits;
+    const cfo = net + dep - dAR - dInv + dAP + dDep;
     const capex = sumType(s, "equip", "cash"); // negative
     const borrowed = sumType(s, "borrow", "cash"), repaid = sumType(s, "repay", "cash");
     const cfi = capex, cff = borrowed + repaid, change = cfo + cfi + cff;
     // direct check: every cash line outside investing/financing is operating cash flow
     const cfoDirect = s.journal.filter(j => ["open", "equip", "borrow", "repay"].indexOf(j.type) < 0).reduce((a, j) => a + (j.lines.cash || 0), 0);
-    const cf = { net, dep, dAR, dInv, dAP, cfo, cfoDirect, capex, cfi, borrowed, repaid, cff, change, cashStart: start.cash, cashEnd: end.cash,
+    const cf = { net, dep, dAR, dInv, dAP, dDep, cfo, cfoDirect, capex, cfi, borrowed, repaid, cff, change, cashStart: start.cash, cashEnd: end.cash,
       reconciles: change === end.cash - start.cash && cfo === cfoDirect };
     return { is, start, end, cf, day: s.day, outcome: s.outcome, balanced: start.assets === start.liab + start.equity && end.assets === end.liab + end.equity };
   }
@@ -49,7 +49,7 @@
         ask: "What's your current ratio (current assets ÷ current liabilities)?", options: three([f1(r), 1 / r >= .1 ? f1(1 / r) : f1(r / 2), String(end.currentAssets - end.currentLiab), f1(r + 1)]), answer: f1(r) });
     } else qs.push({ id: "wc", also: ["pct"], lines: ["bs1:cash", "bs1:ar", "bs1:inv"], q: `No debts at all. Current assets ${end.currentAssets}.`, ask: "So what's your working capital?",
       options: three([String(end.currentAssets), String(end.cash), "0", String(end.ar)]), answer: String(end.currentAssets) });
-    const moves = [["Accounts receivable rose " + cf.dAR, cf.dAR, "ar"], ["Inventory rose " + cf.dInv, cf.dInv, "inv"], ["Accounts payable fell " + -cf.dAP, -cf.dAP, "ap"],
+    const moves = [["Accounts receivable rose " + cf.dAR, cf.dAR, "ar"], ["Inventory rose " + cf.dInv, cf.dInv, "inv"], ["Accounts payable fell " + -cf.dAP, -cf.dAP, "ap"], ["Customer deposits fell " + -cf.dDep, -cf.dDep, "dep"],
       ["the sprinkler cost " + -cf.capex, -cf.capex, "capex"], ["net loan repayments of " + -cf.cff, -cf.cff, "cff"]].filter(m => m[1] > 0).sort((a, b) => b[1] - a[1]);
     if (cf.change < is.net && moves.length) {
       const opts = moves.slice(0, 3).map(m => m[0]); if (opts.length < 3) opts.push("Net income was overstated");
@@ -57,7 +57,7 @@
       qs.push({ id: "cfs", also: ["accrual", moves[0][2] === "ar" ? "ar" : moves[0][2] === "inv" ? "inventory" : "wc"], lines: ["is:net", "cf:net", "cf:change", "cf:" + moves[0][2]],
         q: `Net income ${is.net}, yet Cash moved only ${cf.change}.`, ask: "Where did most of the difference go?", options: opts, answer: moves[0][0] });
     } else {
-      const src = [["borrowing " + cf.borrowed, cf.borrowed], ["Accounts payable rose " + cf.dAP, cf.dAP], ["Inventory fell " + -cf.dInv, -cf.dInv], ["Accounts receivable fell " + -cf.dAR, -cf.dAR], ["depreciation " + cf.dep, cf.dep]].sort((a, b) => b[1] - a[1]);
+      const src = [["borrowing " + cf.borrowed, cf.borrowed], ["Accounts payable rose " + cf.dAP, cf.dAP], ["customer deposits rose " + cf.dDep, cf.dDep], ["Inventory fell " + -cf.dInv, -cf.dInv], ["Accounts receivable fell " + -cf.dAR, -cf.dAR], ["depreciation " + cf.dep, cf.dep]].sort((a, b) => b[1] - a[1]);
       if (cf.change > is.net && src[0][1] > 0) qs.push({ id: "cfs", also: ["accrual"], lines: ["is:net", "cf:cfo", "cf:cff", "cf:change"], q: `Cash rose ${cf.change}, more than your net income of ${is.net}.`, ask: "What added the most Cash beyond profit?",
         options: [src[0][0], src[1][0], "Revenue was higher than recorded"], answer: src[0][0] });
     }
