@@ -4,6 +4,17 @@ All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Creative lead's list (v0.3.2 candidates, one PR each into `next`)
+- 1 Overtrading loses: one `R.duke` order (132 sacks, 28-day terms) shared by story and sandbox; `test-crown` asserts careful pays, overtrader and reckless lose.
+- 2 Mastery: only right answers from the verbs count; hints, walk-throughs and passive screens don't; `Transcript.evidence`.
+- 3 HUD is one row at 1194x834 and 834x1194; the chapter goal is its own ribbon.
+- 4 Predict timeline: regression test that it never shows the lowest Cash before you commit; the answer is no longer parked on `window`.
+- 5 One Check per ask: the pad's on touch, the inline one on desktop.
+- 6 Optional on-screen pad (`?pad=1`) is smaller and see-through.
+- 7 `Bot.spender` triggers the wages-day walk-off; careful doesn't.
+- 8 iOS audio: the first tap creates and resumes one shared AudioContext and plays a silent buffer; later taps re-resume it; the stamp's thud uses it and obeys the sound switch.
+- Cache-bust stamp bumped to `?v=0.3.2`.
+
 ### Added (WS2: UI kit, iPad-first)
 - Design tokens in `style.css` (`--bg --panel --panel-edge --ink --muted --gold --green --red --font-body --font-num --sp1..5 --radius --shadow --tap`); game UI in new `ui.css`.
 - One-row HUD (Day, Cash, Crown fund meter, goal, Travel, Books); balance-sheet boxes moved to a collapsible Books strip that opens when a lesson spotlights one. HUD numbers 20px, dialog text 18px, 96px portrait with name plate.
