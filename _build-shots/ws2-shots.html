@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>WS2 screenshot driver</title><style>html,body{margin:0;background:#222;height:100%}iframe{border:0;display:block;width:100vw;height:100vh}</style></head>
+<body><iframe id="f"></iframe>
+<!-- Sets up one scene so headless Chrome can screenshot it (WS2 UI kit).
+     Run: chrome --headless --allow-file-access-from-files --window-size=1194,834 --virtual-time-budget=3000 --screenshot=<out.png> "file:///.../_build-shots/ws2-shots.html?shot=ask&touch=1"
+     shot = farm | ask | haggle | ledger | daycard | travel | books | desk -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), P = new URLSearchParams(location.search), shot = P.get("shot"), f = document.getElementById("f");
+f.src = "../game.html?sandbox&new=1&touch=" + (P.get("touch") || "0");
+f.onload = async () => {
+  await sleep(400);
+  const w = f.contentWindow, S = w.Spring, s = w.G.s, G = w.G;
+  G.closeDlg(); G.hidePanel();
+  const upTo = n => { while (s.day < n && !s.over) S.sleep(s); G.hud(); };
+  upTo(6);
+  if (shot === "ask") G.ask("maud", "Your Cash is " + s.bal.cash + ". Tomas's bill of 24 falls due. What will Cash be after you pay it?", s.bal.cash - 24, ["Subtract the bill from Cash."], ["h-cash"], 0, null, "w", "h");
+  else if (shot === "ledger") G.ledger();
+  else if (shot === "daycard") { w.document.getElementById("night").style.transition = "none"; G.night("Day 7 · Sunny", ["Wages and interest: 12 left your Cash."], null, { day: 6, d: 18, owes: ["Hobb owes you <b>81</b>", "Ashby owes you <b>36</b>"], losses: ["2 sacks spoiled in the barn"] }); }
+  else if (shot === "travel") G.openTravel();
+  else if (shot === "books") G.say("maud", "Look at Accounts receivable: it is money customers owe you.", ["Next"], ["h-ar"]);
+  else if (shot === "desk") { G.desk(); }
+};
+</script></body></html>

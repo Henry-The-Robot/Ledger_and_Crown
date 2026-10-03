@@ -6,6 +6,12 @@
   --good:#2f6f62; --bad:#9b2335;
   --mono:"Consolas","SFMono-Regular","Menlo",monospace;
   --serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  /* ---- WS2 design tokens (shared with the verbs UI; keep these names) ---- */
+  --bg:#f3e9d2; --panel:#f1d9a6; --panel-edge:#7a4a22; --muted:#5a4a38; --green:#2f6f62; --red:#9b2335;
+  --font-body:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --font-num:"Consolas","SFMono-Regular","Menlo",monospace;
+  --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px;
+  --radius:6px; --shadow:0 3px 0 #4a2c14; --tap:44px;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--serif);color:var(--ink);background:#3a2e22;
