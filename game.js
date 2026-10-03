@@ -361,6 +361,7 @@
     if (!p.ok) { const r = act(() => fn(s)); if (after) after(r); else say(null, r.msg); return; }
     const types = [...new Set(p.entries.map(e => e.type))], n = Math.min(...types.map(t => s.seen[t] || 0)), big = p.moved > .4 * Math.max(1, s.bal.cash);
     const run = () => { const r = act(() => fn(s)); if (after) after(r); else if (!r.ok) say(null, r.msg); };
+    if (storyOn && Story.busy) return run(); // never interrupt a scripted story chapter with a confirm
     if (n >= 2 && !big) return run();
     types.forEach(t => s.seen[t] = (s.seen[t] || 0) + 1);
     const lesson = types.map(t => LESSON[t]).filter(Boolean)[0], nums = [`Cash ${p.cash[0]} → ${p.cash[1]}`, p.dNet ? `Net income ${p.dNet > 0 ? "+" : ""}${p.dNet}` : "Net income unchanged", `Liabilities ${p.dLiab > 0 ? "+" : ""}${p.dLiab}`];
