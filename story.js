@@ -467,6 +467,8 @@ window.Story = (function () {
     if (busy) return true;
     const m = { tomas: { tomas2: ch2, tomas6: ch6, tomas9: ch9t }, ashby: { ashby3: ch3 }, hobb: { hobb4: ch4 }, ezra: { ezra7: ch7 }, duke: { duke8: ch8, duke9: ch8b } }[who];
     if (m && m[st.stage]) { run(m[st.stage]); return true; }
+    // Integration: from chapter 5 on, a waiting village scene (#28) or the day's practice problem (#29) must reach the player, so Maud's hint/silence lines below stand aside and game.js shows her menu
+    if (who === "maud" && st.ch >= 5 && ((window.Scenes && Scenes.available("maud", G.s)) || (window.Practice && Practice.available(G.s, TR.state)))) return false;
     if (who === "maud" && weekOf(G.s.day) === 4) { run(async () => { const c = S.coach(G.s); await tell(c && c.danger ? c.text : "Maud only nods toward the door. This week she speaks only when the farm is in danger."); }); return true; } // week 4: silent but for danger
     if (who === "maud" && st.ch < 9 && st.stage !== "done") { run(() => tell(`Next: ${goalText().split(": ").slice(1).join(": ")}`)); return true; }
     return false;
