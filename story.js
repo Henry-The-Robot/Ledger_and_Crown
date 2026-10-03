@@ -140,7 +140,7 @@ window.Story = (function () {
     V.pinRow("liab", "Ezra's note (the loan)", b.loan); await V.wait(window.__fastVerbs ? 0 : 700);
     V.pinRow("liab", "The Crown's writ, due at Midwinter", b.crown); await V.wait(window.__fastVerbs ? 0 : 500);
     await V.countTotal("lTot", b.liab);
-    const c = await G.say("crane", "Item: before I stamp it, heir, is this farm worth more than nothing, or less?", ["More", "Less"]);
+    const c = await G.say("crane", "Item: before I stamp it, heir, do you own more than you owe, or less?", ["More", "Less"]);
     V.P.eq = b.equity; V.parch();
     await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
     const right = (c === 1) === (b.equity < 0);
@@ -497,7 +497,7 @@ window.Story = (function () {
     if (evt === "harvest" && st.stage === "harvest2" && !G.s.plots.some(p => p.crop && S.stage(G.s, p) === 4))
       run(async () => { await tell(`${G.s.sacks} sacks in the barn now. Ashby at the bakery (red roof) is waiting.`); await page(0); to(2, "ashby3"); });
     if (evt === "deliver" && st.stage === "ship3" && info.who === "ashby")
-      run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}. And it came in as Cash, today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
+      run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}, and it came in as Cash today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
     if (evt === "morning") run(async () => { // one ordered chain per morning, so two scenes never race for the same dialog
       const d = G.s.day;

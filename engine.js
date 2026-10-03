@@ -365,7 +365,7 @@
     const spared = s.fenced || s.orders.some(o => o.who === "pell" && o.status !== "cancelled");
     if (ev === "pigs" && !spared) return `Pell's pigs have broken loose and are heading for the fields ${when}. A fence from Tomas costs ${R.fenceCost}; pigs would eat about a quarter of what's growing.`;
     if (ev === "rats" && !s.poison) return `Rats are in the village ${when}. Stock in the barn is Inventory you can lose; sacks you've shipped are safe.`;
-    if (ev === "frost") return `A frost is coming ${when}: nothing will grow that night. Check your delivery dates.${s.day === frostNight(s) - 1 && s.notices[s.day] == null && growing(s).length ? " The almanac on the village notice board gives the odds of a hard one." : ""}`;
+    if (ev === "frost") return `A frost is coming ${when}, and nothing will grow that night: check your delivery dates.${s.day === frostNight(s) - 1 && s.notices[s.day] == null && growing(s).length ? " The almanac on the village notice board gives the odds of a hard one." : ""}`;
     return null;
   }
   function refusePell(s) { s.pell = "refused"; bump(s, "pell", -1); note(s, "You turned Pell away. He walked off muttering about his pigs."); return ok(); }
@@ -396,7 +396,8 @@
       moved: sum(entries.map(e => Math.abs(e.lines.cash || 0))) };
   }
   // The village notice board: the going price for the next few days, plus one small decision on some days.
-  const NOTICE_DAYS = { 2: "tinker", 6: "trader", 12: "hands" };
+  // Work order item 7 (day-loop): the existing notices recur so no stretch of Spring is a day with nothing new on the board (tests/test-dayloop.js). The tinker is a one-off trap.
+  const NOTICE_DAYS = { 2: "tinker", 3: "trader", 4: "hands", 6: "trader", 10: "trader", 12: "hands", 16: "hands", 25: "trader" };
   const frostNight = s => +Object.keys(evs(s)).find(d => evs(s)[d] === "frost") || 0;
   const hardFrost = (s, d) => roll(d, "hardfrost", 1) < R.frostOdds; // decided by the night itself, not by anything the player does
   const growing = s => s.plots.filter(p => p.crop);
@@ -464,6 +465,6 @@
   }
 
   root.Spring = { R, roll, eventsFor, eventDay, pellDays, pedlarDays, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -34,7 +34,7 @@ window.Standing = (function () {
   function judge(s, o, f) {
     f = f || facts(s, o); const thin = o.price <= f.floor, cant = f.cashAfter < 0, slow = o.terms > 0 && (f.late || f.cashAfter < f.week);
     const why = [], tell = [];
-    if (thin) { why.push("thin"); tell.push(`${o.price} is no better than the ${f.floor} the road trader pays for the same sack, so you'd give up that sale for nothing`); }
+    if (thin) { why.push("thin"); tell.push(`${o.price} is no better than the ${f.floor} the road trader pays for the same sack, so it gains you nothing over the sale you'd give up`); }
     if (cant) { why.push("cant"); tell.push(`the seed costs ${f.seed} and Cash is ${s.bal.cash}`); }
     if (slow) { why.push("slow"); tell.push(f.late ? `the Cash arrives on day ${f.arrive}, after the season ends` : `the Cash arrives on day ${f.arrive} and the next pay-day finds the chest at ${f.cashAfter} against ${f.week} of wages`); }
     return { well: !why.length, why, line: why.length ? `Not a good take: ${tell.join("; ")}.` : `A good take: ${f.margin}% margin, ${o.price} against the trader's ${f.floor}, and the chest carries it${o.terms ? `, with the Cash due day ${f.arrive}` : ""}.` };

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.1 candidate: editor pass and day loop (work order items 6-8)
+- Every Maud box is at most two sentences (27 lines fixed or split); the longest choiceless run in the story is 4 boxes (was 5); `test-editor.js` keeps both true.
+- Teaching-line audit against the curriculum foundation: Crane's equity question, the Market Day price-rise explanation, the guarantee as a contingent liability, the standing-order wording. See `docs/EDITOR-REPORT.md`.
+- Day loop: every day 2-28 has a choice and a surprise or set piece over 40 seeds. Notices recur (trader 3/6/10/25, hands 4/12/16), rain counts, the notice board shows a red "!". `test-dayloop.js`, `day-loop.html`.
+- `?v=` 0.4.1.
+
 ## T4: The Reeve's Court (the exam and the finale, day 28)
 - `court.js` + `court.css`: Vane's advocate makes 8 claims built from the player's own statements (profit is not Cash, receivables, "owns nothing", "Edric was unprofitable", the Duke's terms vs wages, a guarantee is a liability, payable-on-demand, margin vs markup, inventory, equity). PRESS for detail (it can turn up evidence), PRESENT a statement line, a case-board clue or a found card. Refute 6 of 8 to pass; a failed hearing offers another sitting with a fresh set of claims, never a game over.
 - Crane (trust 3+) testifies once (a free correct present); Ezra (trust 3+) confirms his rate. One Maud line per refuted claim (claim, number, reason); transcript evidence only for unhinted right presents.

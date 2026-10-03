@@ -305,7 +305,7 @@
       if (pick.startsWith('"I always')) { used.rec = 1; walk += 1; line = "True enough. You've never let me down."; continue; }
       const p = r.v; round++;
       if (p == null || isNaN(p) || p <= 0) { line = "Say a number, dear."; continue; }
-      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your cost floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
+      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your cost floor of ${fl}, so your margin would be ${Math.round((p - fl) / p * 100)}%. Sure?`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
       if (p <= theirs) return close(theirs);
       if (p <= walk) { line = "Done."; return close(p); }
       if (p > walk + 2) { s.trust[o.who] = Math.max(0, s.trust[o.who] - 1); line = `${p}? That's an insult. ${theirs} is my offer.`; continue; }
@@ -334,7 +334,7 @@
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
   function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability (WS6: named unearned revenue, C1.01/C1.03)
     if (storyOn) Story.noteDeposit(o);
-    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Accountants call it <b>unearned revenue</b>: money received for work not yet done. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
+    say("maud", `Look at Cash: it rose by ${o.paid}, but Revenue didn't move. You owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit is a liability, <b>Customer deposits</b>, also called <b>unearned revenue</b>.`, [["Next", () => say("maud", `If the grain isn't there by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit. The Cash is real; the profit isn't until you deliver.`, [["Open the Ledger", ledger], ["Close", null]])]]);
   }
   async function pellTalk() {
     if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
@@ -343,7 +343,7 @@
     if (pick === 0) { const o = S.addOffer(s, "pell", S.R.pellSacks, S.R.unitCost, 14, 4, 2), deal = await haggle(o, { open: S.R.unitCost, walk: S.R.unitCost + 1, line: "Four a sack. It's all I have, neighbour." });
       if (!deal) S.decline(s, o.id); else await sayP("pell", "Twelve sacks by day " + (s.day + 4) + ". I'll keep the pigs in.", ["Close"]); }
     else if (pick === 1) { const o = S.addOffer(s, "pell", S.R.pellSacks, 3, 21, 4, 2); o.share = true; const r = act(() => S.accept(s, o.id));
-      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise. It isn't Cash, a bill or Revenue until Pell pays it at Midwinter, so the Ledger lists it as a note and nowhere else.<br>Is it worth it? Maybe. But look at what your books say today.`, [["Open the Ledger", ledger], ["Close", null]]); }
+      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise.`, [["Next", () => say("maud", "It isn't Cash, a bill or Revenue until Pell pays at Midwinter, so the Ledger lists it as a note and nowhere else; is it worth it? Look at what your books say today.", [["Open the Ledger", ledger], ["Close", null]])]]); }
     else if (pick === 2) { act(() => S.refusePell(s)); say("pell", "I'll remember this. So will my pigs."); }
   }
   async function pedlarTalk() {
@@ -420,10 +420,12 @@
   // ---------- the Ledger tour: how to read it, in the player's own books ----------
   async function ledgerTour() {
     const j0 = s.journal[0], debits = Object.values(j0.lines).filter(v => v > 0).reduce((a, v) => a + v, 0), b = S.balanceSheet(s.bal), docs = [{ label: "Open the Ledger", open: ledger }];
-    await sayP("maud", "The Ledger is a list of every posting, newest first. Each posting touches at least two accounts. <b>Debits</b> and <b>credits</b> are the two columns, and in every posting they add up to the same number. That's why Assets always equal Liabilities plus Owner's equity.", ["Show me"]);
-    await ask("maud", `Your farm's very first posting was: <b>${dr(j0)}</b>.<br>Add up just the <b>Dr</b> (debit) amounts. What do they total?`, debits, ["Debits are the lines that start with Dr. Add only those.", "Everything the farm had at the start went on the debit side. Cash and Inventory are two of them."], null, 0, docs, `Dr amounts: ${Object.entries(j0.lines).filter(([, v]) => v > 0).map(([k, v]) => `${S.ACCTS[k][0]} ${v}`).join(" + ")} = ${debits}. The Cr side must match: that's the rule.`, "Add the Dr lines.");
-    await ask("maud", `Now today's balance sheet. Your <b>Total assets</b> are ${b.assets}. If the books balance, what must <b>Liabilities + Owner's equity</b> add up to?`, b.assets, ["The balance sheet always balances: both sides are the same number.", "Assets = Liabilities + Owner's equity."], null, 0, docs, `Assets ${b.assets} = Liabilities ${b.liab} + Owner's equity ${b.equity}. Every posting keeps this true.`, "The two sides always match.");
-    await sayP("maud", "Three habits that make the Ledger useful:<br>1. Before a big choice, read what it will post. The game shows you the entry first.<br>2. After something odd happens (a loss, a deposit), find its line in the journal.<br>3. Click any number at the top of the screen and I'll tell you what it is and where it came from.", ["Got it"]);
+    await sayP("maud", "The Ledger is a list of every posting, newest first, and each posting touches at least two accounts. <b>Debits</b> and <b>credits</b> are its two columns.", ["Next"]);
+    await sayP("maud", "In every posting they add up to the same number, which is why Assets always equal Liabilities plus Owner's equity.", ["Show me"]);
+    await ask("maud", `Your farm's very first posting was <b>${dr(j0)}</b>: what do the <b>Dr</b> (debit) amounts add up to?`, debits, ["Debits are the lines that start with Dr. Add only those.", "Everything the farm had at the start went on the debit side. Cash and Inventory are two of them."], null, 0, docs, `Dr amounts: ${Object.entries(j0.lines).filter(([, v]) => v > 0).map(([k, v]) => `${S.ACCTS[k][0]} ${v}`).join(" + ")} = ${debits}. The Cr side must match: that's the rule.`, "Add the Dr lines.");
+    await ask("maud", `Today's <b>Total assets</b> are ${b.assets}: if the books balance, what must <b>Liabilities + Owner's equity</b> add up to?`, b.assets, ["The balance sheet always balances: both sides are the same number.", "Assets = Liabilities + Owner's equity."], null, 0, docs, `Assets ${b.assets} = Liabilities ${b.liab} + Owner's equity ${b.equity}. Every posting keeps this true.`, "The two sides always match.");
+    await sayP("maud", "Three habits make the Ledger useful. First, before a big choice, read what it will post: the game shows you the entry.", ["Next"]);
+    await sayP("maud", "Second, after something odd (a loss, a deposit), find its line in the journal. Third, click any number at the top of the screen and I'll tell you where it came from.", ["Got it"]);
     s.tour = true;
   }
   // ---------- click a number: what it is, how it's made, and the latest entries behind it ----------
@@ -608,7 +610,7 @@
     const f = S.forecast(s, 1)[0];
     if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9)) { atDesk = false;
       const bits = [f.cin ? `${f.cin} comes in (invoices due)` : "", f.wages ? `${f.wages} of wages and interest goes out` : "", f.bills ? `${f.bills} of Tomas's bills goes out` : "", f.fines ? `${f.fines} of forfeits goes out` : ""].filter(Boolean).join("; ");
-      const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}. Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
+      const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}, and Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
       guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; }
     doSleep();
   }
@@ -632,7 +634,7 @@
   function lossLesson() { // a loss shows up in the Ledger as an expense with no Cash leaving: walk the player to the exact lines
     const j = s.journal.find(x => x.type === "loss" && x.day === s.day - 1); if (!j || (storyOn && Story.busy)) return;
     const n = Object.values(j.lines)[0] ? j.lines.losses : 0; FX.thud(); FX.shake($("wrap"));
-    say("maud", `Open the Ledger and find the journal line "${j.memo}".<br>Debit Crop & stock losses ${n}, credit Inventory ${n}. Cash didn't move, but Net income fell by ${n} and so did Inventory: value you paid for is gone. That's why losses hit profit.`,
+    say("maud", `Find the journal line "${j.memo}": Debit Crop & stock losses ${n}, credit Inventory ${n}.<br>Cash didn't move, but Net income and Inventory both fell by ${n}, because value you paid for is gone.`,
       [["Open the Ledger", ledger], ["Later", null]]);
   }
   function night(title, notes, then, info) { // info: the day-end card (Cash change, who owes you, losses); tap to dismiss early
@@ -818,7 +820,7 @@
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
-  function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); ctx.fillStyle = S.notice(s) ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); }
+  function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); const news = S.notice(s) || (soOk() && Standing.today(s).length); ctx.fillStyle = news ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); if (news) { ctx.fillRect(x + 7, y - 15, 2, 5); ctx.fillRect(x + 7, y - 9, 2, 2); } }
   function drawWell(W) { const x = W.x * T - cam.x, y = W.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
     ctx.fillStyle = "#2d5f9a"; ctx.fillRect(x + 3, y + 5, 10, 5); ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 1, y - 6, 2, 11); ctx.fillRect(x + 13, y - 6, 2, 11); ctx.fillStyle = "#9b2335"; ctx.fillRect(x - 1, y - 9, 18, 4); }
   function drawStall(f) { const x = (f.x - 1) * T - cam.x, y = (f.y - 1) * T - cam.y;
