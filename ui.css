@@ -1,0 +1,81 @@
+/* Ledger & Crown — game-page UI kit (WS2). Loaded after game.html's inline styles; every colour, space and size comes from the
+   tokens in style.css :root. Font choice: system Palatino/Georgia for prose and Consolas/Menlo for numbers, no web fonts, so the
+   game works offline from a home-screen icon (a free pixel font would need a network fetch on first load). */
+body{background:var(--bg)}
+.wood{background:var(--panel);border:3px solid var(--panel-edge);border-radius:var(--radius);box-shadow:inset 0 0 0 2px #d9a55e,var(--shadow);color:var(--ink);font-family:var(--font-body)}
+
+/* ---- HUD: one row (Day, Cash, Crown fund, goal, Travel, Books), balance-sheet boxes in a collapsible strip ---- */
+#hud{left:var(--sp2);right:124px;top:var(--sp2);flex-direction:column;flex-wrap:nowrap;gap:var(--sp2);font:bold 18px var(--font-body)}
+body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top))}
+#hudrow{display:flex;gap:var(--sp2);align-items:stretch;flex-wrap:wrap}
+#hudmain{display:contents}
+#hud .wood,body.touch #hud .wood{padding:var(--sp1) var(--sp3);min-height:var(--tap);display:flex;align-items:center;gap:var(--sp2);font-size:18px;white-space:nowrap;pointer-events:auto}
+#hud .k,body.touch #hud .k{font-size:14px;color:var(--muted);margin-right:0;font-weight:normal}
+#hud .v{font-family:var(--font-num);font-size:20px}
+#hud .warn .v{color:var(--red)}
+.meter{display:inline-block;width:96px;height:14px;border:2px solid var(--panel-edge);border-radius:var(--sp1);background:#e9dab8;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--green);transition:width .6s}
+#goal,body.touch #goal{position:static;flex:1 1 220px;min-width:0;max-width:none;padding:var(--sp1) var(--sp3);font:bold 16px/1.25 var(--font-body);max-height:calc(var(--tap) + 8px);overflow:hidden;align-items:center}
+#goal .k{display:block;font:13px var(--font-body);color:var(--red);letter-spacing:.06em;text-transform:uppercase}
+.hbtn{font:bold 18px var(--font-body);cursor:pointer;color:var(--ink);justify-content:center}
+.hbtn:hover,.hbtn.on{background:#ffe3a0}
+#books{display:none;flex-wrap:wrap;gap:var(--sp2);align-items:stretch}
+#books.open{display:flex}
+#books .deskonly{display:flex!important}
+#books #coin{width:330px}
+#books .wood.spot{display:flex!important}
+
+/* ---- dialog ---- */
+#dlg{width:min(720px,94%);padding:var(--sp3) var(--sp4);gap:var(--sp4);cursor:default}
+#dlg.hasin{width:min(900px,96%)}
+#dlg canvas{width:96px;height:96px;background:#cfe3b0;border:3px solid var(--panel-edge);border-radius:var(--radius);image-rendering:pixelated}
+#dlg .dc{flex:1;min-width:0}
+#dlg .dc.withpad{display:grid;grid-template-columns:1fr 236px;column-gap:var(--sp4);align-items:start}
+#dlg .dc.withpad>.np{grid-column:2;grid-row:1/span 4}
+#dlg .dc.withpad>:not(.np){grid-column:1}
+#dlg .nm{display:inline-block;font:bold 18px var(--font-body);color:#fff;background:var(--panel-edge);padding:2px var(--sp3);border-radius:var(--sp1);margin-bottom:var(--sp1)}
+#dlg .ht{color:var(--red);font-size:16px}
+#dlg .tx{font:18px/1.4 var(--font-body);margin:var(--sp1) 0 var(--sp2)}
+#dlg .tx .hint,#dlg .tx .hintline{font-size:16px}
+.tw{opacity:0}.tw.on{opacity:1}
+#dlg button,body.touch #dlg button{font:17px var(--font-body);min-height:var(--tap);padding:var(--sp1) var(--sp3);border-radius:var(--sp1);border:2px solid var(--panel-edge);background:#fff5dc;margin:var(--sp1) var(--sp2) var(--sp1) 0}
+#dlg .in input{font:20px var(--font-num);width:200px;min-height:var(--tap)}
+.np{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp1)}
+#dlg .np button{margin:0;min-height:52px;font:bold 22px var(--font-num);padding:0}
+#dlg .np button.ok{grid-column:1/-1;font:bold 18px var(--font-body);background:var(--gold);color:#1a1208;min-height:var(--tap)}
+#dlg .np button:active{background:#ffcf3a}
+#dlg.hasin .sgn{display:none}
+body.touch #dlg.hasin{bottom:calc(16px + env(safe-area-inset-bottom))}
+
+/* ---- panels and buttons use the tokens ---- */
+.btn,.choice{font-family:var(--font-body);min-height:var(--tap);border-radius:var(--radius)}
+.modal{background:var(--bg);border-color:var(--gold)}
+.stm,.stm td{font-size:16px}
+.maudline{font-size:17px}
+@media (max-width:900px){#dlg .dc.withpad{grid-template-columns:1fr 200px}}
+
+/* ---- juice ---- */
+.fl{font:bold 22px var(--font-num);z-index:60}
+i.coin{position:absolute;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#e0a92c 60%,#8a5d12);border:1px solid #6d4f16;pointer-events:none;z-index:55}
+i.coin.lose{background:radial-gradient(circle at 35% 30%,#f4b0b0,#b3414f 60%,#6a1a26);border-color:#4a1018}
+#fade{position:absolute;inset:0;background:#0d0f1c;opacity:0;pointer-events:none;transition:opacity .26s;z-index:90}
+#fade.on{opacity:1;pointer-events:auto}
+#night{z-index:80;cursor:pointer}#night.on{pointer-events:auto}
+#night h2{font-size:32px}
+#night p{font-size:20px;margin:var(--sp1) 0}
+#night .card{background:var(--panel);color:var(--ink);border:3px solid var(--panel-edge);border-radius:var(--radius);box-shadow:inset 0 0 0 2px #d9a55e,var(--shadow);padding:var(--sp4) var(--sp5);min-width:340px;max-width:90%}
+#night .card h2{color:var(--ink);margin:0 0 var(--sp2)}
+#night .card p{opacity:1;color:var(--ink);font-size:20px}
+#night .card .pos,#night .card .neg{font-family:var(--font-num);font-weight:bold}
+#night .card .tap{font-size:16px;color:var(--muted);margin-top:var(--sp3)}
+
+/* ---- fast travel ---- */
+#travel{position:absolute;inset:0;background:rgba(20,14,8,.7);display:none;align-items:center;justify-content:center;z-index:85}
+#travel.on{display:flex}
+#travel .card{padding:var(--sp4) var(--sp5);max-width:92%}
+#travel h2{margin:0 0 var(--sp3);font-size:24px}
+#travel .tgrid{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:var(--sp2)}
+#travel button{font:bold 18px var(--font-body);min-height:64px;background:#fff5dc;border:2px solid var(--panel-edge);border-radius:var(--radius);cursor:pointer;color:var(--ink)}
+#travel button:hover{background:#ffe3a0}
+#travel .x{margin-top:var(--sp3);width:100%;min-height:var(--tap)}
+#menubtn .snd{margin-left:var(--sp2)}
