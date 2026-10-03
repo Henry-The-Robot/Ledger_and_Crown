@@ -8,7 +8,11 @@ f.onload = async () => { try {
   const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300);
   const txt = () => d.getElementById("dlg").textContent, btn = re => [...d.querySelectorAll("#dlg button")].find(b => re.test(b.textContent));
   const S = w.Spring, s = w.G.s; w.G.closeDlg(); w.G.hidePanel(); while (s.day < 11) S.sleep(s);
-  w.G.talk("ashby"); await sleep(50); out.push(`offer mentions the deposit: ${/marrying/.test(txt()) && /paid up front/.test(txt())}`);
+  w.G.talk("ashby"); await sleep(50);
+  // two live Ashby orders on day 11: the picker lists both, so the regular one is never hidden
+  out.push(`picker shows both orders: ${/more than one order/.test(txt()) && /paid up front/.test(txt()) && [...d.querySelectorAll("#dlg button")].length >= 3}`);
+  btn(/paid up front/).click(); await sleep(80);
+  out.push(`offer mentions the deposit: ${/marrying/.test(txt()) && /paid up front/.test(txt())}`);
   const c0 = s.bal.cash; btn(/Accept/).click(); await sleep(80);
   out.push(`deposit taken: ${s.bal.cash > c0 && s.bal.deposits < 0}`, `maud explains the liability: ${/Customer deposits/.test(txt()) && /Revenue didn't move/.test(txt())}`);
   btn(/Open the Ledger/).click(); await sleep(50);
