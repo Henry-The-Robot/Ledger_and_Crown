@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Predict timeline: no spoilers</title></head><body><pre id="out">running</pre>
+<!-- In predict mode nothing on screen may reveal the lowest Cash (or any closing Cash) until the player locks in a guess. Play mode, which is meant to show the
+     result of moving a bill, is the control. Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/predict-spoiler.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+(async () => { try {
+  const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1&touch=0"; document.body.appendChild(f); await new Promise(r => f.onload = r); await sleep(300);
+  const w = f.contentWindow, d = w.document, G = w.G, s = G.s, V = w.Verbs, errs = []; w.addEventListener("error", e => errs.push(e.message)); G.closeDlg(); G.hidePanel();
+  S = w.Spring; s.invoices.push({ id: 91, who: "hobb", amount: 40, due: s.day + 3 }); s.bal.ar += 40; s.bal.revenue -= 40; // something to forecast
+  const act = S.forecast(s, 14).reduce((a, r) => r.close < a.close ? r : a), panel = () => d.getElementById("panelBody");
+  let result = null; V.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast", maud: "Tell me your lowest coin." }).then(r => result = r); await sleep(80);
+  const txt = () => panel().textContent, svg = () => [...panel().querySelectorAll("svg line, svg circle")].filter(e => !e.getAttribute("stroke-dasharray"));
+  out.push(`predict: no "on this plan" line before you commit: ${!/on this plan/i.test(txt())}`);
+  out.push(`predict: the Cash line is not drawn (no line or dots on the strip): ${svg().length === 0}`);
+  const closes = S.forecast(s, 14).map(r => r.close).filter(c => c !== s.bal.cash && !/^\s*$/.test(String(c)));
+  const leaked = closes.filter(c => new RegExp("(^|[^0-9-])" + c + "([^0-9]|$)").test(txt().replace(/day\s*\d+/gi, "")));
+  out.push(`predict: no closing-Cash number is on screen (leaked ${JSON.stringify(leaked)}): ${leaked.length === 0}`);
+  const day = d.querySelector(".vtl-day"); if (day) day.click(); await sleep(30);
+  out.push(`predict: tapping a day explains its events but not the Cash it ends on: ${!/Cash ends the day/i.test(txt())}`);
+  out.push(`predict: the only way forward is to lock in a guess: ${!!d.getElementById("tlok") && /Lock in/.test(d.getElementById("tlok").textContent)}`);
+  d.getElementById("tlLow").value = act.close; d.getElementById("tlDay").value = act.day; d.getElementById("tlok").click(); await sleep(60);
+  out.push(`after locking in, the line and the answer appear: ${/The line says/.test(txt()) && svg().length > 0}`);
+  d.getElementById("tlok2").click(); await sleep(30); out.push(`and the result carries the guess: ${result && result.okLow && result.okDay}`);
+  // control: play mode shows the lowest Cash on the plan, because moving a bill is the point
+  const bill = { amount: 60, due: s.day + 10, discBy: s.day + 7, disc: 1 }; V.timeline({ mode: "play", bill, n: 14, title: "t" }); await sleep(60);
+  out.push(`control: play mode does show "Lowest Cash on this plan": ${/Lowest Cash on this plan/.test(txt())}`); d.getElementById("tlok").click();
+  out.push(`errors: ${JSON.stringify(errs)}`);
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>

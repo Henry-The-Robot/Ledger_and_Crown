@@ -5,7 +5,17 @@
   const KEY = "lc_sound", reduce = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
   let on = false, ac = null;
   try { on = localStorage.getItem(KEY) === "1"; } catch (e) {}
-  function ctx() { if (!on) return null; try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (e) { ac = null; } return ac; }
+  // iOS (Safari and every iPad browser) only lets audio start from inside a user gesture, and a context created later, for example when Cash changes overnight, stays
+  // suspended for good. So the first tap, click or key press creates the ONE shared context, resumes it and plays a one-sample silent buffer (the standard unlock);
+  // every later gesture re-resumes it if iOS suspended it (a backgrounded tab, a phone call). Nothing is audible until sound is switched on in the menu.
+  let unlocked = false;
+  function make() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } return ac; }
+  function unlock() {
+    const a = make(); if (!a) return; if (unlocked && a.state === "running") return;
+    try { if (a.state !== "running") a.resume(); if (!unlocked) { const src = a.createBufferSource(); src.buffer = a.createBuffer(1, 1, 22050); src.connect(a.destination); src.start(0); unlocked = true; } } catch (e) {}
+  }
+  ["pointerdown", "touchend", "click", "keydown"].forEach(t => window.addEventListener(t, unlock, { capture: true, passive: true }));
+  function ctx() { if (!on) return null; make(); try { if (ac && ac.state === "suspended") ac.resume(); } catch (e) {} return ac; }
   function tone(freq, t0, dur, type, vol, slideTo) { const a = ctx(); if (!a) return;
     const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0; o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
     if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
@@ -13,6 +23,7 @@
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .02); }
   const FX = {
     get muted() { return !on; },
+    unlock, get audioState() { return ac ? ac.state : "none"; }, get unlocked() { return unlocked; },
     setSound(v) { on = !!v; try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (e) {} if (on) FX.clink(); },
     clink() { tone(1568, 0, .16, "sine", .12); tone(2093, .07, .22, "sine", .09); },
     thud() { tone(140, 0, .22, "triangle", .2, 50); },

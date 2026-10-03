@@ -17,6 +17,9 @@
     apDays: 14, discDays: 7, discPct: 0.02, // Tomas's terms: "2/7, net 14" (2% off if paid within 7 days)
     prepayBefore: 21,           // Ezra charges one week's interest on any amount repaid before day 21: the interest he was counting on
     factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
+    // The Duke's one big order (sandbox and story use the same numbers). 132 sacks is more than a careful player can grow and carry unless they borrow and
+    // decline other orders; a player who says yes to everything runs out of Cash on a pay-day and is finished. Tuned with the bots in tests/test-crown.js.
+    duke: { sacks: 132, price: 10, terms: 28, dueIn: 12 },
     crownDebt: 1250,            // owed to the Crown at Midwinter (the story's goal); a careful season ends close to it, so the last weeks matter
     bridgeMax: 250, rescueRateBp: 200, // Ezra will bridge a small gap at Midwinter; his one emergency loan costs 2 points a week more
     rain: [5, 12, 13, 20, 26],
@@ -46,7 +49,7 @@
   // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.
   const OFFERS = [
     [1, "ashby", 6, 8, 0, 4], [2, "hobb", 18, 9, 14, 6], [4, "ashby", 9, 8, 0, 4], [6, "hobb", 24, 9, 14, 6],
-    [8, "ashby", 9, 8, 0, 4], [10, "duke", 90, 10, 21, 12], [11, "ashby", 12, 8, 0, 4], [13, "hobb", 27, 9, 14, 6],
+    [8, "ashby", 9, 8, 0, 4], [10, "duke", R.duke.sacks, R.duke.price, R.duke.terms, R.duke.dueIn], [11, "ashby", 12, 8, 0, 4], [13, "hobb", 27, 9, 14, 6],
     [15, "ashby", 12, 8, 0, 4], [18, "hobb", 30, 9, 14, 6], [19, "ashby", 12, 8, 0, 4], [22, "ashby", 12, 8, 0, 4],
     [23, "hobb", 24, 9, 14, 5], [25, "ashby", 9, 8, 0, 3],
   ];
@@ -420,7 +423,7 @@
     const frost = Object.keys(R.events).map(Number).find(d => R.events[d] === "frost" && d >= s.day && d <= s.day + 4);
     if (frost && short + 3 > 0 && openOrders(s).some(o => o.due >= frost && o.due <= frost + 2)) return { danger: true, text: `Frost on day ${frost}: nothing grows that night, and an order is due day ${openOrders(s).find(o => o.due >= frost && o.due <= frost + 2).due}. Be sure the sacks are in the barn before the frost, not in the field.` };
     if (short > 0) return { danger: short > 20, text: `Open orders need ${committed(s)} sacks; Inventory plus the field makes ${s.sacks + sacksComing(s)}. Plant ${Math.ceil(short / 3)} more plots.` };
-    if (s.offers.some(o => o.who === "duke")) return { danger: false, text: `The Duke pays 21 days after delivery. Seed and wages are paid now: can Cash wait that long?` };
+    if (s.offers.some(o => o.who === "duke")) return { danger: false, text: `The Duke pays ${R.duke.terms} days after delivery. Seed and wages are paid now: can Cash wait that long?` };
     if (s.bal.ar > 2 * cash && cash < 150) return { danger: false, text: `Accounts receivable ${s.bal.ar}, Cash ${cash}. Revenue isn't Cash until the invoice is paid.` };
     if (s.day === 1) return { danger: false, text: `E to till, plant and water. Ashby pays Cash on delivery; Hobb pays 14 days after.` };
     return null;

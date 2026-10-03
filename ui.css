@@ -7,7 +7,7 @@ body{background:var(--bg)}
 /* ---- HUD: one row (Day, Cash, Crown fund, goal, Travel, Books), balance-sheet boxes in a collapsible strip ---- */
 #hud{left:var(--sp2);right:124px;top:var(--sp2);flex-direction:column;flex-wrap:nowrap;gap:var(--sp2);font:bold 18px var(--font-body)}
 body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top))}
-#hudrow{display:flex;gap:var(--sp2);align-items:stretch;flex-wrap:wrap}
+#hudrow{display:flex;gap:var(--sp2);align-items:stretch;flex-wrap:nowrap}
 #hudmain{display:contents}
 #hud .wood,body.touch #hud .wood{padding:var(--sp1) var(--sp3);min-height:var(--tap);display:flex;align-items:center;gap:var(--sp2);font-size:18px;white-space:nowrap;pointer-events:auto}
 #hud .k,body.touch #hud .k{font-size:14px;color:var(--muted);margin-right:0;font-weight:normal}
@@ -15,9 +15,19 @@ body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + en
 #hud .warn .v{color:var(--red)}
 .meter{display:inline-block;width:96px;height:14px;border:2px solid var(--panel-edge);border-radius:var(--sp1);background:#e9dab8;overflow:hidden}
 .meter i{display:block;height:100%;background:var(--green);transition:width .6s}
-#goal,body.touch #goal{position:static;flex:1 1 220px;min-width:0;max-width:none;padding:var(--sp1) var(--sp3);font:bold 16px/1.25 var(--font-body);max-height:calc(var(--tap) + 8px);overflow:hidden;align-items:center}
+#goal,body.touch #goal{position:static;flex:none;width:100%;min-width:0;max-width:none;padding:var(--sp1) var(--sp3);font:bold 16px/1.25 var(--font-body);overflow:visible;align-items:center;pointer-events:auto}
+#goal .k{display:inline;margin-right:var(--sp2)}
 #goal .k{display:block;font:13px var(--font-body);color:var(--red);letter-spacing:.06em;text-transform:uppercase}
 .hbtn{font:bold 18px var(--font-body);cursor:pointer;color:var(--ink);justify-content:center}
+.rainic{display:none}
+/* narrow screens (an iPad in portrait, 834px): the HUD stays ONE row by shortening labels and the meter, never by wrapping */
+@media (max-width:900px){
+  #hud .wood,body.touch #hud .wood{padding:var(--sp1) var(--sp2);gap:var(--sp1);font-size:16px}
+  #hud .v{font-size:18px}#hud .k,body.touch #hud .k{font-size:13px}
+  #h-fund .kl{display:none}.meter{width:56px}
+  .rainw{display:none}.rainic{display:inline}
+  .hbtn{font-size:16px}
+}
 .hbtn:hover,.hbtn.on{background:#ffe3a0}
 #books{display:none;flex-wrap:wrap;gap:var(--sp2);align-items:stretch}
 #books.open{display:flex}
@@ -45,6 +55,9 @@ body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + en
 #dlg .np button.ok,body.touch #dlg .np button.ok{grid-column:1/-1;font:bold 18px var(--font-body);background:var(--gold);color:#1a1208;min-height:var(--tap)}
 #dlg .np button:active{background:#ffcf3a}
 #dlg.hasin .sgn{display:none}
+/* One Check per ask: on touch the number pad's own Check button (big, under the keys) is the only one; on a desktop the inline Check beside the box is the only one. The hidden one stays in the DOM: the other calls it (and Enter does too). */
+body.touch #dlg .dc.withpad .ch button:first-child{display:none}
+body:not(.touch) #dlg .np button.ok{display:none}
 body.touch #dlg.hasin{bottom:calc(16px + env(safe-area-inset-bottom))}
 
 /* ---- panels and buttons use the tokens ---- */

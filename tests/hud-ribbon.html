@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>HUD: one row and a goal ribbon</title></head><body><pre id="out">running</pre>
+<!-- The top bar is ONE row (Day, Cash, Crown fund, Travel, Books) at 1194x834 and 834x1194; the chapter goal is its own ribbon underneath, never clipped.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=40000 --dump-dom tests/hud-ribbon.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+function load(q, w, h) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = w + "px"; f.style.height = h + "px"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => res(f); }); }
+(async () => { try {
+  for (const [name, w, h, touch] of [["iPad landscape 1194x834", 1194, 834, 1], ["iPad portrait 834x1194", 834, 1194, 1], ["desktop 1280x800", 1280, 800, 0]]) {
+    const f = await load(`?new=1&touch=${touch}`, w, h), win = f.contentWindow, d = win.document, errs = []; win.addEventListener("error", e => errs.push(e.message)); await sleep(400); win.G.closeDlg();
+    const row = d.getElementById("hudrow"), items = [...row.querySelectorAll(":scope > .wood, #hudmain > .wood")].filter(k => k.offsetParent), menu = d.getElementById("menubtn").getBoundingClientRect();
+    const tops = new Set(items.map(k => Math.round(k.getBoundingClientRect().top))), right = Math.max(...items.map(k => k.getBoundingClientRect().right));
+    out.push(`${name}: HUD is one row (${items.length} items, ${tops.size} row): ${tops.size === 1 && items.length === 5}; clear of the Menu button (${Math.round(right)} <= ${Math.round(menu.left)}): ${right <= menu.left + 1}`);
+    // every chapter goal, longest first: shown whole, on its own ribbon below the row, row unchanged
+    const goals = Object.values(win.Story.goalTexts()), longest = goals.slice().sort((a, b) => b.length - a.length)[0], g = d.getElementById("goal");
+    let clipped = 0, moved = 0; const base = row.getBoundingClientRect().height;
+    for (const t of goals) { win.G.goal(t, 7); await sleep(10); if (g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1) clipped++; if (Math.abs(row.getBoundingClientRect().height - base) > 1) moved++; }
+    win.G.goal(longest, 7); await sleep(10); const gr = g.getBoundingClientRect(), rr = row.getBoundingClientRect();
+    out.push(`${name}: all ${goals.length} goal texts shown whole (clipped ${clipped}) and none changes the HUD row (${moved}); ribbon sits under the row (${Math.round(gr.top)} >= ${Math.round(rr.bottom)}): ${clipped === 0 && moved === 0 && gr.top >= rr.bottom - 1}`);
+    out.push(`${name}: errors ${JSON.stringify(errs)}`);
+  }
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>

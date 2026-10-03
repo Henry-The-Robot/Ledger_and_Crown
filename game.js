@@ -557,8 +557,8 @@
     if (!hud.wired) { hud.wired = 1; hudInit(); $("hud").addEventListener("click", e => { const el = e.target.closest(".wood"); if (el && el.id && !dlgOpen() && !panelOpen()) explain(el.id.replace(/^h-/, "")); }); }
     // Row 1: Day, Cash, Crown fund meter, goal, Travel, Books. The balance-sheet boxes live in the Books strip (opens at the desk, on tap, or when a lesson spotlights one).
     const fund = S.crownFund(s).net, pct = Math.max(0, Math.min(100, Math.round(fund / S.R.crownDebt * 100)));
-    $("hudmain").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
-      `<span class="wood" id="h-fund"><span class="k">Toward the Crown</span><span class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="${S.R.crownDebt}" aria-valuenow="${fund}"><i style="width:${pct}%"></i></span><b class="v">${fund} / ${S.R.crownDebt}</b></span>`;
+    $("hudmain").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? `<span class="rainw"> · rain</span><span class="rainic"> ☔</span>` : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
+      `<span class="wood" id="h-fund"><span class="k"><span class="kl">Toward the </span>Crown</span><span class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="${S.R.crownDebt}" aria-valuenow="${fund}"><i style="width:${pct}%"></i></span><b class="v">${fund} / ${S.R.crownDebt}</b></span>`;
     $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
@@ -572,7 +572,7 @@
   let booksPin = false, curSpot = [];
   function hudInit() {
     $("hud").innerHTML = `<div id="hudrow"><span id="hudmain"></span></div><div id="books"></div>`;
-    const row = $("hudrow"); row.appendChild($("goal"));
+    const row = $("hudrow"); $("hud").insertBefore($("goal"), $("books")); // the chapter goal is its own ribbon under the one-row HUD, so it never gets squeezed or pushes Travel and Books down
     [["travelbtn", "Travel ➜", openTravel], ["booksbtn", "Books ▾", () => { booksPin = !booksPin; booksOpen(); }]].forEach(([id, label, fn]) => {
       const b = document.createElement("button"); b.id = id; b.type = "button"; b.className = "wood hbtn"; b.textContent = label; b.onclick = e => { e.stopPropagation(); fn(); }; row.appendChild(b); });
   }
@@ -679,7 +679,7 @@
   function pickLine(text, target, hints) { return new Promise(res => { let tries = 0; window.__pick = target;
     $("mline").innerHTML = `<b>Maud:</b> ${text}`; const rows = document.querySelectorAll("#cft tr[data-line]");
     rows.forEach(r => { if (!r.dataset.line) return; r.classList.add("pick"); r.onclick = () => {
-      if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(); }
+      if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
   function wire() { const a = $("again"), g = $("goEzra"); if (a) a.onclick = restart; if (g) g.onclick = review; }
   function review() {
