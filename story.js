@@ -179,7 +179,7 @@ window.Story = (function () {
     const r = G.act(() => S.buySeeds(G.s, c ? 9 : 6, true));
     if (!r.ok) { await G.say("tomas", r.msg); return; }
     const bill = G.s.bills[G.s.bills.length - 1];
-    const V = Verbs, r2 = await V.timeline({ mode: "play", bill, n: 14, title: "When do you pay Tomas?", maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and you save ${bill.disc}; pay later and you keep the coin. But the Cash has to be there on day ${bill.due}.` });
+    const V = Verbs, r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and you save ${bill.disc}; pay later and you keep the coin. But the Cash has to be there on day ${bill.due}.` });
     mastered("ap");
     const pay = r2.paidNow ? 0 : 1; if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
     keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${G.s.day}: seed bill ${bill.amount}, 2% off by day ${bill.discBy} = ${bill.disc}; you ${pay === 0 ? "paid early" : r2.day < bill.due ? `planned to pay on day ${r2.day}` : "kept the Cash"}.`);
