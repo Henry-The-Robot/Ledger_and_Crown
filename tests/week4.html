@@ -15,7 +15,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   out.push(`week 4: Maud only nods (no problem, no menu of lessons): ${!btns().some(b => /problem/i.test(b.textContent)) && /nods|danger|quiet|speaks only|rat|Barnaby|pig|Pell/.test(txt())} [${txt().slice(0, 90)}]`); G.closeDlg();
   G.desk(); await sleep(80); out.push(`week 4: the desk lists Ezra's problem, not Maud's: ${btns().some(b => /Ezra's problem \(new\)/.test(b.textContent)) && !btns().some(b => /Maud's problem/.test(b.textContent))}`); G.closeDlg();
   w.Story.testScene("none"); G.talk("ezra"); await sleep(80); out.push(`week 4: Ezra offers "A problem on your books": ${btns().some(b => /A problem on your books/.test(b.textContent))}`);
-  click(/A problem on your books/); await sleep(100);
+  click(/A problem on your books/); await sleep(100); if (btns().some(b => /No stake/.test(b.textContent))) { click(/No stake/); await sleep(100); } // (T5's optional wager comes first)
   out.push(`the question is asked by Ezra, with no Explain-how button: ${/Ezra/.test(d.getElementById("dlg").textContent) && !btns().some(b => /Explain how/.test(b.textContent))} (answer ${w.__want})`);
   d.getElementById("num").value = String(w.__want); click(/Check/); await sleep(150);
   out.push(`a right answer counts: ${s.practice.done[s.day] === 2} and earns Ezra's regard (trust ${s.trust.ezra})`); G.closeDlg();
