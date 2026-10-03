@@ -41,7 +41,7 @@
     factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
-    mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
+    crane: "Bailiff Crane", mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.
   const OFFERS = [
@@ -66,7 +66,7 @@
     Object.keys(ACCTS).forEach(k => s.bal[k] = 0);
     const f = R.field;
     for (let i = 0; i < f.w * f.h; i++) s.plots.push({ i, x: f.x0 + i % f.w, y: f.y0 + Math.floor(i / f.w), tilled: i < f.w, watered: false, crop: null, sprinkler: false });
-    [0, 1, 2].forEach(i => s.plots[i].crop = { age: 2, cost: R.seedCost });
+    [0, 1, 2].forEach(i => s.plots[i].crop = { age: R.growDays, cost: R.seedCost }); // WS3: three plots start ripe, so the player harvests in minute 2
     const cash = 200 + (opt.bonus || 0), inv = s.sacks * R.unitCost + 3 * R.seedCost, loan = 100;
     const crown = R.crownDebt;
     post(s, "open", "Opening balances: the estate as Uncle Edric left it", { cash, inv, loan: -loan, crown: -crown, capital: -(cash + inv - loan - crown) });
@@ -75,6 +75,9 @@
     note(s, "Spring, day 1. Cash " + cash + ", 15 sacks in the barn, Edric's 100 loan from Ezra, and " + R.crownDebt.toLocaleString("en-US") + " owed to the Crown at Midwinter.");
     return s;
   }
+  // WS3: a wager with Maud. The stake is real Cash, posted as an Operating expense (so the books still tie); a win pays the stake back twice over.
+  function wager(s, stake, memo) { if (!(stake > 0)) return ok(); if (s.bal.cash < stake) return err("Not enough Cash for that stake."); post(s, "wager", `${memo}: stake ${stake} (Operating expense)`, { upkeep: stake, cash: -stake }); return ok(); }
+  function wagerWin(s, stake, memo) { if (!(stake > 0)) return ok(); post(s, "wager", `${memo}: won, stake ${stake} back plus ${stake}`, { cash: 2 * stake, upkeep: -2 * stake }); return ok(); }
   function newWeek() { return { revenue: 0, cogs: 0, sacksSold: 0 }; }
 
   // ---------- the journal ----------
@@ -257,15 +260,21 @@
     const d = s.day;
     const ev = R.events[d];
     if (s.boost === d) s.plots.forEach(p => { if (p.crop && p.crop.age < R.growDays) p.crop.age++; });
-    s.plots.forEach(p => { if (p.crop && ev !== "frost" && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) p.crop.age++; p.watered = false; });
+    const grown = []; s.plots.forEach(p => { if (p.crop && ev !== "frost" && (p.watered || rain(d) || sprinkled(s, p)) && p.crop.age < R.growDays) { p.crop.age++; grown.push(p); } p.watered = false; });
     if (ev) overnight(s, ev);
     s.invoices.filter(v => v.due <= d).forEach(v => { post(s, "collect", `${NAMES[v.who]} paid invoice of ${v.amount}`, { cash: v.amount, ar: -v.amount }); use(s, "ar"); note(s, `${NAMES[v.who]} paid ${v.amount}.`); });
     s.invoices = s.invoices.filter(v => v.due > d);
     if (d % 7 === 0) {
       const t = terms(s), interest = Math.round(-s.bal.loan * t.rateBp / 10000);
-      if (s.bal.cash < wages(s) + interest) rescue(s, wages(s) + interest - s.bal.cash);
-      if (s.bal.cash < wages(s) + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${wages(s) + interest} of wages and interest. The hands walk off.`);
-      post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: wages(s), cash: -wages(s) });
+      // WS3 (story games): the first wages day Cash cannot cover, the farmhand walks off for the week instead of Ezra rescuing you: no wages are owed,
+      // but crops that grew by hand-watering tonight lose that day, and Maud trusts you a little less. Skipped when Cash cannot even cover the interest.
+      const walkOff = s.story && !s.walkedOff && s.bal.cash < wages(s) + interest && s.bal.cash >= interest;
+      if (walkOff) { s.walkedOff = d; s.walkedWages = wages(s); grown.filter(p => !sprinkled(s, p) && !rain(d)).forEach(p => p.crop.age--); bump(s, "maud", -1); note(s, `Cash ${s.bal.cash} couldn't cover ${wages(s)} in wages. Jory walked off for the week, and the crops weren't watered tonight.`); }
+      else {
+        if (s.bal.cash < wages(s) + interest) rescue(s, wages(s) + interest - s.bal.cash);
+        if (s.bal.cash < wages(s) + interest) return insolvent(s, `Cash ${s.bal.cash} can't cover ${wages(s) + interest} of wages and interest. The hands walk off.`);
+        post(s, "upkeep", `Week ${d / 7} wages & upkeep`, { upkeep: wages(s), cash: -wages(s) });
+      }
       if (interest) { post(s, "interest", `Week ${d / 7} interest on Ezra's loan`, { interest, cash: -interest }); use(s, "tvm"); }
       if (s.bal.equip + s.bal.accdep > 0) { const dep = Math.min(R.depPerWeek * Math.round(s.bal.equip / R.sprinklerCost), s.bal.equip + s.bal.accdep); post(s, "dep", "Depreciation on the sprinkler", { depreciation: dep, accdep: -dep }); use(s, "depreciation"); }
       const gp = s.week.revenue - s.week.cogs;
@@ -418,6 +427,6 @@
   }
 
   root.Spring = { R, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -5,7 +5,7 @@
      game's own expected value, fills the forecast boards, haggles (accepts the counter), ships from the crate, sleeps,
      runs the rest of the season with the careful bot, then the guided close and Ezra's review. Also checks the save
      (reload after chapter 5 -> "Continue" restores the stage). Reports every JS error.
-     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=120000 --dump-dom tests/smoke-story.html
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=400000 --dump-dom tests/smoke-story.html
      Screenshot a stage: ...smoke-story.html?stopAt=ashby3 (stops at the first typed-number question in that stage). -->
 <script>
 const out = [], log = t => out.push(t), errs = [], P = new URLSearchParams(location.search), stopAt = P.get("stopAt");
@@ -13,11 +13,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 function load(q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px";
   f.onload = () => { f.contentWindow.addEventListener("error", e => errs.push(e.message)); res([f, f.contentWindow]); }; f.src = "../game.html" + q; document.getElementById("frames").appendChild(f); }); }
 const vis = el => el && el.offsetParent !== null && getComputedStyle(el).display !== "none";
-let typed = 0, boards = 0, picks = 0, haggles = 0;
+let tl = 0, tags = 0, typed = 0, boards = 0, picks = 0, haggles = 0;
 function pump(w) { // do the one thing the screen is asking for; true if something was done
   const d = w.document, panel = d.getElementById("panel"), dlg = d.getElementById("dlg");
   if (panel.style.display !== "none") {
     const click = id => { const b = d.getElementById(id); if (b) { b.click(); return true; } };
+    if (d.getElementById("tlLow") && w.__tl) { d.getElementById("tlLow").value = w.__tl.low; d.getElementById("tlDay").value = w.__tl.day; tl++; return click("tlok"); } // WS3 timeline
+    if (click("tlok2") || click("tlok")) { tl++; return true; }
+    const pcl = d.querySelector("#panelBody .pclose"); if (pcl) { pcl.click(); return true; } // a reference panel opened by a "Later/Open the Ledger" lesson
     if (click("pgok") || click("rnext") || click("pclose")) return true;
     const ins = d.querySelectorAll("#panelBody input.fc"); if (d.getElementById("bok")) { ins.forEach(x => x.value = x.dataset.ans); boards++; return click("bok"); }
     if (w.__pick) { const r = d.querySelector(`#cft tr[data-line="${w.__pick}"]`); if (r) { r.click(); picks++; return true; } }
@@ -33,17 +36,19 @@ function pump(w) { // do the one thing the screen is asking for; true if somethi
 }
 async function drive(w, until) {
   const G = w.G, St = w.Story, seen = [];
-  for (let i = 0; i < 6000; i++) {
+  for (let i = 0; i < 20000; i++) {
     await sleep(4);
     const stage = St.state.stage; if (seen[seen.length - 1] !== stage) seen.push(stage);
     const D = w.document, n = +(P.get("n") || 1);
     if (stopAt && stage === stopAt && (P.has("pick") ? w.__pick : (D.getElementById("num") && w.__want !== undefined) || D.getElementById("bok"))) { if ((drive.hits = (drive.hits || 0) + 1) >= n) return { seen, stopped: true }; }
     if (until && until(stage)) return { seen };
+    if (w.Verbs && w.Verbs.tagging) { tags++; w.Verbs.tapDecoy(); w.Verbs.tapNext(); continue; } // WS3: the tag verb, through the real hit-test
     if (pump(w)) continue;
     if (St.busy) continue;
     if (G.s.over) { if (w.document.getElementById("goEzra")) return { seen }; continue; }
     const s = G.s;
     switch (stage) {
+      case "harvest2": { const p = s.plots.find(p => p.crop && w.Spring.stage(s, p) === 4); if (p) G.interactTile(p.x, p.y); break; }
       case "tomas2": case "tomas6": G.talk("tomas"); break;
       case "plant2": { const p = s.plots.find(p => p.tilled && !p.crop && !p.sprinkler); if (p && s.seeds) G.interactTile(p.x, p.y); break; }
       case "ashby3": G.talk("ashby"); break;
@@ -60,7 +65,7 @@ async function drive(w, until) {
 }
 (async () => {
   try {
-    const [f, w] = await load("?fast=1&savetest=1&new=1"); await sleep(150); w.localStorage.removeItem("lc_transcript_v1");
+    const [f, w] = await load("?fast=1&savetest=1&new=1"); w.__fastVerbs = true; await sleep(150); w.localStorage.removeItem("lc_transcript_v1");
     // Every Try must be answerable and fully equipped: numeric answer and tolerance, docs list, working, Explain-how.
     const realAsk = w.G.ask, badAsks = []; w.G.ask = function (who, text, answer, hints, sp, tol, docs, work, how) {
       const why = [typeof answer !== "number" || isNaN(answer) ? "answer" : "", tol != null && typeof tol !== "number" ? "tol" : "", docs != null && !Array.isArray(docs) ? "docs" : "",
@@ -80,6 +85,8 @@ async function drive(w, until) {
     if (r2.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
     const st = w.Story.state, d = w.document;
     log(`chapters 6-9: stages ${r2.seen.join(" → ")}${r2.timeout ? " TIMEOUT" : ""}; outcome ${w.G.s.outcome} day ${w.G.s.day}`);
+    if (r2.timeout) log(`STUCK: dlg=${JSON.stringify(d.getElementById("dlg").innerText.slice(0, 200))} display=${d.getElementById("dlg").style.display} panel=${d.getElementById("panel").style.display} ${JSON.stringify(d.getElementById("panelBody").innerText.slice(0, 120))} busy=${w.Story.busy} stage=${st.stage}`);
+    log(`WS3: tag taps ${tags}, timeline panels ${tl}, bets pending/left ${JSON.stringify(w.G.s.bet || null)}, walkedOff ${w.G.s.walkedOff || "no"}`);
     log(`Try beats answered ${typed}, forecast boards ${boards}, haggles ${haggles}, line picks ${picks}; notebook: ${st.notebook.map(n => n.term).join("; ")}; journal pages ${st.pages.length}/5`);
     log(`Ezra rate after the forecast: ${w.G.s.rateAdj} bp off; Duke order: ${(w.G.s.orders.find(o => o.who === "duke") || { sacks: "none", status: "" }).sacks} ${(w.G.s.orders.find(o => o.who === "duke") || {}).status || ""}`);
     log(`close: statements unveiled ${d.querySelectorAll("#panelBody .veil").length === 0}, reconciles ${/reconciles ✓/.test(d.getElementById("panelBody").textContent)}, Ezra button ${!!d.getElementById("goEzra")}`);
