@@ -20,7 +20,7 @@
     // The Duke's one big order (sandbox and story use the same numbers). 132 sacks is more than a careful player can grow and carry unless they borrow and
     // decline other orders; a player who says yes to everything runs out of Cash on a pay-day and is finished. Tuned with the bots in tests/test-crown.js.
     duke: { sacks: 132, price: 10, terms: 28, dueIn: 12 },
-    // WS6: the story's Corvin Vale escalates (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order of half of duke.sacks, day 15 the whole duke.sacks.
+    // WS6: the story's Corvin Vane escalates (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order of half of duke.sacks, day 15 the whole duke.sacks.
     // The second order is due 9 days out (day 24, the same day as the first) so a player who says yes to everything has both fall due at once.
     // Tuned with the bots in tests/test-spine.js: careful still pays the Crown, the overtrader is sued for the forfeit, reckless goes insolvent.
     corvin: [{ day: 12, sacks: 66, dueIn: 12 }, { day: 15, sacks: 132, dueIn: 9 }],
@@ -61,7 +61,7 @@
     upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], losses: ["Crop & stock losses", "X"], interest: ["Interest expense", "X"],
     factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
-  const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "Corvin Vale, the Duke's steward",
+  const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "Corvin Vane, the Duke's steward",
     crane: "Bailiff Crane", mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.

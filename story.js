@@ -3,7 +3,7 @@
 // planted before the reveal: the case board pins one per lesson), and kishotenketsu inside each week. Calendar weeks drive the
 // title cards and the goal ribbon (day 1/8/15/22); the lesson stages below are the existing chapters, mapped into the weeks:
 //   Week 1 "The writ"        (days 1-7)   Crane's stamp, Crane's offer, harvest, Ashby, Tomas, Hobb
-//   Week 2 "Promises"        (days 8-14)  wages day, Tomas's terms (time value), Ezra's forecast, MIDPOINT day 12: Corvin Vale's first order, Edric's page
+//   Week 2 "Promises"        (days 8-14)  wages day, Tomas's terms (time value), Ezra's forecast, MIDPOINT day 12: Corvin Vane's first order, Edric's page
 //   Week 3 "The squeeze"     (days 15-21) Corvin's double order, events, Tomas offers again (the answer can flip), Crane's "mercy" visits
 //   Week 4 "The reckoning"   (days 22-28) Edric's cash book, close the books, the verdict + ending (the Audit duel is WS8)
 // Every concept runs Show -> Try -> Use -> Keep: Maud does it once with the player's real numbers (UI highlighted),
@@ -30,8 +30,8 @@ window.Story = (function () {
     "Maud keeps drawing me calendars of coin. I keep telling her: the Ledger shows a profit.",
     "The Duke wants grain, more than I've ever grown. Ezra will lend me the seed money. It's the making of us.",
     "Profit every year. Never once enough coin on wages day. If someone reads this: watch the chest, not the Ledger.",
-    // WS6: the midpoint page, found the night Corvin Vale brings his order. Numbers are the game's own constants (S.R.duke).
-    `Corvin Vale was here again with the Duke's order: ${S.R.duke.sacks} sacks at ${S.R.duke.price}, paid ${S.R.duke.terms} days after delivery. The same order as last spring. The same as the spring before. I sign, I borrow for seed, and by Midwinter I'm begging Ezra. I begin to think he counts on it.`,
+    // WS6: the midpoint page, found the night Corvin Vane brings his order. Numbers are the game's own constants (S.R.duke).
+    `Corvin Vane was here again with the Duke's order: ${S.R.duke.sacks} sacks at ${S.R.duke.price}, paid ${S.R.duke.terms} days after delivery. The same order as last spring. The same as the spring before. I sign, I borrow for seed, and by Midwinter I'm begging Ezra. I begin to think he counts on it.`,
   ];
   function fresh() { return { ch: 1, stage: "intro", notebook: [], pages: [], clues: [], weeks: [], farm: "Thornfield" }; }
   function init(g, saved) { G = g; st = Object.assign(fresh(), saved || {}); goal(); }
@@ -48,16 +48,16 @@ window.Story = (function () {
     "sleep5": "Wages day: sleep, and Maud will meet you in the morning",
     "tomas6": "Tomas's terms: buy your next seed from Tomas on account",
     "ezra7": "Ezra: ask the moneylender about a loan (purple roof)",
-    "sleep8": "The steward: run the farm and sleep; Corvin Vale comes to the well on day 12",
-    "duke8": "The steward: Corvin Vale is waiting by the well",
+    "sleep8": "The steward: run the farm and sleep; Corvin Vane comes to the well on day 12",
+    "duke8": "The steward: Corvin Vane is waiting by the well",
     "page8": "The page: sleep, and Maud will show you what she found",
-    "sleep9": "The squeeze: run the farm and sleep; Corvin Vale returns on day 15",
-    "duke9": "The squeeze: Corvin Vale is back at the well",
+    "sleep9": "The squeeze: run the farm and sleep; Corvin Vane returns on day 15",
+    "duke9": "The squeeze: Corvin Vane is back at the well",
     "tomas9": "Tomas offers again: Ezra's rate has moved; see Tomas on account",
     "run9": "Run the farm to the end of spring (day 28), then close the books",
     "done": "Spring is closed. Your notebook (N) and case board have everything you learned.",
   };
-  GOALS.sleep8now = "The steward: sleep; Corvin Vale comes to the well in the morning"; GOALS.sleep9now = "The squeeze: sleep; Corvin Vale returns to the well in the morning";
+  GOALS.sleep8now = "The steward: sleep; Corvin Vane comes to the well in the morning"; GOALS.sleep9now = "The squeeze: sleep; Corvin Vane returns to the well in the morning";
   const goalText = () => { const d = G && G.s ? G.s.day : 1; return (st.stage === "sleep8" && d >= 12 ? GOALS.sleep8now : st.stage === "sleep9" && d >= 15 ? GOALS.sleep9now : GOALS[st.stage]) || ""; };
   function goal() { const w = weekOf(G.s.day); G.goal(goalText(), st.ch, `${w === 0 ? "" : "Week " + w} · ${WEEKS[w].title}`); }
   function to(ch, stage) { if (window.Verbs) Verbs.parchClose(); /* a lesson page never outlives its stage */ st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
@@ -75,7 +75,7 @@ window.Story = (function () {
     const e = document.createElement("div"); e.className = "wkcard"; e.setAttribute("role", "status");
     e.innerHTML = `<div class="wk-farm">${farmName()}</div><div class="wk-n">Week ${w} of 4</div><div class="wk-t">${WEEKS[w].title}</div><div class="wk-l">${WEEKS[w].line}</div><div class="wk-m"><b>Maud:</b> ${WEEKS[w].maud}</div><div class="wk-tap">Tap to dismiss</div>`;
     e.onclick = () => e.remove(); document.getElementById("wrap").appendChild(e);
-    if (!hold) setTimeout(() => e.remove(), 7000);
+    if (!hold) setTimeout(() => e.remove(), 7000); else e.style.animation = "none"; // hold = screenshots: no entrance animation to catch half-faded
     return e;
   }
   const dueCard = () => { const d = G.s.day, w = weekOf(d); if (d === 1 + 7 * (w - 1) && st.weeks.indexOf(w) < 0) { st.weeks.push(w); return w; } return 0; };
@@ -132,9 +132,9 @@ window.Story = (function () {
     await G.say("crane", right ? "You've a head for it. Pity." : "Less. Much less.", ["Next"]);
     document.querySelectorAll(".vstamp").forEach(x => x.remove());
     // WS6: the writ needs a name (item 10), and Crane makes his standing offer (M3, item 3), both while he's still standing in the yard
-    await G.say("crane", "The writ needs a name for the land, heir. What do I write?", ["Give it a name"]);
+    await G.say("crane", "Item: the writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
     await nameFarm(); V.P.title = farmName(); V.parch();
-    await G.say("crane", `${farmName()}. A fine name for an estate I'll be selling by Midwinter.`, ["Next"]);
+    await G.say("crane", `Item: ${farmName()}. Item: entered on the writ.`, ["Next"]);
     await craneOffer({ first: true });
     if (G.s.over) return; // sold on day 1: the ending has been shown
     V.craneOn = false;
@@ -273,7 +273,7 @@ window.Story = (function () {
     keep("interest", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${c < 2 ? ` You borrowed ${c ? 200 : 100}: ${Math.round((c ? 200 : 100) * t.rateBp / 10000)} interest a week.` : ""}`, `${t0.rateBp / 100}% → ${t.rateBp / 100}% a week`, `Day ${G.s.day} · Ezra's forecast`);
     to(8, "sleep8");
   }
-  // ---------- chapters 8 and 8b: Corvin Vale, the Duke's steward (week 2 midpoint, week 3 squeeze). C2.09 overtrading; case W.T. Grant. Maud asks, then bets; she doesn't show. ----------
+  // ---------- chapters 8 and 8b: Corvin Vane, the Duke's steward (week 2 midpoint, week 3 squeeze). C2.09 overtrading; case W.T. Grant. Maud asks, then bets; she doesn't show. ----------
   // Escalation (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order (half of R.duke.sacks), day 15 a double order (R.duke.sacks). The timeline's second line
   // (tied up in sacks and invoices) shows what each order does to the working capital. Mastery only if the choice matched the player's OWN board.
   function arrive(n) { // Corvin's order n comes to the well (sizes and due dates: S.R.corvin)
@@ -284,8 +284,8 @@ window.Story = (function () {
   async function dukeScene(n) {
     const V = Verbs, o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(8, n === 1 ? "page8" : "tomas9"); return; }
     const D = S.R.duke, sacks = o.sacks, half = Math.round(sacks / 6) * 3, value = sacks * o.price;
-    await G.say("duke", n === 1 ? `Corvin Vale, steward to His Grace the Duke. You will be the heir. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery.`
-      : `Corvin Vale again, heir. His Grace is delighted with the first. Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
+    await G.say("duke", n === 1 ? `Corvin Vane, steward to His Grace the Duke. You will be the heir. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery.`
+      : `Corvin Vane again, heir. His Grace is delighted with the first. Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
     if (n === 1) { await page(3); await tell("This is the order that killed your uncle. I won't tell you what to do. I'll ask."); }
     const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * S.R.seedCost;
     const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a), ord = { sacks, price: o.price, due: o.due };
@@ -309,7 +309,7 @@ window.Story = (function () {
     const choice = [`all ${sacks}`, "half", "to decline"][c];
     if (n === 1) keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. The gap grows with sales and only comes back when growth stops. Forecast before you say yes.", `Corvin's first order, ${sacks} sacks: lowest Cash ${low.close} on day ${low.day} if taken, ${money(delta)} tied up. You chose: ${choice}.`, `Cash low ${low.close}, ${money(delta)} tied up`, `Day ${G.s.day} · Corvin's first order`);
     else { addEx("overtrading", `The double order, ${sacks} sacks: lowest Cash ${low.close}, ${money(delta)} tied up (the first tied up ${money(st.tied1 || 0)}). You chose: ${choice}.`); pin("duke2", "Corvin's double order", `${money(delta)} tied up (was ${money(st.tied1 || 0)})`, `Day ${G.s.day} · Corvin's second order`); }
-    if (n === 1) to(8, "page8"); else { await vale(); to(8, "tomas9"); }
+    if (n === 1) to(8, "page8"); else to(8, "tomas9");
   }
   async function ch9t() { await tvmScene(true); to(9, "run9"); } // week 3: Tomas offers again; Ezra's rate has moved, and the answer can flip
   const ch8 = () => dukeScene(1), ch8b = () => dukeScene(2);
@@ -320,12 +320,7 @@ window.Story = (function () {
     await tell("The same order, every spring, from the same man. Edric didn't miscount. Someone made sure the coin ran out.");
     to(8, "sleep9");
   }
-  // Week 3: Crane is revealed as Corvin's man.
-  async function vale() {
-    const o = Endings.offer(G.s);
-    await G.say("crane", `Master Vale sends his regards, heir. He asks me to say the Crown's collector is a patient man. ${farmName()} can be mine any day for ${money(o.price)}.`, ["Next"]);
-    pin("crane-vale", "Crane works for Vale", "“Master Vale sends his regards”", `Day ${G.s.day} · Crane, week 3`);
-  }
+  // (Canon: Crane is NOT Vane's man. He carries Vane's offer as an instructed messenger, reluctantly; see craneOffer.)
   // ---------- week 4 (item 6): Maud's last scene. Edric's cash book, the second ledger he kept and never read beside the first. ----------
   // Rows are rebuilt from the player's own journal: cumulative Net income (the Ledger) and Cash (the chest) at the end of each week.
   function cashBookRows(s) {
@@ -406,9 +401,10 @@ window.Story = (function () {
   const money = v => Number(v).toLocaleString("en-US");
   async function craneOffer(opts) { // opts.first: the day-1 scene; opts.mercy: Crane's visit when you are short for wages
     opts = opts || {}; const E = Endings, o = E.offer(G.s), farm = farmName();
-    const intro = opts.first ? `The Duke will take ${farm} off your hands today. ${money(o.price)}, in coin, on the table. Or you carry the Crown's ${money(S.R.crownDebt)} to Midwinter alone.`
-      : o.mercy ? `Master Vale sends his regards, heir. Cash ${money(o.cash)}, and ${money(o.wages)} of wages due. I can be merciful: ${money(o.price)} for ${farm}, today.`
-      : `The Duke's offer for ${farm} stands: ${money(o.price)}.`;
+    // Crane's voice: he numbers his sentences ("Item:"), and he delivers Steward Vane's offer reluctantly, as an instructed messenger.
+    const intro = opts.first ? `Item: I am instructed to convey an offer from Steward Vane for ${farm}. Item: ${money(o.price)}, in coin, today. Item: I do not recommend it.`
+      : o.mercy ? `Item: Cash is ${money(o.cash)}, and ${money(o.wages)} of wages fall due. Item: I am instructed to repeat the offer for ${farm} at a reduced ${money(o.price)}. Item: I still do not recommend it.`
+      : `Item: Steward Vane's offer for ${farm} stands at ${money(o.price)}. Item: I am obliged to say so.`;
     const c = await G.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
     if (c === 0) { pin("offer", "Crane's offer", `${money(o.price)} now`, `Day ${G.s.day} · Crane's offer (money now vs the farm later)`); return false; }
     const sure = await G.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
@@ -446,6 +442,15 @@ window.Story = (function () {
     return showEnding(kind);
   }
 
+  // screenshots and tests only (_build-shots/ws6-shots.html): force-start one scene on the current game, whatever the story was doing
+  function testScene(kind) {
+    busy = false; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); const s = G.s;
+    if (kind === "corvin" || kind === "tied") { s.day = Math.max(s.day, 12); st.ch = 8; arrive(1); G.hud(); run(() => dukeScene(1)); }
+    else if (kind === "page") { st.ch = 8; run(() => page(5)); }
+    else if (kind === "cashbook") { s.day = Math.max(s.day, 22); to(9, "run9"); run(cashBook); }
+    else if (kind === "offer") run(() => craneOffer({ first: true }));
+    else if (kind === "tvm") { st.ch = 6; st.stage = "tomas6"; run(() => tvmScene(false)); }
+  }
   // ---------- hooks from the game ----------
   let busy = false;
   async function run(fn, ...a) { if (busy) return; busy = true; window.__walked = false; try { await fn(...a); } finally { busy = false; G.hud(); } }
@@ -471,6 +476,7 @@ window.Story = (function () {
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
     if (evt === "morning") run(async () => { // one ordered chain per morning, so two scenes never race for the same dialog
       const d = G.s.day;
+      if (window.Scenes && Scenes.morning) await Scenes.morning({ G, st, S, day: d }); // HOOK: village scenes from another PR (cast.js / scenes.js); nothing is built here
       if (st.stage === "sleep5" && d >= 8) await ch5();
       if (G.s.bet && d >= G.s.bet.revealDay) await revealIfDue();
       if (st.stage === "sleep8" && d >= 12) { arrive(1); await tell("A man in a feathered cap is waiting at the well. He's asking for you by name."); } // the midpoint: day 12
@@ -482,5 +488,5 @@ window.Story = (function () {
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
   return { init, start, onTalk, after, close, quietOffers, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    noteDeposit, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm }; // WS6 hooks used by game.js and the tests
+    testScene, noteDeposit, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm }; // WS6 hooks used by game.js and the tests
 })();

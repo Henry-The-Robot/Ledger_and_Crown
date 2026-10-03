@@ -52,7 +52,7 @@
           `Crane counts ${n(so.price)} onto the table and stamps the deed. ${farm} is the Duke's by supper.`,
           so.worth != null ? `Run carefully, the books say ${farm} would have held ${n(so.worth)} on day 28 against the Crown's ${n(so.crown)}${so.careful.gap >= 0 ? ", with " + n(so.careful.gap) + " to spare" : ", " + n(so.careful.gap) + " short"}.` : `Run carefully, ${farm} might have paid the Crown's ${n(so.crown)}.`,
           `You took ${n(so.price)} today. Money now against the farm later: the offer was always lower than the farm.`,
-          `Corvin Vale watches from the gate. He has bought ${farm} on day ${s.day} before.`] }; },
+          `Steward Vane watches from the gate. A farm sold on day ${s.day} is a farm he did not have to wait for.`] }; },
       seized: () => ({ title: "Seized", lines: [
           s.outcome === "insolvent" ? `Day ${s.day}: ${s.why || "the chest ran dry"}` : `On day 28 ${farm} is ${n(f.gap)} short of the Crown's ${n(R.crownDebt)}.`,
           `The Crown's men change the lock. Profit was in the Ledger; the Cash was in other people's purses.`,
@@ -60,11 +60,11 @@
       bridged: () => ({ title: "Bridged", lines: [
           `${farm} is ${n(f.gap)} short of the Crown's ${n(R.crownDebt)}. Ezra writes the gap into a new note: about ${n(f.bridge)} a week.`,
           `The farm survives, in his debt, and every week of that interest comes out of next year's profit.`,
-          `Corvin Vale tips his hat. A farm in debt is a farm that can be bought next spring.`] }),
+          `Steward Vane tips his hat. A farm in debt is a farm that can be bought next spring.`] }),
       free: () => ({ title: "Free", lines: [
           `The Crown is paid: ${n(f.net)} against ${n(R.crownDebt)}${f.gap > 0 ? ", with " + n(f.gap) + " to spare" : ""}. ${farm} is yours.`,
           `You watched the chest, not the Ledger. Edric's last page was right.`,
-          `Crane and Corvin Vale will answer for the Duke's order before the magistrate: The Audit (coming).`,
+          `Steward Vane will answer for the Duke's order before the magistrate: The Audit (coming).`,
           `"Summer is long, heir," says Corvin. "Your busiest month is coming."`] }),
     };
     const e = T[kind](); e.kind = kind; e.unlock = UNLOCKS[kind]; return e;
@@ -73,7 +73,7 @@
     sold: { id: "letter-maud", kind: "letter", term: "A letter from Maud", text: "You can sell the roof and keep the lesson, heir. The price Crane names is the price of your fear. Next time, count before you decide. — Maud" },
     seized: { id: "page-lastspring", kind: "page", term: "Edric's page: the last spring", text: "I watched the Ledger every night and it said I was fine. I should have watched the chest. — E." },
     bridged: { id: "letter-ezra", kind: "letter", term: "A letter from Ezra", text: "A debt is a rope. It will hold you up, or it will hang you. I lend; I do not forgive. Read your forecast. — Ezra" },
-    free: { id: "page-freespring", kind: "page", term: "Edric's page: if someone reads this", text: "If you are reading this you read the right book. The order came every spring, and every spring a Vale was behind it. — E." },
+    free: { id: "page-freespring", kind: "page", term: "Edric's page: if someone reads this", text: "If you are reading this you read the right book. The order came every spring, and every spring a Vane was behind it. — E." },
   };
   // unlocks persist across games in localStorage (a Map in memory under node)
   const KEY = "lc_unlocks_v1"; let mem = {};

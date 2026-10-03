@@ -86,6 +86,7 @@ async function drive(w, until) {
     f2.remove();
     const r2 = await drive(w);
     if (r2.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
+    if (P.get("shotAfter") === "case") { w.G.hidePanel(); w.Story.caseBoard(); await sleep(300); document.getElementById("out").textContent = "case board shot"; return; } // screenshots: the real, fully played case board
     const st = w.Story.state, d = w.document;
     log(`chapters 6-9: stages ${r2.seen.join(" → ")}${r2.timeout ? " TIMEOUT" : ""}; outcome ${w.G.s.outcome} day ${w.G.s.day}`);
     if (r2.timeout) log(`STUCK: dlg=${JSON.stringify(d.getElementById("dlg").innerText.slice(0, 200))} display=${d.getElementById("dlg").style.display} panel=${d.getElementById("panel").style.display} ${JSON.stringify(d.getElementById("panelBody").innerText.slice(0, 120))} busy=${w.Story.busy} stage=${st.stage}`);
@@ -107,7 +108,7 @@ async function drive(w, until) {
     // WS6: the four-week frame, the case board, the name, the ribbon, the seeded events
     log(`WS6 seed ${w.G.s.seed}: event nights ${JSON.stringify(w.G.s.events)} (stored in the save: ${!!JSON.parse(w.localStorage.getItem("lc_spring_save_v3") || "{}").s})`);
     log(`WS6 weeks: cards shown for weeks ${JSON.stringify(st.weeks)}; farm "${st.farm}" (name overlay clicked ${named}x); ribbon "${d.getElementById("goal").textContent}"`);
-    log(`WS6 case board: ${st.clues.length} clues pinned: ${st.clues.map(c => c.id).join(", ")}; Crane's offer pinned ${st.clues.some(c => c.id === "offer")}; Crane=Vale pinned ${st.clues.some(c => c.id === "crane-vale")}; Edric's page 6 pinned ${st.clues.some(c => c.id === "page5")}; case button "${(d.getElementById("casebtn") || {}).textContent}"`);
+    log(`WS6 case board: ${st.clues.length} clues pinned: ${st.clues.map(c => c.id).join(", ")}; Crane's offer pinned ${st.clues.some(c => c.id === "offer")}; Crane=Vane clue absent (canon: he is only a messenger) ${!st.clues.some(c => c.id === "crane-vale")};Edric's page 6 pinned ${st.clues.some(c => c.id === "page5")}; case button "${(d.getElementById("casebtn") || {}).textContent}"`);
     // every ending's epilogue is reachable through the ?ending= test hook
     for (const k of ["sold", "seized", "bridged", "free"]) { const [fe, we] = await load(`?fast=1&new=1&ending=${k}`); await sleep(900);
       const h2 = we.document.querySelector("#ending h2"), ps = we.document.querySelectorAll("#ending p").length, un = (we.document.querySelector("#ending .s6unlock") || {}).textContent || "";
