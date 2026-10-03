@@ -9,11 +9,29 @@ About 45 minutes. It saves automatically every morning.
 ## How to play
 
 - Open `index.html` and click **Play**.
-- Everything is mouse-only — click to walk, talk, farm, and answer. The only time you need the
+- Everything works with the mouse alone (or touch, see below) — click to walk, talk, farm, and answer. The only time you need the
   keyboard is to type a number when a lesson asks for one.
 - Click **☰ Menu** (top right) or press **Esc** any time to pause, restart today, save and quit, or
   report a problem.
 - If something seems stuck for a few seconds, the game will tell you to open the menu.
+
+## Playing on an iPad
+
+Open the same `index.html` in Safari (or Chrome) on an iPad: the game detects touch and switches on its
+iPad controls. Portrait and landscape both work.
+
+- **Tap the map** to walk there. Tap a person, a plot, the crate, the notice board or the house door and you
+  walk up to it and use it.
+- **On-screen pad (bottom left)**: hold an arrow to walk. **Act (bottom right)** does what the label says
+  (Till, Plant, Water, Harvest, Talk to Tomas, ...). They hide while a conversation or a panel is open.
+- **Tap any number at the top** to see what it means and where it came from. **☰ Menu** (top right) replaces the
+  Esc key; Notebook and Transcript are the two buttons at the bottom.
+- **Typing a number**: the box moves to the top of the screen so the keyboard doesn't cover it, and a **±**
+  button sits beside it, because the iPad number pad has no minus key.
+- **Full-screen**: tap Share, then **Add to Home Screen**. The game then opens like an app, with no Safari bars.
+  It still saves locally in that app (a home-screen app keeps its own saved game, separate from Safari's).
+- A keyboard still works if one is attached. Add `?touch=1` to the address to force iPad mode on another device,
+  or `?touch=0` to turn it off.
 
 ## Supported browsers
 
