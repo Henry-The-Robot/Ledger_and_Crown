@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>iOS audio unlock</title></head><body><pre id="out">running</pre>
+<!-- iOS only starts audio from inside a user gesture. With a fake AudioContext: nothing is created at load; the first tap/click/key creates ONE context, resumes it and
+     plays a silent buffer; later gestures re-resume a suspended context; the stamp's thud shares that context and obeys the sound switch.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=20000 --dump-dom tests/audio-unlock.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+(async () => { try {
+  const f = document.createElement("iframe"); f.style.width = "1180px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1&touch=1"; document.body.appendChild(f); await new Promise(r => f.onload = r); await sleep(300);
+  const w = f.contentWindow, d = w.document, log = { made: 0, resumes: 0, sources: 0, started: 0, osc: 0 };
+  class Mock { constructor() { log.made++; w.__ac = this; this.state = "suspended"; this.currentTime = 0; this.destination = {}; }
+    resume() { log.resumes++; this.state = "running"; return Promise.resolve(); }
+    createBuffer() { return {}; } createBufferSource() { log.sources++; return { connect() {}, start() { log.started++; }, set buffer(v) {} }; }
+    createOscillator() { log.osc++; return { type: "", frequency: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {}, start() {}, stop() {} }; }
+    createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; } }
+  w.AudioContext = Mock; w.webkitAudioContext = Mock; // installed AFTER load, before any gesture
+  out.push(`nothing is created before a gesture (made ${log.made}): ${log.made === 0}`);
+  d.body.dispatchEvent(new w.PointerEvent("pointerdown", { bubbles: true })); await sleep(20);
+  out.push(`the first tap creates ONE context, resumes it and plays a silent buffer (made ${log.made}, resumed ${log.resumes}, silent buffer ${log.started}): ${log.made === 1 && log.resumes === 1 && log.started === 1}`);
+  out.push(`FX reports it unlocked and running (${w.FX.audioState}): ${w.FX.unlocked && w.FX.audioState === "running"}`);
+  d.body.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); d.body.dispatchEvent(new w.KeyboardEvent("keydown", { bubbles: true })); await sleep(10);
+  out.push(`later gestures do not create another context or replay the buffer (made ${log.made}, buffers ${log.started}): ${log.made === 1 && log.started === 1}`);
+  { const r0 = log.resumes; w.__ac.state = "suspended"; d.body.dispatchEvent(new w.PointerEvent("pointerdown", { bubbles: true })); await sleep(10); out.push(`a suspended context is resumed by the next gesture (resumes ${r0} -> ${log.resumes}): ${log.resumes === r0 + 1 && w.FX.audioState === "running"}`); }
+  w.FX.setSound(true);
+  out.push(`switching sound on plays through the same context (made ${log.made}, oscillators ${log.osc}): ${log.made === 1 && log.osc > 0}`);
+  const before = log.osc; w.Verbs.thud(); out.push(`the stamp's thud uses the shared context too (made ${log.made}, +${log.osc - before} oscillator): ${log.made === 1 && log.osc > before}`);
+  w.FX.setSound(false); const mid = log.osc; w.Verbs.thud(); out.push(`and obeys the sound switch: silent when muted: ${log.osc === mid}`);
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>
