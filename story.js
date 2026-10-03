@@ -129,8 +129,16 @@ window.Story = (function () {
     await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
     const right = (c === 1) === (b.equity < 0);
     await G.say("crane", right ? "You've a head for it. Pity." : "Less. Much less.", ["Next"]);
-    V.craneOn = false; document.querySelectorAll(".vstamp").forEach(x => x.remove());
+    document.querySelectorAll(".vstamp").forEach(x => x.remove());
+    // WS6: the writ needs a name (item 10), and Crane makes his standing offer (M3, item 3), both while he's still standing in the yard
+    await G.say("crane", "The writ needs a name for the land, heir. What do I write?", ["Give it a name"]);
+    await nameFarm(); V.P.title = farmName(); V.parch();
+    await G.say("crane", `${farmName()}. A fine name for an estate I'll be selling by Midwinter.`, ["Next"]);
+    await craneOffer({ first: true });
+    if (G.s.over) return; // sold on day 1: the ending has been shown
+    V.craneOn = false;
     await tell(`Don't mind Crane. What you own minus what you owe is yours, and yours is ${b.equity < 0 ? "below zero" : "thin"}. That's why we work.`);
+    await tell("Profit is an opinion. Cash is a fact."); // WS6: the theme, stated once, early
     await tell("The far field's ripe. Harvest it (walk up, press E or tap Act) and Ashby the baker will buy.");
     if (right) mastered("equation");
     keep("equation", "Assets = Liabilities + Owner's equity", "What you own, minus what you owe, is yours. It can be below zero.", `Day 1: ${b.assets} = ${b.liab} + (${b.equity}).${right ? "" : " You guessed more; the page says less."}`);
@@ -281,6 +289,83 @@ window.Story = (function () {
     to(9, "done");
   }
 
+  // ---------- name your farm (item 10): the name appears on the writ, the week cards and the epilogue ----------
+  function nameFarm() {
+    return new Promise(res => {
+      document.querySelectorAll("#namefarm").forEach(e => e.remove());
+      const ov = document.createElement("div"); ov.className = "s6ov"; ov.id = "namefarm";
+      ov.innerHTML = `<div class="s6card"><div class="s6sub">The writ</div><h2>Name your farm</h2><p>Crane's pen is waiting. What does the writ call this land?</p>` +
+        `<input type="text" id="nfin" maxlength="18" value="Thornfield" aria-label="Farm name" autocomplete="off"><br><button class="gold" id="nfok">Write it down</button><button id="nfdef">Keep “Thornfield”</button></div>`;
+      document.getElementById("wrap").appendChild(ov);
+      const done = keepDefault => { const v = keepDefault ? "" : ov.querySelector("#nfin").value.replace(/[<>&"'`]/g, "").trim().slice(0, 18); st.farm = v || "Thornfield"; ov.remove(); G.save(); res(st.farm); };
+      ov.querySelector("#nfok").onclick = () => done(false); ov.querySelector("#nfdef").onclick = () => done(true);
+      ov.querySelector("#nfin").addEventListener("keydown", e => { if (e.key === "Enter") done(false); e.stopPropagation(); }); // typing never walks the player
+      if (!window.matchMedia("(pointer: coarse)").matches) setTimeout(() => { const i = ov.querySelector("#nfin"); i && i.select(); }, 30);
+    });
+  }
+  // ---------- the case board (item 5): a corkboard of pinned clues, opened from the Books strip or the Desk ----------
+  function caseBoard() {
+    const prev = Endings.unlocked();
+    const cards = st.clues.map(c => `<div class="clue ${c.kind}"><div class="ct">${c.term}</div><div class="cn">${c.num}</div><div class="cf">${c.from}</div></div>`).join("");
+    return G.openDoc(() => G.showPanel("casebd", `<h1>The case board <span class="hint">${farmName()} · ${st.clues.length} clue${st.clues.length === 1 ? "" : "s"} · day ${G.s.day}</span></h1>` +
+      `<p class="hint">Edric made a profit every year and still lost the farm. Who gains when a profitable farm runs out of coin? Every lesson pins a clue.</p>` +
+      `<div class="corkboard">${cards || `<div class="cbempty">Nothing pinned yet. Every lesson pins a clue here.</div>`}</div>` +
+      (prev.length ? `<h3 style="margin-top:10px">From earlier seasons</h3>${prev.map(u => `<div class="clue ${u.kind === "page" ? "page" : "book"}" style="margin:8px 0;transform:none"><div class="ct">${u.term}</div><div class="cn" style="font-family:var(--serif)">“${u.text}”</div></div>`).join("")}` : "")));
+  }
+  function deskItems() { // extra Desk-menu entries (game.js desk() adds them before "Back to the road")
+    if (!G || G.s.over || busy) return [];
+    const o = Endings.offer(G.s);
+    return [{ label: `Crane's offer: ${money(o.price)}${o.mercy ? " (mercy)" : ""}`, fn: () => run(() => craneOffer()) }, { label: `Case board (${st.clues.length})`, fn: () => caseBoard() }];
+  }
+  function deskNote() { // the offer as a card on the Desk
+    if (!G || G.s.over || st.stage === "intro") return "";
+    const o = Endings.offer(G.s);
+    return `<div class="offercard">Crane's standing offer for ${farmName()}: <b>${money(o.price)}</b> today${o.mercy ? ` (the mercy price: Cash ${money(o.cash)} is below ${money(o.wages)} of wages)` : ""}. Accepting ends the season.</div>`;
+  }
+  // ---------- Crane's offer (M3): a standing buy-out. Price formula and its tests: endings.js, tests/test-offer.js ----------
+  const money = v => Number(v).toLocaleString("en-US");
+  async function craneOffer(opts) { // opts.first: the day-1 scene; opts.mercy: Crane's visit when you are short for wages
+    opts = opts || {}; const E = Endings, o = E.offer(G.s), farm = farmName();
+    const intro = opts.first ? `The Duke will take ${farm} off your hands today. ${money(o.price)}, in coin, on the table. Or you carry the Crown's ${money(S.R.crownDebt)} to Midwinter alone.`
+      : o.mercy ? `Master Vale sends his regards, heir. Cash ${money(o.cash)}, and ${money(o.wages)} of wages due. I can be merciful: ${money(o.price)} for ${farm}, today.`
+      : `The Duke's offer for ${farm} stands: ${money(o.price)}.`;
+    const c = await G.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
+    if (c === 0) { pin("offer", "Crane's offer", `${money(o.price)} now`, `Day ${G.s.day} · Crane's offer (money now vs the farm later)`); return false; }
+    const sure = await G.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
+    if (sure === 0) return false;
+    await sell(o); return true;
+  }
+  async function sell(o) {
+    const s = G.s; s.sold = { price: o.price, day: s.day, mercy: o.mercy }; s.sold.so = Endings.soldOut(s, o.price);
+    TR.use("tvm", false, s.day); TR.use("equation", false, s.day); // introduced, not credited: selling is not evidence of skill
+    pin("offer", "Crane's offer", `took ${money(o.price)} on day ${s.day}`, `Day ${s.day} · you sold ${farmName()}`);
+    s.over = true; s.outcome = "sold"; G.save(); G.hud(); await showEnding("sold");
+  }
+  // ---------- endings (item 4): an epilogue card with 3-4 lines and what it unlocks for the next game ----------
+  function showEnding(kind) {
+    return new Promise(res => {
+      document.querySelectorAll(".s6ov").forEach(e => e.remove());
+      const s = G.s, ep = Endings.epilogue(kind, { s, farm: farmName(), sold: s.sold && s.sold.so }), u = Endings.unlock(kind);
+      const ov = document.createElement("div"); ov.className = "s6ov"; ov.id = "ending";
+      ov.innerHTML = `<div class="s6card s6end-${kind}"><div class="s6sub">${farmName()} · Spring · the ending</div><h2>${ep.title}</h2>${ep.lines.map(l => `<p>${l}</p>`).join("")}` +
+        (kind === "sold" ? `<div class="s6cmp"><div>You took<b>${money(s.sold.price)}</b></div>${s.sold.so && s.sold.so.worth != null ? `<div>Carefully run, day 28<b>${money(s.sold.so.worth)}</b></div>` : ""}</div><p class="hint">C0.01 time value · C1.01 equity</p>` : "") +
+        `<div class="s6unlock">${u && u.fresh ? "Unlocked" : "Unlocked earlier"}: <b>${ep.unlock.term}</b><br>“${ep.unlock.text}”</div>` +
+        `<button class="gold" id="endagain">Play again</button><button id="endcase">Case board</button>${kind === "sold" ? "" : `<button id="endback">Back to the books</button>`}</div>`;
+      document.getElementById("wrap").appendChild(ov);
+      ov.querySelector("#endagain").onclick = () => G.restart();
+      ov.querySelector("#endcase").onclick = () => { ov.style.display = "none"; caseBoard().then(() => { ov.style.display = "flex"; }); };
+      const bk = ov.querySelector("#endback"); if (bk) bk.onclick = () => { ov.remove(); res(); };
+    });
+  }
+  // test hook (?ending=sold|seized|bridged|free): show that ending's epilogue on the current game, whatever its state
+  async function testEnding(kind) {
+    const s = G.s; if (kind === "sold") { const o = Endings.offer(s); s.sold = { price: o.price, day: s.day, so: Endings.soldOut(s, o.price) }; }
+    if (kind === "seized") { s.over = true; s.outcome = "insolvent"; s.why = s.why || "Cash 12 can't cover 48 of wages and interest. The hands walk off."; }
+    if (kind === "free") { s.bal.cash += 1500; s.bal.capital -= 1500; }
+    if (kind === "bridged") { const need = S.R.crownDebt - S.crownFund(s).net - 150; s.bal.cash += need; s.bal.capital -= need; }
+    return showEnding(kind);
+  }
+
   // ---------- hooks from the game ----------
   let busy = false;
   async function run(fn, ...a) { if (busy) return; busy = true; window.__walked = false; try { await fn(...a); } finally { busy = false; G.hud(); } }
@@ -308,5 +393,6 @@ window.Story = (function () {
     if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
-  return { init, start, onTalk, after, close, quietOffers, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName };
+  return { init, start, onTalk, after, close, quietOffers, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
+    craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm }; // WS6 hooks used by game.js and the tests
 })();

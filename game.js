@@ -455,9 +455,10 @@
   function desk() {
     atDesk = true; hud();
     const c = S.coach(s);
-    dlg({ who: null, text: `Your desk: Edric's ledger, the forecast board, Maud's notebook.${c && c.danger ? `<br><b>Maud's note:</b> ${c.text}` : ""}`,
-      choices: [`Sleep (end day ${s.day})`, "Ledger", "Ledger tour: how to read it", "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", "Back to the road"] })
-      .then(r => { const f = [sleepNow, ledger, ledgerTour, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, () => { atDesk = false; hud(); }][r.i]; f && f(); });
+    const ex = storyOn ? Story.deskItems() : []; // WS6: Crane's offer and the case board join the Desk menu (before "Back to the road")
+    dlg({ who: null, text: `Your desk: Edric's ledger, the forecast board, Maud's notebook.${storyOn ? Story.deskNote() : ""}${c && c.danger ? `<br><b>Maud's note:</b> ${c.text}` : ""}`,
+      choices: [`Sleep (end day ${s.day})`, "Ledger", "Ledger tour: how to read it", "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", ...ex.map(x => x.label), "Back to the road"] })
+      .then(r => { const f = [sleepNow, ledger, ledgerTour, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, ...ex.map(x => x.fn), () => { atDesk = false; hud(); }][r.i]; f && f(); });
   }
   function plan() {
     const o = S.openOrders(s), need = S.committed(s) - s.sacks - S.sacksComing(s);
@@ -562,7 +563,8 @@
     $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
-      `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
+      `<div class="wood deskonly" id="coin">${coinBar(b)}</div>` + (storyOn ? `<button type="button" class="wood" id="casebtn">Case board (${Story.state.clues.length})</button>` : ""); // WS6: the case board button
+    const cbtn = $("casebtn"); if (cbtn) cbtn.onclick = e => { e.stopPropagation(); if (!dlgOpen() && !panelOpen() && !Story.busy) Story.caseBoard(); };
     spot(curSpot); // hud() rebuilds the boxes, so put the lesson's spotlight (and the Books strip it needs) back
     $("bar").innerHTML = `<div class="slot"><i>sacks</i><canvas width=16 height=16 data-i="sack"></canvas><b>${s.sacks}</b></div><div class="slot"><i>seed</i><canvas width=16 height=16 data-i="seed"></canvas><b>${s.seeds}</b></div>` +
       `<div class="slot"><i>sprinkler</i><canvas width=16 height=16 data-i="sprinkler"></canvas><b>${s.sprinklersHeld}</b></div><div class="slot keys"><button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.notebook()">Notebook</button> <button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.transcript()">Transcript</button><br>Desk at home: ledger, forecast</div>`;
@@ -606,7 +608,7 @@
   // Mouse-only play: every panel you can leave gets a clickable Close at the top and bottom, and a click on
   // the dark backdrop closes it. Task panels (forecast with cells to fill, journal pages, the close) keep
   // their own buttons, because they finish a step of the story.
-  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript", "explain"]);
+  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript", "explain", "casebd"]); // WS6: casebd = the case board
   function showPanel(k, html, locked) {
     panelKind = { k, locked };
     const x = CLOSABLE.has(k) && !locked;
@@ -784,7 +786,7 @@
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
     dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
-    travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
@@ -803,5 +805,6 @@
   if (q.has("auto")) { const a = q.get("auto"); G.play(q.get("bot") || "careful", /^\d+$/.test(a) ? +a : 99); if (a === "ezra") review(); }
   if (q.has("at")) { const [x, y] = q.get("at").split(",").map(Number); pl.x = x * T + 8; pl.y = y * T + 12; }
   if (q.has("desk")) { atDesk = true; hud(); }
+  if (q.has("ending") && storyOn) setTimeout(() => { G.closeDlg(); Story.testEnding(q.get("ending")); }, 300); // WS6 test hook: ?ending=sold|seized|bridged|free shows that epilogue
   requestAnimationFrame(loop);
 })();

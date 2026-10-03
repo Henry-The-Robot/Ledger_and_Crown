@@ -13,9 +13,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 function load(q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px";
   f.onload = () => { f.contentWindow.addEventListener("error", e => errs.push(e.message)); res([f, f.contentWindow]); }; f.src = "../game.html" + q; document.getElementById("frames").appendChild(f); }); }
 const vis = el => el && el.offsetParent !== null && getComputedStyle(el).display !== "none";
-let tl = 0, tags = 0, typed = 0, boards = 0, picks = 0, haggles = 0;
+let tl = 0, tags = 0, typed = 0, boards = 0, picks = 0, haggles = 0, named = 0;
 function pump(w) { // do the one thing the screen is asking for; true if something was done
   const d = w.document, panel = d.getElementById("panel"), dlg = d.getElementById("dlg");
+  const nf = d.getElementById("nfok"); if (nf) { nf.click(); named++; return true; } // WS6: name your farm (keeps the default)
   if (panel.style.display !== "none") {
     const click = id => { const b = d.getElementById(id); if (b) { b.click(); return true; } };
     if (d.getElementById("tlLow") && w.__tl) { d.getElementById("tlLow").value = w.__tl.low; d.getElementById("tlDay").value = w.__tl.day; tl++; return click("tlok"); } // WS3 timeline
@@ -104,6 +105,6 @@ async function drive(w, until) {
   } catch (e) { log("FAIL " + e.message + " " + e.stack); }
   log(`JS errors: ${errs.length} ${JSON.stringify(errs)}`);
   document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
-  document.getElementById("frames").innerHTML = "";
+  document.getElementById("frames").innerHTML = ""; document.querySelectorAll("script").forEach(x => x.remove()); // keep the --dump-dom output short
 })();
 </script></body></html>

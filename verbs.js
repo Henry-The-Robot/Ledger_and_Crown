@@ -22,7 +22,7 @@ window.Verbs = (function () {
   const P = { assets: [], liab: [], aTot: null, lTot: null, eq: null, hint: "", on: false }; // on: the parchment is part of a lesson right now; nothing may re-create it once it is closed
   function parchHtml() {
     const rows = a => a.map(r => `<div class="vp-row"><span>${r.line}</span><b>${fmt(r.value)}</b></div>`).join("");
-    return `${tagSt ? "" : `<button type="button" class="vp-x" aria-label="Close this page">✕</button>`}<h4>Thornfield, as the Crown sees it</h4><div class="vp-sec">Assets <span style="font-weight:normal;font-size:13px">(what the farm owns)</span></div>${rows(P.assets)}${P.aTot != null ? `<div class="vp-tot"><span>Total assets</span><b>${fmt(P.aTot)}</b></div>` : ""}` +
+    return `${tagSt ? "" : `<button type="button" class="vp-x" aria-label="Close this page">✕</button>`}<h4>${P.title || "Thornfield"}, as the Crown sees it</h4><div class="vp-sec">Assets <span style="font-weight:normal;font-size:13px">(what the farm owns)</span></div>${rows(P.assets)}${P.aTot != null ? `<div class="vp-tot"><span>Total assets</span><b>${fmt(P.aTot)}</b></div>` : ""}` +
       (P.liab.length ? `<div class="vp-sec">Liabilities <span style="font-weight:normal;font-size:13px">(what it owes)</span></div>${rows(P.liab)}${P.lTot != null ? `<div class="vp-tot"><span>Total liabilities</span><b>${fmt(P.lTot)}</b></div>` : ""}` : "") +
       (P.eq != null ? `<div class="vp-tot"><span>Owner's equity</span><b class="${P.eq < 0 ? "vp-neg" : ""}">${fmt(P.eq)}</b></div>` : "") + (P.hint ? `<div class="vp-hint">${P.hint}</div>` : "") +
       (P.where ? `<button type="button" class="vp-where">Where else?</button>` : "");
