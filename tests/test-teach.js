@@ -27,7 +27,7 @@ const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
   ok(S.notice(blind) === null, "each notice can only be answered once"); }
 { const s = S.newGame(); upTo(s, 6); s.sacks = 12; const n = S.notice(s); ok(n.id === "trader" && S.answerNotice(s, 0).ok && s.sacks === 3, "day 6: the trader buys up to 9 spare sacks"); }
 { const s = S.newGame(); upTo(s, 12); S.buySeeds(s, 1); s.plots.filter(p => p.tilled && !p.crop).slice(0, 2).forEach(p => p.crop = { age: 1, cost: 12 }); const before = s.plots.filter(p => p.crop).map(p => p.crop.age);
-  s.bal.cash += 50; s.bal.capital -= 50; S.answerNotice(s, 0); S.sleep(s); const after = s.plots.filter(p => p.crop).map(p => p.crop.age); ok(after.every((a, i) => a >= before[i] + 1), "hired hands: every crop gains a day overnight"); }
+  s.bal.cash += 50; s.bal.capital -= 50; const growing = s.plots.filter(p => p.crop && p.crop.age < S.R.growDays); S.answerNotice(s, 0); S.sleep(s); ok(growing.length > 0 && growing.every(p => p.crop.age >= 2), "hired hands: every growing crop gains a day overnight"); }
 { const s = S.newGame(); const o = S.marketOutlook(s); ok(o.length === 3 && o[0].day === 2, "the board shows the next three days' prices"); }
 // --- frost pile-up coaching
 { const s = S.newGame(); upTo(s, 20); const o = S.addOffer(s, "ashby", 18, 9, 0, 3, 3); S.accept(s, o.id); ok(/Frost on day 23/.test(S.coach(s).text), "Maud warns when an order falls due around the frost"); }

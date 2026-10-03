@@ -7,6 +7,9 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26, VW = 320, VH = 200;
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
   const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
+  // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
+  const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
+  if (TOUCH) document.body.classList.add("touch");
   let s, calm = 0, frame = 0, closing = null, atDesk = false, storyOn = !q.has("sandbox"), fairDay = {}, fairSeen = {};
   A.build();
   // ---------- the map ----------
@@ -22,6 +25,7 @@
   BUILD.forEach(b => { b.img = A.building(b.w, b.h, Object.assign({}, b, { sign: b.sign && A.SIGNS[b.sign] })); b.door = { x: b.x + Math.floor(b.w / 2), y: b.y + b.h - 1 }; });
   const NPC = {}; BUILD.filter(b => b.who).forEach(b => NPC[b.who] = { who: b.who, x: b.door.x + 1, y: b.door.y + 1, dir: "down" });
   NPC.duke = { who: "duke", x: 36, y: 10, dir: "left" };
+  NPC.crane = { who: "crane", x: 7, y: 7, dir: "left" }; // WS3: the bailiff, only on screen during the cold open (Verbs.craneOn)
   NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
@@ -29,6 +33,7 @@
     abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
   const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 8 };
+  const CHEST = { x: 5, y: 7 }, SACKS = { x: 10, y: 7 }, FWELL = { x: 13, y: 7 }; // WS3 (see Story.ch1: the tag verb's targets and decoys)
   (function buildMap() {
     let r = 5; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
     for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) ground[y * MW + x] = rnd() < .05 ? "flower" + Math.floor(rnd() * 3) : "grass" + Math.floor(rnd() * 4);
@@ -44,14 +49,18 @@
     [[15, 3], [18, 4], [20, 2], [12, 3], [2, 12], [2, 17], [8, 19], [12, 21], [22, 16], [21, 22], [26, 23], [46, 16], [44, 23], [30, 23], [16, 11], [19, 13], [47, 6], [2, 22], [5, 23]].forEach(([x, y], i) => tree(x, y, i));
     [[10, 2], [21, 12], [23, 13], [36, 23], [40, 23], [15, 21], [45, 13], [11, 17], [29, 10]].forEach(([x, y]) => { solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.bush, x * T, y * T) }); });
     solid.add(key(CRATE.x, CRATE.y)); props.push({ y: CRATE.y + 1, draw: () => blit(A.crate, CRATE.x * T, CRATE.y * T) });
-    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: drawWell });
+    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: () => drawWell(WELL) });
+    // WS3: the cold-open scene: the cash chest, sacks stacked by the crate, and a farm well (a decoy for the tag verb)
+    solid.add(key(CHEST.x, CHEST.y)); props.push({ y: CHEST.y + 1, draw: () => blit(A.chest, CHEST.x * T, CHEST.y * T) });
+    solid.add(key(SACKS.x, SACKS.y)); props.push({ y: SACKS.y + 1, draw: () => { blit(A.sack, SACKS.x * T, SACKS.y * T); blit(A.sack, SACKS.x * T + 4, SACKS.y * T - 5); blit(A.sack, SACKS.x * T - 3, SACKS.y * T + 2); } });
+    solid.add(key(FWELL.x, FWELL.y)); props.push({ y: FWELL.y + 1, draw: () => drawWell(FWELL) });
     solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
   const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
-  const npcHere = n => n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
+  const npcHere = n => n.who === "crane" ? !!(window.Verbs && Verbs.craneOn) : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
     : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
     : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
@@ -67,7 +76,7 @@
     if (e.code === "Escape") { if ($("pause")) $("pause").remove(); else if (panelOpen() && panelKind && !panelKind.locked && CLOSABLE.has(panelKind.k)) hidePanel(); else pauseMenu(); e.preventDefault(); return; }
     if ($("pause")) return;
     if (panelOpen()) return;
-    if (dlgOpen()) { if (e.target.tagName === "INPUT") { if (e.key === "Enter") $("dlg").querySelector("button").click(); return; }
+    if (dlgOpen()) { if (e.target.tagName === "INPUT") { if (e.key === "Enter") $("dlg").querySelector(".ch button").click(); return; }
       const n = +e.key; if (n >= 1 && n <= 9) { const b = $("dlg").querySelectorAll("button")[n - 1]; if (b && !b.disabled) b.click(); } e.preventDefault(); return; }
     if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; pl.target = null; e.preventDefault(); }
     if (e.code === "KeyE" || e.code === "Space") { interactTile(facing().x, facing().y); e.preventDefault(); }
@@ -77,7 +86,9 @@
   addEventListener("keyup", e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = false; });
   cv.addEventListener("click", e => { // click / tap to walk; clicking something walks up to it and uses it
     if (dlgOpen()) return; const r = cv.getBoundingClientRect(), sc = r.width / VW;
-    const wx = (e.clientX - r.left) / sc + cam.x, wy = (e.clientY - r.top) / sc + cam.y; pl.target = { tx: Math.floor(wx / T), ty: Math.floor(wy / T) };
+    const wx = (e.clientX - r.left) / sc + cam.x, wy = (e.clientY - r.top) / sc + cam.y;
+    if (window.Verbs && Verbs.canvasTap(Math.floor(wx / T), Math.floor(wy / T))) return; // WS3: a tap that tags a world object isn't a walk
+    pl.target = { tx: Math.floor(wx / T), ty: Math.floor(wy / T) };
   });
   function facing() { const [dx, dy] = DIRS[pl.dir]; return { x: Math.floor((pl.x + dx * 12) / T), y: Math.floor((pl.y - 4 + dy * 12) / T) }; }
   function hitFree(x, y) { return [[-5, -5], [4, -5], [-5, 0], [4, 0]].every(([a, b]) => !blocked(Math.floor((x + a) / T), Math.floor((y + b) / T))); }
@@ -111,14 +122,14 @@
     const b = buildingAt(x, y); if (b) return b.id === "house" ? desk() : talk(b.who);
     const p = plotAt(x, y);
     if (p) { const r = act(() => S.act(s, p.i));
-      if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); }
+      if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); if (r.msg === "harvest") story("harvest"); }
       else if (r.msg) say(null, r.msg); return; }
     if (x === BOARD.x && y === BOARD.y) return noticeBoard();
     if (x === WELL.x && y === WELL.y) say(null, "The town well. Cold, clear water.");
   }
   function act(fn) { // run an engine action, then float the Cash change and feed the transcript
     const c0 = s.bal.cash, r = fn(); drainUses(); hud();
-    if (s.bal.cash !== c0) floatHud("cash", s.bal.cash - c0);
+    if (s.bal.cash !== c0) { floatHud("cash", s.bal.cash - c0); FX.cash(s.bal.cash - c0, $("h-cash"), $("wrap")); }
     return r;
   }
   const story = (evt, info) => { if (storyOn) Story.after(evt, info); };
@@ -129,16 +140,38 @@
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
       const d = $("dlg"), who = o.who, nm = who ? S.NAMES[who] || who : "", ht = who && s.trust[who] != null ? hearts(s.trust[who]) : "";
-      spot(o.spot);
-      d.innerHTML = `${who && A.people[who] ? "<canvas width=16 height=16></canvas>" : ""}<div style="flex:1"><div><span class="nm">${cap(nm)}</span><span class="ht">${ht}</span></div><div class="tx">${o.text}</div>` +
-        (o.input ? `<div class="in"><input id="num" type="text" inputmode="decimal" placeholder="${o.input}" autocomplete="off"></div>` : "") + `<div class="ch"></div></div>`;
+      spot(o.spot); d.classList.remove("kb"); d.classList.toggle("hasin", !!o.input);
+      d.innerHTML = `${who && A.people[who] ? "<canvas width=16 height=16></canvas>" : ""}<div class="dc${o.input ? " withpad" : ""}"><div><span class="nm">${cap(nm)}</span><span class="ht">${ht}</span></div><div class="tx">${o.text}</div>` +
+        (o.input ? `<div class="in"><input id="num" type="text" inputmode="decimal" enterkeyhint="done" placeholder="${o.input}" autocomplete="off"></div>` : "") + `<div class="ch"></div></div>`;
       if (who && A.people[who]) d.querySelector("canvas").getContext("2d").drawImage(A.people[who].down[0], 0, 0);
+      addSignButtons(d);
       (o.choices || ["Next"]).forEach((c, i) => { const b = document.createElement("button"), lab = c.label || c; b.innerHTML = `<kbd>${i + 1}</kbd>${lab}`; b.disabled = !!c.disabled;
-        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; spot(null); res({ i, v }); };
+        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb", "hasin"); spot(null); res({ i, v }); };
         d.querySelector(".ch").appendChild(b); });
-      d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false; if (o.input) setTimeout(() => $("num") && $("num").focus(), 30);
+      if (o.input) numberPad(d, (o.choices || ["Next"])[0]); // the pad goes after the choice buttons, so button order (and the number keys) stay as they were
+      d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false;
+      if (o.input && !TOUCH) setTimeout(() => $("num") && $("num").focus(), 30); // on touch the pad types; no keyboard to cover the dialog
+      if (!fast && !q.has("auto")) FX.type(d.querySelector(".tx"));
     });
   }
+  // On-screen number pad (0-9, minus, backspace, Check) for the ask and haggle boxes: mouse and touch alike (WS2).
+  // On touch the input is inputmode=none, so the iOS keyboard never opens over the dialog. Pad keys sit after the choices in the DOM.
+  function numberPad(d, first) {
+    const inp = $("num"), np = document.createElement("div"); np.className = "np"; np.setAttribute("aria-label", "Number pad");
+    if (TOUCH) inp.setAttribute("inputmode", "none");
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "−", "0", "⌫"].forEach(k => { const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.tabIndex = -1; b.dataset.k = k;
+      b.setAttribute("aria-label", k === "−" ? "Minus sign" : k === "⌫" ? "Backspace" : k);
+      b.addEventListener("pointerdown", e => e.preventDefault()); // keep focus where it is
+      b.addEventListener("click", () => { const v = inp.value; inp.value = k === "⌫" ? v.slice(0, -1) : k === "−" ? (v.startsWith("-") ? v.slice(1) : "-" + v) : v + k; });
+      np.appendChild(b); });
+    const ok = document.createElement("button"); ok.type = "button"; ok.className = "ok"; ok.textContent = (first && (first.label || first)) || "Check"; ok.tabIndex = -1;
+    ok.addEventListener("click", () => d.querySelector(".ch button").click()); np.appendChild(ok);
+    d.querySelector(".dc").appendChild(np);
+  }
+  // Click anywhere on the dialog: first click finishes the typewriter, a second advances when there is a single "Next"-style choice.
+  $("dlg").addEventListener("click", e => { const d = $("dlg"), tx = d.querySelector(".tx"); if (e.target.closest("button,input")) return;
+    if (tx && tx._finish) return tx._finish();
+    const bs = d.querySelectorAll(".ch button"); if (bs.length === 1 && !$("num") && !bs[0].disabled) bs[0].click(); });
   function say(who, text, choices) { // menu form for the sandbox: choices [[label, fn, disabled]]
     const cs = choices || [["Close", null]];
     dlg({ who, text, choices: cs.map(c => ({ label: c[0], disabled: c[2] })) }).then(r => cs[r.i][1] && cs[r.i][1]());
@@ -211,6 +244,7 @@
       <p><button class="btn gold" id="pz-resume" style="width:100%">Resume</button></p>
       <p><button class="btn alt" id="pz-restart" style="width:100%">Restart today (from this morning's save)</button></p>
       <p><button class="btn alt" id="pz-map" style="width:100%">Save and quit</button></p>
+      <p><button class="btn alt" id="pz-sound" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-feedback" style="width:100%">Copy feedback details</button></p>
       ${askSkip ? `<p><button class="btn alt" id="pz-skip" style="width:100%">Report a problem and skip this question</button></p><p class="hint">Use this only if the game seems broken. The lesson won't count as mastered, and Maud will bring it up again later. Copies feedback details too, so you can paste them to Kyle.</p>` : ""}
       <p class="hint">Today's progress since the morning save is lost if you restart or leave.</p></div>`;
@@ -220,6 +254,8 @@
     $("pz-restart").onclick = () => location.reload();
     $("pz-map").onclick = () => { save(); location.href = "index.html"; };
     $("pz-feedback").onclick = () => copyFeedback();
+    const snd = () => $("pz-sound").textContent = FX.muted ? "🔇 Sound: off (tap to turn on)" : "🔊 Sound: on (tap to mute)"; snd();
+    $("pz-sound").onclick = () => { FX.setSound(FX.muted); snd(); };
     if ($("pz-skip")) $("pz-skip").onclick = () => {
       try { const log = JSON.parse(localStorage.getItem("lc_bug_reports") || "[]"); log.push({ at: new Date().toISOString(), day: s.day, stage: storyOn ? Story.state.stage : "sandbox", question: ($("dlg").querySelector(".tx") || {}).textContent, expected: window.__want }); localStorage.setItem("lc_bug_reports", JSON.stringify(log)); } catch (e) {}
       copyFeedback();
@@ -234,19 +270,24 @@
   const stall = {};
   (function () { const pb = document.createElement("button"); pb.id = "menubtn"; pb.className = "btn alt"; pb.textContent = "☰ Menu";
     pb.style.cssText = "position:fixed;top:8px;right:8px;z-index:150"; pb.onclick = pauseMenu; document.body.appendChild(pb); })();
-  function spot(ids) { document.querySelectorAll(".spot").forEach(e => e.classList.remove("spot")); (ids || []).forEach(id => { const e = $(id); if (e) e.classList.add("spot"); }); }
+  function spot(ids) { document.querySelectorAll(".spot").forEach(e => e.classList.remove("spot")); curSpot = ids || []; curSpot.forEach(id => { const e = $(id); if (e) e.classList.add("spot"); }); booksOpen(); }
   const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
   const hearts = t => "♥".repeat(Math.round(t / 2)) + "♡".repeat(5 - Math.round(t / 2));
   // ---------- negotiation: open, counter, leverage, walk away (2-4 rounds) ----------
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
+  function floorTrack(fl, offer, top) { // a price track: red below your floor, a marker for their offer
+    const lo = Math.max(0, Math.min(fl, offer) - 2), hi = Math.max(top, offer, fl) + 2, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
+    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Your floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
+  }
   async function haggle(o, cfg) {
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
+    const fl = cfg.floor != null ? cfg.floor : S.R.unitCost; // WS3: the floor is the walk-away line, drawn on the price track
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
     while (round < 4) {
       const lev = [];
       if (fairBest > theirs && !used.fair) lev.push("fair"); if (s.trust[o.who] >= 6 && !used.rec) lev.push("rec");
       const labels = ["Ask my price", `Accept ${theirs} a sack`].concat(lev.map(l => l === "fair" ? `"The fair pays ${fairBest}"` : `"I always deliver on time"`), ["Walk away"]);
-      const r = await dlg({ who: o.who, text: `${line}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.tag ? ` (${o.tag})` : ""}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
+      const r = await dlg({ who: o.who, text: `${line}${storyOn ? floorTrack(fl, theirs, walk) : ""}<br><b>Their offer: ${theirs} a sack</b> × ${o.sacks} sacks${o.tag ? ` (${o.tag})` : ""}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash"}.`, input: "your price per sack", choices: labels });
       const pick = labels[r.i];
       if (pick === "Walk away") { toast("You walked away."); return null; }
       if (pick.startsWith("Accept")) return close(theirs);
@@ -254,14 +295,14 @@
       if (pick.startsWith('"I always')) { used.rec = 1; walk += 1; line = "True enough. You've never let me down."; continue; }
       const p = r.v; round++;
       if (p == null || isNaN(p) || p <= 0) { line = "Say a number, dear."; continue; }
-      if (p < 4 && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you 4. Sure?`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
+      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
       if (p <= theirs) return close(theirs);
       if (p <= walk) { line = "Done."; return close(p); }
       if (p > walk + 2) { s.trust[o.who] = Math.max(0, s.trust[o.who] - 1); line = `${p}? That's an insult. ${theirs} is my offer.`; continue; }
       theirs = Math.min(walk, Math.ceil((theirs + p) / 2)); line = round >= 3 ? `My last word: ${theirs}.` : `Too dear. Meet me at ${theirs}.`;
     }
     const k = await sayP(o.who, `${theirs}, take it or leave it.`, [`Accept ${theirs}`, "Walk away"]); return k === 0 ? close(theirs) : null;
-    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, `Deal: ${price} a sack`, "#2a5a2a"); return { price }; }
+    function close(price) { S.setPrice(s, o.id, price); act(() => S.accept(s, o.id)); if (o.deposit && o.paid) depositLesson(o); floatAt(pl.x / T, pl.y / T - 1, price < fl ? `Deal: ${price} a sack (margin ${Math.round((price - fl) / price * 100)}%)` : `Deal: ${price} a sack`, price < fl ? "#9b2335" : "#2a5a2a"); return { price }; }
   }
   // ---------- villagers ----------
   async function talk(who) {
@@ -476,23 +517,30 @@
     say("maud", right ? `Right: ${s.bal.cash}. You read the night correctly.` : `You said ${g.v}; Cash is ${s.bal.cash}.<br>${g.before} + ${g.f.cin} collected − ${g.f.wages} wages and interest − ${g.f.bills} bills${g.f.fines ? ` − ${g.f.fines} forfeits` : ""} = ${g.f.close}${g.f.close !== s.bal.cash ? ", plus whatever else happened overnight" : ""}. Start from today's Cash, add what comes in, take away what goes out.`);
   }
   function doSleep() {
-    atDesk = false; const n0 = s.log.length; act(() => S.sleep(s));
+    atDesk = false; const n0 = s.log.length, c0 = s.bal.cash, day0 = s.day; act(() => S.sleep(s));
     const notes = s.log.slice(0, s.log.length - n0).reverse().map(l => l.t).slice(0, 4);
-    if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks);
+    // the day-end card: what Cash did, who still owes you, what was lost
+    const owed = {}; s.invoices.forEach(v => owed[v.who] = (owed[v.who] || 0) + v.amount);
+    const info = { day: day0, d: s.bal.cash - c0, owes: Object.entries(owed).map(([w, a]) => `${S.NAMES[w] || w} owes you <b>${a}</b>`), losses: s.journal.filter(j => j.type === "loss" && j.day === s.day - 1).map(j => j.memo) };
+    if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks, info);
     pl.x = 6 * T + 8; pl.y = 7 * T + 12; pl.dir = "down"; save();
     const morning = () => { morningBark(); story("morning"); lossLesson(); revealPrediction(); };
     if (fast) return morning();
-    night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning);
+    night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning, info);
   }
   function lossLesson() { // a loss shows up in the Ledger as an expense with no Cash leaving: walk the player to the exact lines
     const j = s.journal.find(x => x.type === "loss" && x.day === s.day - 1); if (!j || (storyOn && Story.busy)) return;
-    const n = Object.values(j.lines)[0] ? j.lines.losses : 0;
+    const n = Object.values(j.lines)[0] ? j.lines.losses : 0; FX.thud(); FX.shake($("wrap"));
     say("maud", `Open the Ledger and find the journal line "${j.memo}".<br>Debit Crop & stock losses ${n}, credit Inventory ${n}. Cash didn't move, but Net income fell by ${n} and so did Inventory: value you paid for is gone. That's why losses hit profit.`,
       [["Open the Ledger", ledger], ["Later", null]]);
   }
-  function night(title, notes, then) {
-    const n = $("night"); n.innerHTML = `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join(""); n.classList.add("on");
-    setTimeout(() => { n.classList.remove("on"); then && then(); }, 1500 + notes.length * 500);
+  function night(title, notes, then, info) { // info: the day-end card (Cash change, who owes you, losses); tap to dismiss early
+    const n = $("night"), rows = info ? [`Day ${info.day} ended. Cash <span class="${info.d < 0 ? "neg" : "pos"}">${info.d < 0 ? "−" : "+"}${Math.abs(info.d)}</span> (now ${s.bal.cash})`, ...info.owes, ...info.losses.map(m => `Lost: ${m}`)] : [];
+    n.innerHTML = info ? `<div class="card"><h2>${title}</h2>${rows.concat(notes).map(t => `<p>${t}</p>`).join("")}<p class="tap">Tap to continue</p></div>` : `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join("");
+    n.classList.add("on"); let done = false;
+    const end = () => { if (done) return; done = true; n.onclick = null; n.classList.remove("on"); then && then(); };
+    n.onclick = () => end();
+    setTimeout(end, 1500 + notes.length * 500 + rows.length * 400);
   }
   function morningBark() { // coaching fades: only real danger once the player is past chapter 5
     const c = S.coach(s); if (!c) { calm++; return; }
@@ -504,16 +552,43 @@
   function hud() {
     const b = S.balanceSheet(s.bal), wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk), wd = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][(s.day - 1) % 7];
     document.body.classList.toggle("desk", atDesk);
-    const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span>${v}</span>`;
-    if (!hud.wired) { hud.wired = 1; $("hud").addEventListener("click", e => { const el = e.target.closest(".wood"); if (el && el.id && !dlgOpen() && !panelOpen()) explain(el.id.replace(/^h-/, "")); }); }
-    $("hud").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) + box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : "")) + box("fund", "Toward the Crown", S.crownFund(s).net + " / " + S.R.crownDebt) +
+    const box = (id, k, v, warn, deskOnly) => `<span class="wood${warn ? " warn" : ""}${deskOnly ? " deskonly" : ""}" id="h-${id}"><span class="k">${k}</span><b class="v">${v}</b></span>`;
+    if (!hud.wired) { hud.wired = 1; hudInit(); $("hud").addEventListener("click", e => { const el = e.target.closest(".wood"); if (el && el.id && !dlgOpen() && !panelOpen()) explain(el.id.replace(/^h-/, "")); }); }
+    // Row 1: Day, Cash, Crown fund meter, goal, Travel, Books. The balance-sheet boxes live in the Books strip (opens at the desk, on tap, or when a lesson spotlights one).
+    const fund = S.crownFund(s).net, pct = Math.max(0, Math.min(100, Math.round(fund / S.R.crownDebt * 100)));
+    $("hudmain").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? " · rain" : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
+      `<span class="wood" id="h-fund"><span class="k">Toward the Crown</span><span class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="${S.R.crownDebt}" aria-valuenow="${fund}"><i style="width:${pct}%"></i></span><b class="v">${fund} / ${S.R.crownDebt}</b></span>`;
+    $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
+    spot(curSpot); // hud() rebuilds the boxes, so put the lesson's spotlight (and the Books strip it needs) back
     $("bar").innerHTML = `<div class="slot"><i>sacks</i><canvas width=16 height=16 data-i="sack"></canvas><b>${s.sacks}</b></div><div class="slot"><i>seed</i><canvas width=16 height=16 data-i="seed"></canvas><b>${s.seeds}</b></div>` +
       `<div class="slot"><i>sprinkler</i><canvas width=16 height=16 data-i="sprinkler"></canvas><b>${s.sprinklersHeld}</b></div><div class="slot keys"><button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.notebook()">Notebook</button> <button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.transcript()">Transcript</button><br>Desk at home: ledger, forecast</div>`;
     $("bar").querySelectorAll("canvas").forEach(c => c.getContext("2d").drawImage(c.dataset.i === "seed" ? A.crops[1] : A[c.dataset.i], 0, 0));
   }
+  // The top bar is built once: [Day, Cash, Crown meter] [goal] [Travel] [Books], then the Books strip underneath.
+  let booksPin = false, curSpot = [];
+  function hudInit() {
+    $("hud").innerHTML = `<div id="hudrow"><span id="hudmain"></span></div><div id="books"></div>`;
+    const row = $("hudrow"); row.appendChild($("goal"));
+    [["travelbtn", "Travel ➜", openTravel], ["booksbtn", "Books ▾", () => { booksPin = !booksPin; booksOpen(); }]].forEach(([id, label, fn]) => {
+      const b = document.createElement("button"); b.id = id; b.type = "button"; b.className = "wood hbtn"; b.textContent = label; b.onclick = e => { e.stopPropagation(); fn(); }; row.appendChild(b); });
+  }
+  function booksOpen() { const bk = $("books"); if (!bk) return; const open = atDesk || booksPin || !!bk.querySelector(".spot"); bk.classList.toggle("open", open);
+    const bb = $("booksbtn"); if (bb) { bb.classList.toggle("on", open); bb.textContent = open ? "Books ▴" : "Books ▾"; } }
+  // ---------- fast travel: a small map of the six doors; a 0.5 s fade, then the player stands at that door ----------
+  const STOPS = [["Farm", "🌾", 9, 8], ["Bakery", "🥖", BUILD[1].door.x, BUILD[1].door.y + 1], ["Mill", "⚙", BUILD[2].door.x, BUILD[2].door.y + 1],
+    ["Seed shop", "🌱", BUILD[3].door.x, BUILD[3].door.y + 1], ["Counting house", "💰", BUILD[4].door.x, BUILD[4].door.y + 1], ["Fair", "🎪", 34, 19]];
+  function openTravel() {
+    if (dlgOpen() || panelOpen()) return; if (storyOn && Story.busy) return toast("Finish what Maud is saying first.");
+    const t = $("travel"); t.innerHTML = `<div class="wood card"><h2>Where to?</h2><div class="tgrid">${STOPS.map(([n, ic], i) => `<button type="button" data-i="${i}">${ic}<br>${n}</button>`).join("")}</div><button type="button" class="x">Stay here</button></div>`;
+    t.classList.add("on"); t.onclick = e => { if (e.target === t) t.classList.remove("on"); };
+    t.querySelector(".x").onclick = () => t.classList.remove("on");
+    t.querySelectorAll("[data-i]").forEach(b => b.onclick = () => travelTo(+b.dataset.i));
+  }
+  function travelTo(i) { const st = STOPS[i]; $("travel").classList.remove("on"); if (!st) return;
+    FX.fade($("wrap"), () => { pl.x = st[2] * T + 8; pl.y = st[3] * T + 12; pl.dir = "up"; pl.target = null; keys.up = keys.down = keys.left = keys.right = false; }); }
   function coinBar(b) { // "where your coin is": Cash -> Inventory -> Accounts receivable (from poc/1-harvest-ledger.html)
     const segs = [["Cash", b.cash, "#2f6f62"], ["Inventory", b.inv, "#b8862b"], ["Accounts receivable", b.ar, "#5b7fc4"]], tot = Math.max(1, segs.reduce((a, x) => a + Math.max(0, x[1]), 0));
     return `<span class="k">Where your coin is</span><div class="coinmap">${segs.map(([n, v, c]) => `<div style="width:${Math.max(0, v) / tot * 100}%;background:${c}" title="${n}: ${v}">${v / tot > .18 ? `${n} ${v}` : ""}</div>`).join("")}</div>`;
@@ -537,7 +612,7 @@
       (x ? `<div style="text-align:right;margin-top:10px"><button class="btn gold pclose">Done</button></div>` : "");
     if (x) document.querySelectorAll("#panelBody .pclose").forEach(b => b.onclick = hidePanel);
     $("panel").onclick = e => { if (x && e.target === $("panel")) hidePanel(); };
-    $("panel").style.display = "flex";
+    $("panel").style.display = "flex"; addSignButtons($("panelBody"));
   }
   let hideWaiters = [];
   function hidePanel() { $("panel").style.display = "none"; panelKind = null; const w = hideWaiters.splice(0); if (w.length) return w.forEach(f => f()); if (atDesk) desk(); }
@@ -629,7 +704,7 @@
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
   function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); ctx.fillStyle = S.notice(s) ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); }
-  function drawWell() { const x = WELL.x * T - cam.x, y = WELL.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
+  function drawWell(W) { const x = W.x * T - cam.x, y = W.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
     ctx.fillStyle = "#2d5f9a"; ctx.fillRect(x + 3, y + 5, 10, 5); ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 1, y - 6, 2, 11); ctx.fillRect(x + 13, y - 6, 2, 11); ctx.fillStyle = "#9b2335"; ctx.fillRect(x - 1, y - 9, 18, 4); }
   function drawStall(f) { const x = (f.x - 1) * T - cam.x, y = (f.y - 1) * T - cam.y;
     ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y - 10, 2, 24); ctx.fillRect(x + 44, y - 10, 2, 24); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y + 4, 48, 10); ctx.fillStyle = "#946b3c"; ctx.fillRect(x, y + 12, 48, 2);
@@ -662,25 +737,51 @@
     ctx.fillStyle = "#f2efe6"; for (let k = 0; k < 4; k++) { const a = ang + k * Math.PI / 2; ctx.fillRect(Math.round(mx + Math.cos(a) * 13) - 2, Math.round(my + Math.sin(a) * 13) - 2, 5, 5); }
     [BUILD[0], BUILD[1], BUILD[5]].forEach((b, k) => { for (let j = 0; j < 3; j++) { const t = (frame / 90 + j / 3 + k * .3) % 1; ctx.fillStyle = `rgba(235,235,235,${.6 * (1 - t)})`; ctx.fillRect(Math.round((b.x + b.w) * T - 18 - cam.x + Math.sin(t * 6) * 2), Math.round(b.y * T - 4 - t * 18 - cam.y), 3 + t * 3, 3 + t * 3); } });
     if (S.rain(s.day)) { ctx.fillStyle = "rgba(40,60,110,.18)"; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = "rgba(200,220,255,.55)"; for (let k = 0; k < 70; k++) { const rx = (k * 53 + frame * 3) % VW, ry = (k * 97 + frame * 6) % VH; ctx.fillRect(rx, ry, 1, 4); } }
+    if (window.Verbs) Verbs.draw(ctx, cam, frame); // WS3: frames round tagged things
     const f = facing(), p = plotAt(f.x, f.y), n = npcAt(f.x, f.y), b = buildingAt(f.x, f.y);
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
-    $("hint").textContent = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
+    const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
       p ? "E: " + (!p.tilled ? "till" : p.sprinkler ? "pick up sprinkler" : !p.crop ? (s.sprinklersHeld ? "place sprinkler" : s.seeds ? "plant seed" : "no seed: buy from Tomas") : S.stage(s, p) === 4 ? "harvest" : p.watered || S.rain(s.day) ? "watered" : "water") : "";
+    $("hint").textContent = TOUCH ? hintText.replace(/^E: /, "Tap Act: ") : hintText;
+    if (TOUCH) { const lab = hintText.replace(/^E: /, "") || "Act", act = $("act"); if (act && act.dataset.l !== lab) { act.dataset.l = lab; act.textContent = lab.charAt(0).toUpperCase() + lab.slice(1); } }
   }
   let last = 0;
-  function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; frame++; if (!dlgOpen() && !panelOpen()) move(dt); draw(); requestAnimationFrame(loop); }
-  function fit() { const sc = Math.max(2, Math.floor(Math.min(innerWidth / VW, innerHeight / VH))); cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px"; }
-  addEventListener("resize", fit);
+  function tick(dt) { frame++; const modal = dlgOpen() || panelOpen(); if (TOUCH) { document.body.classList.toggle("inmodal", modal); if (modal) for (const k in keys) keys[k] = false; } if (!modal) move(dt); draw(); }
+  function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; tick(dt); requestAnimationFrame(loop); }
+  // whole pixels on a desktop, half steps on an iPad so the map fills the screen
+  function fit() { const fitSc = Math.min(innerWidth / VW, innerHeight / VH), sc = Math.max(2, TOUCH ? Math.floor(fitSc * 2) / 2 : Math.floor(fitSc)); cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px"; }
+  addEventListener("resize", fit); addEventListener("orientationchange", () => setTimeout(fit, 150));
+  // ---------- touch: on-screen pad and Act button, minus-sign helper, and keeping the typing box above the iPad keyboard ----------
+  function initTouch() {
+    const tc = document.createElement("div"); tc.id = "tc";
+    tc.innerHTML = `<div id="dpad">${[["up", "▲"], ["left", "◀"], ["right", "▶"], ["down", "▼"]].map(([d, g]) => `<button type="button" data-d="${d}" aria-label="Walk ${d}">${g}</button>`).join("")}</div><button type="button" id="act" aria-label="Act">Act</button>`;
+    document.body.appendChild(tc);
+    tc.querySelectorAll("#dpad button").forEach(b => { const d = b.dataset.d;
+      b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} keys[d] = true; pl.target = null; b.classList.add("down"); });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, () => { keys[d] = false; b.classList.remove("down"); })); });
+    $("act").addEventListener("pointerdown", e => { e.preventDefault(); if (!dlgOpen() && !panelOpen()) { const f = facing(); interactTile(f.x, f.y); } });
+    document.addEventListener("focusin", e => { if (e.target.tagName === "INPUT" && $("dlg").contains(e.target)) $("dlg").classList.add("kb"); });
+    document.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  function addSignButtons(root) { // the iPad number pad has no minus key, and a forecast can go negative
+    if (!TOUCH) return; root.querySelectorAll('input[inputmode="decimal"]').forEach(inp => { if (inp.dataset.sign) return; inp.dataset.sign = 1;
+      const b = document.createElement("button"); b.type = "button"; b.className = "sgn"; b.textContent = "±"; b.setAttribute("aria-label", "Make negative or positive"); b.tabIndex = -1;
+      b.addEventListener("pointerdown", e => e.preventDefault()); // don't steal focus from the box, so the keyboard stays up
+      b.addEventListener("click", () => { inp.value = inp.value.startsWith("-") ? inp.value.slice(1) : "-" + inp.value; inp.focus(); }); inp.after(b); });
+  }
+  if (TOUCH) initTouch();
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
-    interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; }, hidePanel,
-    set fast(v) { fast = v; }, pl, keys, step: dt => move(dt),
+    dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
+    travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
     const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10) });
+      if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       hud(); if (storyOn) Story.start();
     };

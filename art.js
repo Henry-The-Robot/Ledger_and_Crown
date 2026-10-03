@@ -44,7 +44,9 @@
     abbey: { H: "#8a6a4a", c: "#6b5a48", C: "#54463a", l: "#54463a" },
     pell: { H: "#6a4a2a", c: "#b07a6a", C: "#8f5f50", l: "#4a3a2a", e: "#e0a888" },
     pedlar: { H: "#2a2a3a", c: "#7a7a2a", C: "#5a5a1f", l: "#3a3a2a", e: "#e0b090" },
+    crane: { H: "#d8d8d8", c: "#26262c", C: "#15151a", l: "#1c1c22", e: "#e8c9a8" }, // WS3: Bailiff Crane, black coat; the ledger under his arm is added in build()
   };
+  const CHEST = ["", "", "", "", "", "..kkkkkkkkkkkk..", ".kHHHHHHHHHHHHk.", ".kHsHHHHHHHHsHk.", ".kkkkkkYYkkkkkk.", ".kssssskYksssSk.", ".kssssssYssssSk.", ".kSSSSSSSSSSSSk.", "..kkkkkkkkkkkk.."]; // WS3: the farm's cash chest
   // ---------- crops (wheat), five growth stages ----------
   const CROPS = [
     ["", "", "", "", "", "", "", "", "", "", "....Y....Y......", "..........Y..Y..", "......Y.........", "............"],
@@ -72,6 +74,9 @@
     TILES.water = [0, 1].map(i => { const t = tile(P.w, [], 60), x = t.getContext("2d"); x.fillStyle = P.W; for (let j = 0; j < 4; j++) x.fillRect((j * 5 + i * 3) % 14, j * 4 + 2, 3, 1); return t; });
     TILES.fence = (() => { const c = canvas(T, T), x = c.getContext("2d"); x.fillStyle = P.F; x.fillRect(0, 6, 16, 2); x.fillRect(0, 11, 16, 2); x.fillStyle = P.f; x.fillRect(2, 3, 3, 12); x.fillRect(11, 3, 3, 12); x.fillStyle = P.k; x.fillRect(2, 14, 3, 1); x.fillRect(11, 14, 3, 1); return c; })();
     Object.keys(PEOPLE).forEach(k => ART.people[k] = person(PEOPLE[k]));
+    // WS3: Crane carries a brown ledger under one arm (drawn onto his sprite frames: front/back at the right hip, sides in front)
+    ["down", "up", "left", "right"].forEach(d => ART.people.crane[d].forEach((c, i) => { const x = c.getContext("2d"), side = d === "left" || d === "right"; x.fillStyle = P.k; x.fillRect(side ? 5 : 10, 10, 5, 7); x.fillStyle = "#8a4b3a"; x.fillRect(side ? 6 : 11, 11, 3, 5); x.fillStyle = "#e8d8a8"; x.fillRect(side ? 6 : 11, 11, 3, 1); }));
+    ART.chest = sprite(CHEST);
     ART.crops = CROPS.map(r => sprite(r)); ART.crate = sprite(CRATE); ART.sprinkler = sprite(SPRINKLER); ART.sack = sprite(SACK);
     ART.tree = [0, 1, 2].map(i => tree(70 + i)); ART.bush = bush(90);
   }

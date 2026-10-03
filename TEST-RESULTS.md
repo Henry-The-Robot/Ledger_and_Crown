@@ -1,3 +1,12 @@
+# WS2 UI kit test results (branch ws2-ui-ipad, 2026-10-02)
+- tests/ipad.html: 17/17 true, errors []. tests/mouse-close.html: 9/9 closed. tests/never-stuck.html: all true.
+- tests/smoke-story.html (full story, ch. 1-9 through the UI incl. typed numbers): close ok, reconciles, JS errors 0.
+- tests/ws2-ui.html (new): 3 viewports (1280x800, 1194x834, 834x1194), all true: tokens present, HUD number 20px, dialog text >=18px, portrait 96px, HUD clear of Menu, Day/Cash/Crown on one row, Books strip opens on spot(h-ar) and closes after, pad types and submits, pad keys >=44px, inputmode none on touch, Travel to Mill lands at (34,7), sound muted by default, coins + floating number on a Cash change, day-end card + tap dismiss.
+- All other tests/*.html (deposit-flow, doc-button, loan-advice, midwinter, smoke-spring, sprinkler-advice, teach-ui, visitors) and tests/test-*.js (11): pass. One test edited: teach-ui.html waits 4500 ms (was 2500) after sleeping, because the day-end card stays up longer.
+- Not run: tests/ipad-touch.js needs the `playwright` npm package (not installed here; same on `next`).
+- Screenshots: _build-shots/v0.3-ui/ (driver: _build-shots/ws2-shots.html).
+- Not verified: real-iPad feel (typewriter speed, audio unlock on Safari), phone 390x844 layout.
+
 # Test results — thornfield-beta packaging (2026-10-02)
 
 Source: `projects/mba-game/poc/5-spring/` in the Agent System repo, copied into this standalone

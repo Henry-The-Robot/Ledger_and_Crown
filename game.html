@@ -1,7 +1,11 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Thornfield">
+<meta name="theme-color" content="#1f2a1a"><meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Ledger & Crown — Spring at Thornfield</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="verbs.css">
 <style>
   body{background:#1f2a1a;overflow:hidden;user-select:none}
   #wrap{position:relative;margin:0 auto}
@@ -53,7 +57,41 @@
   .fcast td,.fcast th{padding:2px 8px}.fcast tr.ev td{background:#fff6dc}.fcast input{width:70px;font:14px var(--mono)}.fcast input.bad{background:#ffd6d6}.fcast input.good{background:#d9f2d9}.neg{color:#9b2335}
   .journal{background:#f6ecd2;border:1px solid #c9b183;padding:16px 20px;font:italic 19px "Segoe Script","Bradley Hand",cursive,var(--serif);color:#4a3526}.journal.small{font-size:15px;padding:8px 12px;display:block}.journal .sig{text-align:right}
   .nb{border-left:4px solid #ffcf3a;background:#fffaf0;padding:6px 10px;margin:8px 0}.nb b{color:#9b2335}
-</style></head>
+
+  /* ---- iPad and touch ---- */
+  html,body{overscroll-behavior:none;-webkit-touch-callout:none;-webkit-user-select:none;-webkit-text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  #hud .wood{pointer-events:auto}
+  #tc{display:none}
+  body.touch #tc{display:block}body.touch.inmodal #tc{display:none}
+  #dpad{position:fixed;left:calc(16px + env(safe-area-inset-left));bottom:calc(16px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,68px);grid-template-rows:repeat(3,68px);gap:4px;z-index:40}
+  #dpad button[data-d=up]{grid-area:1/2}#dpad button[data-d=left]{grid-area:2/1}#dpad button[data-d=right]{grid-area:2/3}#dpad button[data-d=down]{grid-area:3/2}
+  #dpad button,#act{background:rgba(241,217,166,.78);border:3px solid #7a4a22;color:#3b2a1e;font:bold 28px var(--serif);border-radius:16px;touch-action:none;padding:0;box-shadow:0 3px 0 #4a2c14}
+  #dpad button.down,#act:active{background:#ffcf3a;transform:translateY(2px);box-shadow:none}
+  #act{position:fixed;right:calc(20px + env(safe-area-inset-right));bottom:calc(24px + env(safe-area-inset-bottom));width:112px;height:112px;border-radius:50%;font-size:19px;line-height:1.1;z-index:40}
+  body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(8px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top));gap:8px}
+  body.touch #hud .wood{padding:8px 13px;font-size:17px;min-height:44px;display:flex;align-items:center}body.touch #hud .k{font-size:13px}
+  body.touch #goal{top:calc(62px + env(safe-area-inset-top));font-size:16px}
+  body.touch #menubtn{background:rgba(241,217,166,.92)!important;border:3px solid #7a4a22!important;color:#3b2a1e!important;box-shadow:0 3px 0 #4a2c14;top:calc(8px + env(safe-area-inset-top))!important;right:calc(8px + env(safe-area-inset-right))!important;min-height:44px;font-size:17px;padding:8px 16px}
+  body.touch #hint{font-size:16px;bottom:78px}body.touch #bark{font-size:16px;bottom:78px}
+  body.touch #bar{bottom:10px}body.touch #bar .slot{width:52px;height:52px}body.touch #bar canvas{width:46px;height:46px}
+  body.touch #bar .slot.keys{height:52px;width:auto;padding:4px 6px;display:flex;flex-direction:row;gap:6px;align-items:center;font-size:0}
+  body.touch #bar .slot.keys br{display:none}body.touch #bar .slot.keys .btn{min-height:40px;font-size:15px!important;padding:5px 12px!important;margin:0;background:#fff5dc;border:2px solid #9a6a3a;color:#3b2a1e}
+  body.touch #bar{align-items:center}body.touch.inmodal #bar{display:none}
+  body.touch #dlg{bottom:calc(84px + env(safe-area-inset-bottom));width:min(780px,96%);padding:12px 14px;max-height:78%;overflow:auto}
+  body.touch #dlg.kb{bottom:auto;top:calc(60px + env(safe-area-inset-top))}
+  body.touch #dlg .tx{font-size:18px;line-height:1.4}body.touch #dlg .nm{font-size:17px}
+  body.touch #dlg button{min-height:48px;font-size:17px;padding:8px 16px;margin:5px 8px 5px 0}body.touch #dlg button kbd{display:none}
+  body.touch #dlg .in{display:flex;align-items:center;gap:8px;margin:6px 0}
+  body.touch #dlg .in input,body.touch .fcast input,body.touch input{font-size:18px;min-height:46px}
+  body.touch .sgn,#dlg .sgn{min-height:46px;min-width:52px;font:bold 22px var(--serif);background:#fff5dc;border:2px solid #9a6a3a;border-radius:8px;color:#3b2a1e;padding:0 12px;margin:0 0 0 6px}
+  body.touch .fcast .sgn{min-height:40px;min-width:42px;font-size:18px}
+  body.touch .btn{min-height:46px;font-size:17px;padding:9px 18px}
+  body.touch .choice{min-height:52px;font-size:17px}
+  body.touch .stm tr.pick{height:44px}body.touch .stm{font-size:15.5px}
+  body.touch .modal{max-height:92dvh;padding:18px 18px;-webkit-overflow-scrolling:touch}
+  body.touch .pclose{min-height:46px}
+</style>
+<link rel="stylesheet" href="ui.css"></head>
 <body>
 <div id="wrap">
   <canvas id="c" width="320" height="200"></canvas>
@@ -64,9 +102,10 @@
   <div id="dlg" class="wood"></div>
   <div id="bar" class="wood"></div>
   <div id="night"></div>
+  <div id="travel"></div>
 </div>
 <div class="overlay" id="panel" style="display:none"><div class="modal" id="panelBody"></div></div>
 <script src="codex.js"></script>
 <script src="engine.js"></script><script src="books.js"></script><script src="transcript.js"></script>
-<script src="art.js"></script><script src="bot.js"></script><script src="story.js"></script><script src="game.js"></script>
+<script src="art.js"></script><script src="bot.js"></script><script src="fx.js"></script><script src="verbs.js"></script><script src="story.js"></script><script src="game.js"></script>
 </body></html>

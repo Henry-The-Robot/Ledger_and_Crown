@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>WS3 screenshot driver</title><style>body{margin:0;background:#111}iframe{border:0;display:block;width:1194px;height:834px}</style></head>
+<body><iframe id="f"></iframe>
+<!-- Drives the real game to one WS3 scene and stops, for a screenshot. Run:
+     chrome --headless --allow-file-access-from-files --window-size=1194,834 --virtual-time-budget=20000 --screenshot=<out.png> "file:///.../tests/shot-ws3.html?scene=tag|stamp|bet|timeline|play|predict" -->
+<script>
+const scene = new URLSearchParams(location.search).get("scene") || "tag", sleep = ms => new Promise(r => setTimeout(r, ms)), f = document.getElementById("f");
+f.src = "../game.html?new=1&touch=1" + (/^(bet|timeline|play|predict)$/.test(scene) ? "&sandbox=1" : "");
+f.onload = async () => {
+  const w = f.contentWindow; w.__fastVerbs = true; await sleep(200);
+  const d = w.document, click = () => { const b = [...d.querySelectorAll("#dlg button")].filter(b => !b.disabled)[0]; if (b) b.click(); };
+  if (scene === "tag" || scene === "stamp") {
+    for (let i = 0; i < 4000; i++) { await sleep(5);
+      if (scene === "tag" && w.Verbs.tagging && d.getElementById("vparch") && d.querySelectorAll(".vp-row").length >= 2) { w.Verbs.tapDecoy(); break; }
+      if (scene === "stamp" && d.querySelector(".vstamp")) { w.__fastVerbs = false; break; }
+      if (w.Verbs.tagging) { if (scene === "stamp") w.Verbs.tapNext(); else if (d.querySelectorAll(".vp-row").length < 2 && !d.querySelector(".vsay")) { w.Verbs.tapNext(); } } else if (d.getElementById("dlg").style.display === "flex") click(); }
+  } else {
+    const G = w.G, S = w.Spring; G.s.bal.cash += 0; S.buySeeds(G.s, 5, true); G.hud();
+    if (scene === "bet") { w.Verbs.bet({ prompt: "Five coin says you can't tell me what's in the chest the morning after Hobb pays, if you buy nothing more.", docs: [{ label: "Open the timeline", open() {} }], how: "x", stake: { min: 0, max: 5 }, answer: () => 100, reveal: { day: 18 } });
+      G.s.bet = { guess: 143, stake: 3, revealDay: 18, day: 3, base: 0, tol: 0 }; await sleep(900); }
+    else if (scene === "timeline") w.Verbs.timeline({ mode: "show", n: 14, title: "Your next two weeks", maud: "Every coin coming and going, with Cash under it." });
+    else if (scene === "play") w.Verbs.timeline({ mode: "play", bill: G.s.bills[0], n: Math.max(14, G.s.bills[0].due - G.s.day + 1), title: "When do you pay Tomas?", maud: "Move the purple card." });
+    else if (scene === "predict") w.Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Name your lowest coin and the day." });
+  }
+  document.title = "ready " + scene;
+};
+</script></body></html>

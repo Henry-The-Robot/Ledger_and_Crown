@@ -4,6 +4,14 @@ All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Added (WS2: UI kit, iPad-first)
+- Design tokens in `style.css` (`--bg --panel --panel-edge --ink --muted --gold --green --red --font-body --font-num --sp1..5 --radius --shadow --tap`); game UI in new `ui.css`.
+- One-row HUD (Day, Cash, Crown fund meter, goal, Travel, Books); balance-sheet boxes moved to a collapsible Books strip that opens when a lesson spotlights one. HUD numbers 20px, dialog text 18px, 96px portrait with name plate.
+- On-screen number pad (0-9, minus, backspace, Check) in every ask/haggle box; on touch the box is `inputmode="none"` so the iPad keyboard never covers the dialog.
+- `fx.js`: coin burst on every Cash change, WebAudio clink/thud (muted by default; toggle in the menu), typewriter text (click finishes it; click a single-button box to advance), day-end card (Cash change, who owes you, losses; tap to dismiss).
+- Fast travel: Travel button opens a map of six doors; 0.5 s fade.
+- `tests/ws2-ui.html`; `teach-ui.html` waits longer after sleeping because the day-end card stays up a little longer.
+
 ## [v0.2-beta]
 
 Integrates PRs #1-#10 (via `claude/integrated-all` for #1-#9, then `claude/teach-and-thrill` for #10) plus review fixes.
