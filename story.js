@@ -261,5 +261,5 @@ window.Story = (function () {
     if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
-  return { init, start, onTalk, after, close, quietOffers, get state() { return st; }, get busy() { return busy; }, TITLES, PAGES, fresh };
+  return { init, start, onTalk, after, close, quietOffers, goalTexts: goalText, get state() { return st; }, get busy() { return busy; }, TITLES, PAGES, fresh };
 })();
