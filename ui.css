@@ -41,8 +41,8 @@ body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + en
 #dlg button,body.touch #dlg button{font:17px var(--font-body);min-height:var(--tap);padding:var(--sp1) var(--sp3);border-radius:var(--sp1);border:2px solid var(--panel-edge);background:#fff5dc;margin:var(--sp1) var(--sp2) var(--sp1) 0}
 #dlg .in input{font:20px var(--font-num);width:200px;min-height:var(--tap)}
 .np{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp1)}
-#dlg .np button{margin:0;min-height:52px;font:bold 22px var(--font-num);padding:0}
-#dlg .np button.ok{grid-column:1/-1;font:bold 18px var(--font-body);background:var(--gold);color:#1a1208;min-height:var(--tap)}
+#dlg .np button,body.touch #dlg .np button{margin:0;min-height:52px;font:bold 26px var(--font-num);padding:0}
+#dlg .np button.ok,body.touch #dlg .np button.ok{grid-column:1/-1;font:bold 18px var(--font-body);background:var(--gold);color:#1a1208;min-height:var(--tap)}
 #dlg .np button:active{background:#ffcf3a}
 #dlg.hasin .sgn{display:none}
 body.touch #dlg.hasin{bottom:calc(16px + env(safe-area-inset-bottom))}
@@ -78,4 +78,4 @@ i.coin.lose{background:radial-gradient(circle at 35% 30%,#f4b0b0,#b3414f 60%,#6a
 #travel button{font:bold 18px var(--font-body);min-height:64px;background:#fff5dc;border:2px solid var(--panel-edge);border-radius:var(--radius);cursor:pointer;color:var(--ink)}
 #travel button:hover{background:#ffe3a0}
 #travel .x{margin-top:var(--sp3);width:100%;min-height:var(--tap)}
-#menubtn .snd{margin-left:var(--sp2)}
+#menubtn,body.touch #menubtn{background:var(--panel)!important;border:3px solid var(--panel-edge)!important;color:var(--ink)!important;box-shadow:var(--shadow);min-height:var(--tap);font:bold 18px var(--font-body);padding:var(--sp1) var(--sp3);border-radius:var(--radius)}

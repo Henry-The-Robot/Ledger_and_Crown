@@ -527,7 +527,7 @@
     n.classList.add("on"); let done = false;
     const end = () => { if (done) return; done = true; n.onclick = null; n.classList.remove("on"); then && then(); };
     n.onclick = () => end();
-    setTimeout(end, 1500 + (notes.length + rows.length) * 500);
+    setTimeout(end, 1500 + notes.length * 500 + rows.length * 400);
   }
   function morningBark() { // coaching fades: only real danger once the player is past chapter 5
     const c = S.coach(s); if (!c) { calm++; return; }
@@ -758,7 +758,7 @@
   if (TOUCH) initTouch();
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
-    travel: travelTo, openTravel, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
