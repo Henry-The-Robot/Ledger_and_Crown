@@ -18,7 +18,7 @@
     thud() { tone(140, 0, .22, "triangle", .2, 50); },
     // a handful of coins fly up from the element and fall; a thud-and-shake on a loss
     cash(delta, el, wrap) {
-      if (!delta) return; if (delta > 0) FX.clink(); else { FX.thud(); FX.shake(wrap); }
+      if (!delta) return; if (delta > 0) FX.clink(); else FX.thud();
       if (!el || !wrap || reduce()) return;
       const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect(), n = Math.min(10, 3 + Math.floor(Math.abs(delta) / 10));
       for (let i = 0; i < n; i++) { const c = document.createElement("i"); c.className = "coin " + (delta < 0 ? "lose" : "gain");
