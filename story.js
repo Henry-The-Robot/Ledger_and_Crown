@@ -135,37 +135,40 @@ window.Story = (function () {
     if (!deal) { await G.say("hobb", "Suit yourself. The offer stands till tomorrow."); return; }
     to(4, "ship4");
   }
+  // WS3: the four typed sums become one bet with a delayed reveal. The player predicts the chest from the timeline (cards, no Cash line),
+  // stakes real coin, and is told the answer on the morning after Hobb pays: predicted vs actual, each difference named (Verbs.revealBet).
   async function ch4b(order) {
-    const v = order.value, inv = G.s.invoices.find(x => x.who === "hobb"), b = S.balanceSheet(G.s.bal);
+    const V = Verbs, v = order.value, inv = G.s.invoices.find(x => x.who === "hobb");
     await tell(`The Ledger says you earned ${v} today: Revenue. Look at the chest: it didn't move.`, ["h-ni", "h-cash"]);
-    // Say it with the player's real totals: Accounts receivable is everyone who owes you, not just this sale.
     const arNow = S.balanceSheet(G.s.bal).ar;
     await tell(arNow > v
-      ? `Hobb's ${v} joins your Accounts receivable: everything people owe you, ${arNow} in all (see the box at the top). Hobb's part is due day ${inv.due}. Two books, and Edric only read one.`
+      ? `Hobb's ${v} joins your Accounts receivable: everything people owe you, ${arNow} in all. Hobb's part is due day ${inv.due}. Two books, and Edric only read one.`
       : `The ${v} is your Accounts receivable now: Hobb owes it, due day ${inv.due}. Two books, and Edric only read one.`, ["h-ar", "coin"]);
-    const rows = S.forecast(G.s, inv.due - G.s.day + 1), row = rows[rows.length - 1], paydays = rows.filter(r => r.wages), out = rows.reduce((a, r) => a + r.cout, 0);
-    if (paydays.length) await tell(`One more thing comes out before then. Every 7th day you pay the farmhands' wages, plus Ezra's interest on the 100 your uncle borrowed:<br>${paydays.map(r => `day ${r.day}: ${r.wages}`).join(", ")}.`, ["h-cash"]);
-    // Guided lookup (Kyle, 2026-10-02): find each number in your own forecast, then do the sum yourself.
-    // The answer and every hint use the same rows, so a correct sum is always accepted.
-    const n = rows.length, cin = rows.reduce((a, r) => a + r.cin, 0), start = rows[0].open, fc = DOC.forecast(n, `Cash forecast, today to day ${inv.due}`);
-    await tell(`Let's work out the chest on day ${inv.due}. You don't need to remember anything: every coin coming in and going out is on your cash forecast. Open it whenever you like.`);
-    await ask("First: how much is in the chest right now?", start, ["It's the Cash box at the top of the screen, and the first line of the forecast."], ["h-cash"], 0, [fc], `The Cash box says ${start}.`, "Cash is the coin in your chest at this moment. It's always in the Cash box at the top of the screen.");
-    await ask(`What comes in from today through day ${inv.due}?`, cin, [`Open the forecast and read the In column, every day from today to day ${inv.due}.`, "Count every payment in that column, not only Hobb's."], null, 0, [fc], `The In column: ${rows.filter(r => r.cin).map(r => `day ${r.day}: ${r.cin}`).join(", ")}. Together: ${cin}.`, "Add every amount in the forecast's In column, from today's row down to the day asked. In shows 30 on day 3 and 50 on day 5: that's 80.");
-    await ask(`And what goes out over those same days?`, out, [`The Out column, today through day ${inv.due}.`, "Wages, Ezra's interest and any bill to Tomas all count."], null, 0, [fc], `The Out column: ${rows.filter(r => r.cout).map(r => `day ${r.day}: ${r.cout}`).join(", ")}. Together: ${out}.`, "Same idea with the Out column: add every amount from today's row down to the day asked.");
-    await ask(`So: if you buy nothing more, what will Cash be the morning after Hobb pays?`, row.close, ["Picture the chest: what's in it now, what arrives, what leaves.", "Use the three numbers you just found."], ["h-cash"], 0, [fc], `Start with ${start} in the chest, add the ${cin} coming in, take off the ${out} going out: ${row.close}.`, "Cash later = Cash now + what comes in − what goes out. 100 now, 80 coming in, 120 going out: 100 + 80 − 120 = 60.");
-    mastered("accrual"); mastered("ar");
-    keep("ar", "Accounts receivable", "Revenue counts when you deliver; the Cash comes when they pay. In between, it's a receivable.", `Hobb: ${v} of Revenue on day ${G.s.day}, Cash on day ${inv.due}.`);
+    const n = inv.due - G.s.day + 1, last = () => { const r = S.forecast(G.s, n); return r[r.length - 1]; };
+    const tl = { label: "Open the timeline", open: () => V.timeline({ mode: "show", n, hideLine: true, title: `Cash events, today to day ${inv.due}`, maud: "Every coin coming in and going out. I've hidden the Cash line: that's your job." }) };
+    const r = await V.bet({ prompt: `Five coin says you can't tell me what's in the chest the morning after Hobb pays (day ${inv.due + 1}), if you buy nothing more.`, docs: [tl, DOC.ledger],
+      how: "Cash now, plus every coin that comes in, minus every coin that goes out, up to that day. The timeline shows each one.", stake: { min: 0, max: 5 }, tol: 0, answer: () => last().close, reveal: { day: inv.due + 1 }, kind: "hobb",
+      explain: () => "Revenue counted the day you delivered; the coin came today. Two books." });
+    keep("ar", "Accounts receivable", "Revenue counts when you deliver; the Cash comes when they pay. In between, it's a receivable.", `Hobb: ${v} of Revenue on day ${G.s.day}, Cash on day ${inv.due}. You said ${r.guess}${r.stake ? ` and staked ${r.stake}` : ""}.`);
     await page(1); to(5, "sleep5");
   }
+  // the bet's morning: runs whenever the story is free on or after the reveal day
+  async function revealIfDue() { if (!G.s.bet || G.s.day < G.s.bet.revealDay) return; const r = await Verbs.revealBet(); if (r && r.win) { mastered("accrual"); mastered("ar"); } }
   // ---------- chapter 5: wages day (C2.09: working capital, the cash forecast) ----------
+  // WS3: no warning beforehand (Kapur: struggle first). The engine decides at the day-7 sleep: if Cash can't cover wages a farmhand walks off.
   async function ch5() {
-    await tell(`Wages day is day ${S.nextWeekEnd(G.s)}: ${S.weekBills(G.s)} out of the chest, profit or no profit. Let's see if it's there.`, ["h-due"]);
-    const r = await G.board({ title: "Two-week cash forecast", show: 7, fill: [7, 8, 9, 10, 11, 12, 13],
-      maud: "I've filled the first week: each day, Cash at the start, plus what comes in, minus what goes out. You fill the second week's closing Cash." });
+    const V = Verbs, walked = !!G.s.walkedOff;
+    await tell(walked ? `Jory walked off last night: ${G.s.walkedWages} in wages and the chest couldn't find them. The crops went unwatered. The Ledger said profit. The chest said no.`
+      : "Wages went out last night. Closer than the Ledger makes it look.", ["h-cash"]);
     const f = S.forecast(G.s, 14), low = f.reduce((a, x) => x.close < a.close ? x : a);
-    mastered("wc");
-    await tell(`Lowest point: day ${low.day}, Cash ${low.close}. ${low.close < 60 ? "That's your scare. Edric lived there." : "Closer than the Ledger makes it look."}<br>Press F any time to see this board.`, ["h-cash"]);
-    keep("forecast", "Cash forecast", "Cash at the start + cash in − cash out, day by day. Profit doesn't pay wages; Cash does.", `Day ${G.s.day}: lowest Cash in two weeks ${low.close}, on day ${low.day}. You got ${r.firstTry} of ${r.total} cells first time.`);
+    await V.timeline({ mode: "show", n: 14, title: "Your next two weeks", maud: `Every coin coming and going, with Cash under it. The low point is day ${low.day}, Cash ${low.close}. ${low.close < 60 ? "That's where Edric lived." : "Watch that dip."}` });
+    if (!walked) mastered("wc");
+    await G.say("tomas", "I only mark up my seed 50%. Honest trade.");
+    const m = Math.round(50 / 150 * 100);
+    const r = await V.bet({ prompt: "Two coin says you can't tell me Tomas's margin on his seed. He marks it up 50%.", docs: [DOC.notebook], how: "Markup divides the profit by what the seed cost him. Margin divides the same profit by the price he sells at. If it cost him 100 and he sells at 150, the profit is 50.", stake: { min: 0, max: 2 }, tol: 1, answer: () => m, reveal: "now", kind: "markup",
+      explain: () => "Markup is profit ÷ cost, 50%. Margin is profit ÷ price, 50 ÷ 150 = 33%. Same sale, two numbers." });
+    if (r.win) mastered("margin");
+    keep("forecast", "Cash forecast", "Cash at the start + cash in − cash out, day by day. Profit doesn't pay wages; Cash does.", `Day ${G.s.day}: lowest Cash in two weeks ${low.close}, on day ${low.day}.${walked ? " Jory walked off on wages day." : ""} Markup 50% = margin ${m}%.`);
     await page(2); to(6, "tomas6");
   }
   // ---------- chapter 6: Tomas's terms (C1.06: accounts payable, the cost of trade credit) ----------
@@ -176,22 +179,20 @@ window.Story = (function () {
     const r = G.act(() => S.buySeeds(G.s, c ? 9 : 6, true));
     if (!r.ok) { await G.say("tomas", r.msg); return; }
     const bill = G.s.bills[G.s.bills.length - 1];
-    await ask(`Your bill is ${bill.amount}. How much do you save if you pay by day ${bill.discBy}?`, bill.disc, ["Your bill is under Accounts payable at the top. Tomas's terms are 2% off.", "A percent is that many out of every 100. Round to a whole coin."], ["h-ap"], 0, null, `2% of ${bill.amount} is ${bill.amount} × 2 ÷ 100, about ${bill.disc}.`, "A percent means \"out of every 100\". 2% of a bill = the bill × 2 ÷ 100, rounded to the nearest whole coin. 2% of 150 = 150 × 2 ÷ 100 = 3. 2% of 60 = 1.2, which rounds to 1.");
+    const V = Verbs, r2 = await V.timeline({ mode: "play", bill, n: 14, title: "When do you pay Tomas?", maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and you save ${bill.disc}; pay later and you keep the coin. But the Cash has to be there on day ${bill.due}.` });
     mastered("ap");
-    const pay = await G.say("maud", `Your call. Ezra charges more than 2% for two weeks of coin; Tomas's credit is cheaper. But the Cash has to be there on day ${bill.due}.`, [`Pay now, save ${bill.disc}`, `Keep the Cash until day ${bill.due}`]);
-    if (pay === 0) G.act(() => S.payBills(G.s));
-    keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${G.s.day}: seed bill ${bill.amount}, 2% off by day ${bill.discBy} = ${bill.disc}; you ${pay === 0 ? "paid early" : "kept the Cash"}.`);
+    const pay = r2.paidNow ? 0 : 1; if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
+    keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${G.s.day}: seed bill ${bill.amount}, 2% off by day ${bill.discBy} = ${bill.disc}; you ${pay === 0 ? "paid early" : r2.day < bill.due ? `planned to pay on day ${r2.day}` : "kept the Cash"}.`);
     to(7, "ezra7");
   }
   // ---------- chapter 7: Ezra (C1.06, C5.01: debt, interest, what lenders read) ----------
   async function ch7() {
     const t0 = S.terms(G.s);
     await G.say("ezra", `You want coin. Everyone does. My rate is ${t0.rateBp / 100}% a week. Show me your forecast first, and I'll see.`);
-    const rows = S.forecast(G.s, 14), fill = rows.map((r, i) => (r.cin || r.cout || i === rows.length - 1) ? i : -1).filter(i => i >= 0);
-    const r = await G.board({ title: "Your forecast, for Ezra", show: 0, fill, maud: "Ezra only checks the days where something happens. Fill the closing Cash on those rows. Every cell right first time lowers your rate." });
-    G.s.rateAdj = Math.min(100, 25 * r.firstTry); const t = S.terms(G.s);
+    const r = await Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
+    G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
     mastered("tvm");
-    const c = await G.say("ezra", `${r.firstTry} of ${r.total} right first time. ${r.firstTry === r.total ? "You know your coin." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`,
+    const c = await G.say("ezra", `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`,
       ["Borrow 100", "Borrow 200", "Nothing today"]);
     if (c < 2) G.act(() => S.borrow(G.s, c ? 200 : 100));
     keep("tvm", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${c < 2 ? ` You borrowed ${c ? 200 : 100}: ${Math.round((c ? 200 : 100) * t.rateBp / 10000)} interest a week.` : ""}`);
@@ -246,6 +247,7 @@ window.Story = (function () {
     return false;
   }
   function after(evt, info) {
+    if (evt === "morning" && G.s.payPlan && G.s.day >= G.s.payPlan.day) { G.s.payPlan = null; G.act(() => S.payBills(G.s)); G.toast("You paid Tomas, as planned."); }
     if (busy) return;
     if (evt === "plant" && st.stage === "plant2" && (G.s.seeds === 0 || G.s.plots.filter(p => p.crop).length - (st.planted0 || 0) >= 6))
       run(async () => { await tell("Good. Water them every day; four nights and it's grain. Now: Hobb at the mill wants grain too."); to(4, "hobb4"); });
@@ -254,7 +256,8 @@ window.Story = (function () {
     if (evt === "deliver" && st.stage === "ship3" && info.who === "ashby")
       run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}. And it came in as Cash, today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
-    if (evt === "morning" && st.stage === "sleep5") run(ch5);
+    if (evt === "morning" && st.stage === "sleep5" && G.s.day >= 8) run(async () => { await ch5(); await revealIfDue(); });
+    else if (evt === "morning" && G.s.bet && G.s.day >= G.s.bet.revealDay) run(revealIfDue);
     if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
