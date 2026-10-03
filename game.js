@@ -594,7 +594,8 @@
     const segs = [["Cash", b.cash, "#2f6f62"], ["Inventory", b.inv, "#b8862b"], ["Accounts receivable", b.ar, "#5b7fc4"]], tot = Math.max(1, segs.reduce((a, x) => a + Math.max(0, x[1]), 0));
     return `<span class="k">Where your coin is</span><div class="coinmap">${segs.map(([n, v, c]) => `<div style="width:${Math.max(0, v) / tot * 100}%;background:${c}" title="${n}: ${v}">${v / tot > .18 ? `${n} ${v}` : ""}</div>`).join("")}</div>`;
   }
-  function goal(text, ch) { $("goal").innerHTML = text ? `<span class="k">Chapter ${ch} of 9</span> ${text.replace(/^Chapter \d+ · /, "")}` : ""; $("goal").style.display = text ? "block" : "none"; }
+  // WS6: the ribbon's small header is "Week N · <title>" when the story passes one (hdr), else the old "Chapter N of 9"
+  function goal(text, ch, hdr) { $("goal").innerHTML = text ? `<span class="k">${hdr || `Chapter ${ch} of 9`}</span> ${text.replace(/^Chapter \d+ · /, "")}` : ""; $("goal").style.display = text ? "block" : "none"; }
   function floatHud(id, v) { const el = $("h-" + id); if (!el) return; const r = el.getBoundingClientRect(), w = $("wrap").getBoundingClientRect();
     flo(`${v > 0 ? "+" : "−"}${Math.abs(v)}`, r.left - w.left + 10, r.bottom - w.top + 4, v > 0 ? "#2f6f3a" : "#9b2335"); }
   function floatAt(tx, ty, text, col) { if (!text) return; const sc = cv.getBoundingClientRect().width / VW; flo(text, (tx * T - cam.x) * sc, (ty * T - cam.y) * sc, col); }

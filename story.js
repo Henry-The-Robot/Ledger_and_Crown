@@ -1,44 +1,89 @@
-// Spring at Thornfield — the story: "The Uncle's Ledger", chapters 1-9 (projects/mba-game/STORY-year-one.md).
+// Spring at Thornfield — the story: "The Uncle's Ledger" as a FOUR-WEEK season (WS6; projects/mba-game/SEASON-1-REDESIGN.md §2, §4, §7).
+// Structure: Blake Snyder's beat sheet (Save the Cat, 2005) across four weeks, the detective-fiction "fair play" rule (every clue is
+// planted before the reveal: the case board pins one per lesson), and kishotenketsu inside each week. Calendar weeks drive the
+// title cards and the goal ribbon (day 1/8/15/22); the lesson stages below are the existing chapters, mapped into the weeks:
+//   Week 1 "The writ"        (days 1-7)   Crane's stamp, Crane's offer, harvest, Ashby, Tomas, Hobb
+//   Week 2 "Promises"        (days 8-14)  wages day, Tomas's terms (time value), Ezra's forecast, MIDPOINT day 12: Corvin Vale's first order, Edric's page
+//   Week 3 "The squeeze"     (days 15-21) Corvin's double order, events, Tomas offers again (the answer can flip), Crane's "mercy" visits
+//   Week 4 "The reckoning"   (days 22-28) Edric's cash book, close the books, the verdict + ending (the Audit duel is WS8)
 // Every concept runs Show -> Try -> Use -> Keep: Maud does it once with the player's real numbers (UI highlighted),
 // the player types the next number and Maud checks it (a hint when wrong, never the answer), a later situation uses
-// it unprompted, and it lands in Maud's notebook (N). Coaching fades: from chapter 6 Maud shows less; in chapter 8
-// she only asks. Method: worked examples that fade into problems (Atkinson, Renkl & Merrill 2003; Renkl 2014).
-// Curriculum: C1.01, C1.04, C0.02, C1.02, C2.09, C1.06, C5.01, C1.08. Runs on the game's G API (game.js).
+// it unprompted, and it lands in Maud's notebook (N) AND on the case board. Coaching fades on a schedule the player can see:
+// week 1 Maud shows, week 2 she asks, week 3 she bets, week 4 she is silent but for danger. Method: worked examples that fade
+// into problems (Atkinson, Renkl & Merrill 2003; Renkl 2014).
+// Curriculum: C1.01, C1.04, C0.02, C1.02, C2.09, C0.01/C5.01 (time value, ch6), C1.01/C1.03 (unearned revenue), C1.08. Runs on the game's G API (game.js).
 window.Story = (function () {
   const S = Spring, B = Books, TR = Transcript;
   let G, st = fresh();
   const TITLES = ["", "The bailiff", "Harvest and the bakery", "First seed", "Hobb pays later", "Wages day", "Tomas's terms", "Ezra", "The Duke's steward", "Closing the books"];
+  const WEEKS = [null,
+    { title: "The writ", line: "Rain, a gate, and a stranger with a ledger.", maud: "This week I'll show you. Watch the numbers." },
+    { title: "Promises", line: "Wages fall due, and the Duke's steward is coming.", maud: "This week I'll ask, not tell." },
+    { title: "The squeeze", line: "Everyone you promised now wants something.", maud: "This week I'll bet with you, not coach you." },
+    { title: "The reckoning", line: "Edric's last book, and the Crown's collector.", maud: "This week I'm silent unless the farm is in danger." },
+  ];
+  const weekOf = d => Math.min(4, Math.max(1, Math.ceil(d / 7)));
+  const farmName = () => (st && st.farm) || "Thornfield";
   const PAGES = [
     "Spring. Best harvest in ten years. Sold every sack. So why is the chest always empty?",
     "Hobb's my best customer. Pays like clockwork, fourteen days after. I'll be fine till then.",
     "Maud keeps drawing me calendars of coin. I keep telling her: the Ledger shows a profit.",
     "The Duke wants grain, more than I've ever grown. Ezra will lend me the seed money. It's the making of us.",
     "Profit every year. Never once enough coin on wages day. If someone reads this: watch the chest, not the Ledger.",
+    // WS6: the midpoint page, found the night Corvin Vale brings his order. Numbers are the game's own constants (S.R.duke).
+    `Corvin Vale was here again with the Duke's order: ${S.R.duke.sacks} sacks at ${S.R.duke.price}, paid ${S.R.duke.terms} days after delivery. The same order as last spring. The same as the spring before. I sign, I borrow for seed, and by Midwinter I'm begging Ezra. I begin to think he counts on it.`,
   ];
-  function fresh() { return { ch: 1, stage: "intro", notebook: [], pages: [] }; }
-  function init(g, saved) { G = g; st = saved || fresh(); goal(); }
-  const goalText = () => ({
-    "intro": "Chapter 1 · The bailiff: walk with Crane and tap what the farm owns",
-    "harvest2": "Chapter 2 · Harvest: the three ripe plots are in the field (E, or tap Act)",
-    "tomas2": "Chapter 3 · First seed: buy seed from Tomas (east along the path, the green roof)",
-    "plant2": "Chapter 3 · First seed: plant your seed (E on tilled soil, then E again to water)",
-    "ashby3": "Chapter 2 · The bakery: agree a price with Widow Ashby (red roof)",
-    "ship3": "Chapter 2 · The bakery: ship Ashby's sacks from your shipping crate (by the house)",
-    "hobb4": "Chapter 4 · Hobb pays later: see Hobb at the mill",
-    "ship4": "Chapter 4 · Hobb pays later: ship Hobb's sacks from the crate",
-    "sleep5": "Chapter 5 · Wages day: sleep, and Maud will meet you in the morning",
-    "tomas6": "Chapter 6 · Tomas's terms: buy your next seed from Tomas on account",
-    "ezra7": "Chapter 7 · Ezra: ask the moneylender about a loan (purple roof)",
-    "sleep8": "Chapter 8 · The Duke's steward: sleep; he arrives tomorrow",
-    "duke8": "Chapter 8 · The Duke's steward: he's waiting by the well",
-    "run9": "Chapter 9 · Run the farm to the end of spring (day 28), then close the books",
-    "done": "Spring is closed. Your notebook (N) has everything you learned.",
-  })[st.stage] || "";
-  function goal() { G.goal(goalText(), st.ch); }
+  function fresh() { return { ch: 1, stage: "intro", notebook: [], pages: [], clues: [], weeks: [], farm: "Thornfield" }; }
+  function init(g, saved) { G = g; st = Object.assign(fresh(), saved || {}); goal(); }
+  // Objective text per stage ("Title: what to do"); the ribbon adds "Week N · <title>" in front (see goal()).
+  const GOALS = {
+    "intro": "The bailiff: walk with Crane and tap what the farm owns",
+    "harvest2": "Harvest: the three ripe plots are in the field (E, or tap Act)",
+    "tomas2": "First seed: buy seed from Tomas (east along the path, the green roof)",
+    "plant2": "First seed: plant your seed (E on tilled soil, then E again to water)",
+    "ashby3": "The bakery: agree a price with Widow Ashby (red roof)",
+    "ship3": "The bakery: ship Ashby's sacks from your shipping crate (by the house)",
+    "hobb4": "Hobb pays later: see Hobb at the mill",
+    "ship4": "Hobb pays later: ship Hobb's sacks from the crate",
+    "sleep5": "Wages day: sleep, and Maud will meet you in the morning",
+    "tomas6": "Tomas's terms: buy your next seed from Tomas on account",
+    "ezra7": "Ezra: ask the moneylender about a loan (purple roof)",
+    "sleep8": "The steward: run the farm and sleep; Corvin Vale comes to the well on day 12",
+    "duke8": "The steward: Corvin Vale is waiting by the well",
+    "page8": "The page: sleep, and Maud will show you what she found",
+    "sleep9": "The squeeze: run the farm and sleep; Corvin Vale returns on day 15",
+    "duke9": "The squeeze: Corvin Vale is back at the well",
+    "tomas9": "Tomas offers again: Ezra's rate has moved; see Tomas on account",
+    "run9": "Run the farm to the end of spring (day 28), then close the books",
+    "done": "Spring is closed. Your notebook (N) and case board have everything you learned.",
+  };
+  const goalText = () => GOALS[st.stage] || "";
+  function goal() { const w = weekOf(G.s.day); G.goal(goalText(), st.ch, `${w === 0 ? "" : "Week " + w} · ${WEEKS[w].title}`); }
   function to(ch, stage) { if (window.Verbs) Verbs.parchClose(); /* a lesson page never outlives its stage */ st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
-  async function page(i) { if (st.pages.indexOf(i) < 0) st.pages.push(i); await G.page(PAGES[i]); }
+  // ---------- the case board (item 5): every lesson and journal page pins a clue; WS8's Ledger Duel reads Story.state.clues ----------
+  // clue = { id, term, num (the player's own number, as text), from (where it came from), day, kind: "lesson" | "page" | "book" }
+  function pin(id, term, num, from, kind) {
+    if (st.clues.some(c => c.id === id)) return;
+    st.clues.push({ id, term, num, from: from || `Day ${G.s.day}`, day: G.s.day, kind: kind || "lesson" });
+    G.toast(`Pinned to the case board: ${term}`);
+  }
+  async function page(i) { if (st.pages.indexOf(i) < 0) st.pages.push(i); await G.page(PAGES[i]); pin("page" + i, `Edric's page ${i + 1}`, `“${PAGES[i].split(/[.?]/)[0]}…”`, `Day ${G.s.day} · Edric's journal`, "page"); }
+  // ---------- week title cards: one line, tap to dismiss (never blocks the story; fades by itself) ----------
+  function weekCard(w, hold) {
+    document.querySelectorAll(".wkcard").forEach(e => e.remove());
+    const e = document.createElement("div"); e.className = "wkcard"; e.setAttribute("role", "status");
+    e.innerHTML = `<div class="wk-farm">${farmName()}</div><div class="wk-n">Week ${w} of 4</div><div class="wk-t">${WEEKS[w].title}</div><div class="wk-l">${WEEKS[w].line}</div><div class="wk-m"><b>Maud:</b> ${WEEKS[w].maud}</div><div class="wk-tap">Tap to dismiss</div>`;
+    e.onclick = () => e.remove(); document.getElementById("wrap").appendChild(e);
+    if (!hold) setTimeout(() => e.remove(), 7000);
+    return e;
+  }
+  const dueCard = () => { const d = G.s.day, w = weekOf(d); if (d === 1 + 7 * (w - 1) && st.weeks.indexOf(w) < 0) { st.weeks.push(w); return w; } return 0; };
   function addEx(id, more) { const n = st.notebook.find(x => x.id === id); if (n) n.example += " " + more; }
-  function keep(id, term, line, example) { if (!st.notebook.some(n => n.id === id)) st.notebook.push({ id, term, line, example }); G.toast(`Maud's notebook: ${term} (N)`); }
+  // keep: the notebook entry, plus (WS6) a clue card on the case board: num = the player's own number as text, from = where it came from.
+  function keep(id, term, line, example, num, from) {
+    if (!st.notebook.some(n => n.id === id)) st.notebook.push({ id, term, line, example }); G.toast(`Maud's notebook: ${term} (N)`);
+    pin(id, term, num || example.split(".")[0], from);
+  }
   const tell = (t, spot) => G.say("maud", t, null, spot);
   const ask = (t, answer, hints, spot, tol, docs, work, how) => G.ask("maud", t, answer, hints, spot, tol, docs, work, how);
   // Only answers the player got on their own count as evidence: a walk-through or a reported skip adds nothing.
@@ -239,7 +284,7 @@ window.Story = (function () {
   // ---------- hooks from the game ----------
   let busy = false;
   async function run(fn, ...a) { if (busy) return; busy = true; window.__walked = false; try { await fn(...a); } finally { busy = false; G.hud(); } }
-  function start() { if (st.stage === "intro") run(ch1); }
+  function start() { goal(); if (st.stage === "intro") { const w = dueCard(); if (w) weekCard(w); run(ch1); } }
   function onTalk(who) { // returns true when the story takes the conversation
     if (busy) return true;
     const m = { tomas: { tomas2: ch2, tomas6: ch6 }, ashby: { ashby3: ch3 }, hobb: { hobb4: ch4 }, ezra: { ezra7: ch7 }, duke: { duke8: ch8 } }[who];
@@ -249,6 +294,7 @@ window.Story = (function () {
   }
   function after(evt, info) {
     if (evt === "morning" && G.s.payPlan && G.s.day >= G.s.payPlan.day) { G.s.payPlan = null; G.act(() => S.payBills(G.s)); G.toast("You paid Tomas, as planned."); }
+    if (evt === "morning") { const w = dueCard(); if (w) weekCard(w); goal(); } // WS6: a new week's title card on day 8, 15, 22; the ribbon follows the calendar
     if (busy) return;
     if (evt === "plant" && st.stage === "plant2" && (G.s.seeds === 0 || G.s.plots.filter(p => p.crop).length - (st.planted0 || 0) >= 6))
       run(async () => { await tell("Good. Water them every day; four nights and it's grain. Now: Hobb at the mill wants grain too."); to(4, "hobb4"); });
@@ -262,5 +308,5 @@ window.Story = (function () {
     if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
-  return { init, start, onTalk, after, close, quietOffers, goalTexts: goalText, get state() { return st; }, get busy() { return busy; }, TITLES, PAGES, fresh };
+  return { init, start, onTalk, after, close, quietOffers, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName };
 })();
