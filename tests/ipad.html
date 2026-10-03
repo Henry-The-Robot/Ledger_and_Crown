@@ -10,6 +10,8 @@ const ptr = (w, el, type) => el.dispatchEvent(new w.PointerEvent(type, { bubbles
   const f = await load("?sandbox&new=1&touch=1&pad=1"), w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
   const G = w.G, s = G.s, txt = () => d.getElementById("dlg").textContent;
   out.push(`touch mode on: ${d.body.classList.contains("touch")}; pad and Act exist: ${!!d.getElementById("dpad") && !!d.getElementById("act")}`);
+  const padBox = d.getElementById("dpad").getBoundingClientRect(), padOp = parseFloat(w.getComputedStyle(d.querySelector("#dpad button")).opacity), actOp = parseFloat(w.getComputedStyle(d.getElementById("act")).opacity);
+  out.push(`the optional pad is see-through at rest (${padOp}, ${actOp}) and compact (${Math.round(padBox.width)}px wide): ${padOp < .7 && actOp < .7 && padBox.width <= 184}`);
   const x0 = G.pl.x; const right = d.querySelector('#dpad [data-d="right"]'); ptr(w, right, "pointerdown"); for (let k = 0; k < 30; k++) G.tick(1 / 60); const moved = G.pl.x - x0; ptr(w, right, "pointerup"); G.tick(1 / 60); const stop = G.pl.x;
   for (let k = 0; k < 10; k++) G.tick(1 / 60); out.push(`holding the pad walks and releasing stops: ${moved > 10 && G.pl.x === stop}`);
   G.pl.x = 9 * 16 + 8; G.pl.y = 8 * 16 + 12; G.pl.dir = "up"; G.pl.target = null; G.tick(1 / 60);

@@ -15,8 +15,7 @@ window.Verbs = (function () {
 
   // ---------- shared bits: a remark that fades, the stamp, a thud ----------
   function remark(text) { document.querySelectorAll(".vsay").forEach(e => e.remove()); const e = el("vsay", text); setTimeout(() => e.remove(), 3300); }
-  function thud() { try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain(); o.type = "sine"; o.frequency.setValueAtTime(110, a.currentTime); o.frequency.exponentialRampToValueAtTime(40, a.currentTime + .25);
-    g.gain.setValueAtTime(.5, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + .3); o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + .32); } catch (e) {} }
+  function thud() { if (window.FX) FX.thud(); } // the one shared, iOS-unlocked audio context in fx.js (and it respects the sound switch; this used to open a new context on every stamp and ignore it)
   async function stamp(text, sub) { const e = el("vstamp", `${text}${sub ? `<small>${sub}</small>` : ""}`); thud(); await wait(window.__fastVerbs ? 30 : 1300); return e; }
 
   // ---------- the parchment ----------
@@ -66,7 +65,8 @@ window.Verbs = (function () {
     const d = tagSt.cfg.decoys.find(o => hit(o, tx, ty)); if (d) { remark(d.says); return true; }
     return false;
   }
-  function whereElse() { if (!tagSt) return; const left = tagSt.cfg.targets.filter(o => !tagSt.done.has(o.id)); if (!left.length) return;
+  function whereElse() { if (!tagSt) return; window.__walked = true; // asking "Where else?" is a hint: no mastery credit for this tag
+ const left = tagSt.cfg.targets.filter(o => !tagSt.done.has(o.id)); if (!left.length) return;
     const pl = G.pl, px = pl.x / T, py = pl.y / T, d = o => Math.min(...tilesOf(o).map(([x, y]) => Math.hypot(x - px, y - py)));
     left.sort((a, b) => d(a) - d(b)); tagSt.pulse = left[0].id; tagSt.pulseUntil = Date.now() + 5000; }
   // test helper: tap the first untagged target through the real hit-test; returns false when nothing is left
@@ -92,7 +92,7 @@ window.Verbs = (function () {
       const docs = cfg.docs || [], labels = ["Place my bet"].concat(docs.map(d => d.label), cfg.how ? ["Explain how"] : []);
       const r = await G.dlg({ who: "maud", text: cfg.prompt + extra, input: "your number", choices: labels });
       const lab = labels[r.i];
-      if (lab === "Explain how") { extra = `<br><span class="hintline"><b>How:</b> ${cfg.how}</span>`; continue; }
+      if (lab === "Explain how") { extra = `<br><span class="hintline"><b>How:</b> ${cfg.how}</span>`; window.__walked = true; continue; } // taking the hint means the lesson was walked: no mastery credit
       if (r.i > 0 && lab !== "Place my bet") { await G.openDoc(docs[r.i - 1].open); continue; }
       if (r.v == null || isNaN(r.v)) { extra = `<br><i class="hintline">Type a number first.</i>`; continue; }
       guess = r.v; break;
@@ -186,7 +186,7 @@ window.Verbs = (function () {
             const over = ev => { const t = document.elementFromPoint(ev.clientX, ev.clientY), d = t && t.closest ? t.closest(".vtl-day") : null; document.querySelectorAll(".vtl-day.drop").forEach(x => x.classList.remove("drop")); if (d) d.classList.add("drop"); return d; };
             card.onpointermove = over; card.onpointerup = ev => { const d = over(ev); drag = false; if (d) { const day = +d.dataset.day; if (day >= G.s.day && day <= Math.max(G.s.day, cfg.bill.due)) { moved = day; st.sel = day; st.sum = playSum(day); } } paint(); }; };
         } else if (cfg.mode === "predict") {
-          if (!done) { const al = Spring.forecast(G.s, cfg.n, cfg.extra), lw = al.reduce((a, r) => r.close < a.close ? r : a, al[0]); window.__tl = { low: lw.close, day: lw.day }; f.innerHTML = `<div class="vtl-pick"><label>Lowest Cash <input id="tlLow" type="text" inputmode="decimal" placeholder="coin"></label><label>on day <input id="tlDay" type="text" inputmode="numeric" placeholder="day"></label><button class="btn gold" id="tlok">Lock in my guess</button></div>`;
+          if (!done) { const al = Spring.forecast(G.s, cfg.n, cfg.extra), lw = al.reduce((a, r) => r.close < a.close ? r : a, al[0]); if (window.__fastVerbs) window.__tl = { low: lw.close, day: lw.day }; /* test hook only: in play the answer is never parked on window */ f.innerHTML = `<div class="vtl-pick"><label>Lowest Cash <input id="tlLow" type="text" inputmode="decimal" placeholder="coin"></label><label>on day <input id="tlDay" type="text" inputmode="numeric" placeholder="day"></label><button class="btn gold" id="tlok">Lock in my guess</button></div>`;
             if (G.addSigns) G.addSigns(f);
             $("tlok").onclick = () => { const low = parseFloat($("tlLow").value), day = parseInt($("tlDay").value, 10); if (isNaN(low) || isNaN(day)) { $("tlLow").style.outline = "3px solid #9b2335"; return; }
               const all = Spring.forecast(G.s, cfg.n, cfg.extra), act = all.reduce((a, r) => r.close < a.close ? r : a, all[0]); done = true; st.hide = false; st.mark = { day, v: low };

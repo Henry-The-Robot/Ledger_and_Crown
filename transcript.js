@@ -51,6 +51,7 @@
   // master (kept for the story's calls): explained it correctly in a lesson, on your own. Evidence, not mastery.
   function master(id, day) { return record(id, "answer", day); }
   const state = id => level(store.get()[id]);
+  const evidence = id => ((store.get()[id] || { ev: [] }).ev || []).slice(); // the recorded events (kind, game day, real date): for tests and the transcript
   const name = id => { for (const k in CONCEPTS) for (const [i, n] of CONCEPTS[k]) if (i === id) return n; return id; };
   const W = { unseen: 0, introduced: .2, practiced: .55, mastered: 1 };
   function progress(code) { const cs = CONCEPTS[code] || []; if (!cs.length) return 0; return cs.reduce((a, [i]) => a + W[state(i)], 0) / cs.length; }
@@ -65,6 +66,6 @@
       `<p class="hint">Introduced: you've met it. Practiced: right on your own on 2 different days. Mastered: right on your own on 3 different days, at least once by explaining it, across at least 2 real days. Ideas come back in later seasons so you can master them.</p>` +
       `<div class="courses">${COURSES.map(row).join("")}</div><div class="diploma">&#128274; Diploma: sealed until the Grand Audit</div>`;
   }
-  root.Transcript = { COURSES, CONCEPTS, use, master, state, name, progress, reset, html, level };
+  root.Transcript = { COURSES, CONCEPTS, use, master, evidence, state, name, progress, reset, html, level };
   if (typeof module !== "undefined") module.exports = root.Transcript;
 })(typeof window !== "undefined" ? window : globalThis);
