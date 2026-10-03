@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#1f2a1a"><meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Ledger & Crown — Spring at Thornfield</title>
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="verbs.css">
+<link rel="stylesheet" href="style.css?v=0.3.1"><link rel="stylesheet" href="verbs.css?v=0.3.1">
 <style>
   body{background:#1f2a1a;overflow:hidden;user-select:none}
   #wrap{position:relative;margin:0 auto}
@@ -91,7 +91,7 @@
   body.touch .modal{max-height:92dvh;padding:18px 18px;-webkit-overflow-scrolling:touch}
   body.touch .pclose{min-height:46px}
 </style>
-<link rel="stylesheet" href="ui.css"></head>
+<link rel="stylesheet" href="ui.css?v=0.3.1"></head>
 <body>
 <div id="wrap">
   <canvas id="c" width="320" height="200"></canvas>
@@ -105,7 +105,8 @@
   <div id="travel"></div>
 </div>
 <div class="overlay" id="panel" style="display:none"><div class="modal" id="panelBody"></div></div>
-<script src="codex.js"></script>
-<script src="engine.js"></script><script src="books.js"></script><script src="transcript.js"></script>
-<script src="art.js"></script><script src="bot.js"></script><script src="fx.js"></script><script src="verbs.js"></script><script src="story.js"></script><script src="game.js"></script>
+<!-- ?v= busts browser caches on every release (Safari otherwise mixes old scripts with a new page); bump it each release -->
+<script src="codex.js?v=0.3.1"></script>
+<script src="engine.js?v=0.3.1"></script><script src="books.js?v=0.3.1"></script><script src="transcript.js?v=0.3.1"></script>
+<script src="art.js?v=0.3.1"></script><script src="bot.js?v=0.3.1"></script><script src="fx.js?v=0.3.1"></script><script src="verbs.js?v=0.3.1"></script><script src="story.js?v=0.3.1"></script><script src="game.js?v=0.3.1"></script>
 </body></html>
