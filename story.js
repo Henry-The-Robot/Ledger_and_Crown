@@ -162,7 +162,7 @@ window.Story = (function () {
       : "Wages went out last night. Closer than the Ledger makes it look.", ["h-cash"]);
     const f = S.forecast(G.s, 14), low = f.reduce((a, x) => x.close < a.close ? x : a);
     await V.timeline({ mode: "show", n: 14, title: "Your next two weeks", maud: `Every coin coming and going, with Cash under it. The low point is day ${low.day}, Cash ${low.close}. ${low.close < 60 ? "That's where Edric lived." : "Watch that dip."}` });
-    if (!walked) mastered("wc");
+    // (the timeline above is something to read, not an answer, so it earns no mastery; the forecast Ezra asks for in chapter 7 does)
     await G.say("tomas", "I only mark up my seed 50%. Honest trade.");
     const m = Math.round(50 / 150 * 100);
     const r = await V.bet({ prompt: "Two coin says you can't tell me Tomas's margin on his seed. He marks it up 50%.", docs: [DOC.notebook], how: "Markup divides the profit by what the seed cost him. Margin divides the same profit by the price he sells at. If it cost him 100 and he sells at 150, the profit is 50.", stake: { min: 0, max: 2 }, tol: 1, answer: () => m, reveal: "now", kind: "markup",
@@ -180,7 +180,7 @@ window.Story = (function () {
     if (!r.ok) { await G.say("tomas", r.msg); return; }
     const bill = G.s.bills[G.s.bills.length - 1];
     const V = Verbs, r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and you save ${bill.disc}; pay later and you keep the coin. But the Cash has to be there on day ${bill.due}.` });
-    mastered("ap");
+    if (r2.saved > 0 && r2.low >= 0) mastered("ap"); // right = took the discount and the plan never empties the chest
     const pay = r2.paidNow ? 0 : 1; if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
     keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${G.s.day}: seed bill ${bill.amount}, 2% off by day ${bill.discBy} = ${bill.disc}; you ${pay === 0 ? "paid early" : r2.day < bill.due ? `planned to pay on day ${r2.day}` : "kept the Cash"}.`);
     to(7, "ezra7");
@@ -191,7 +191,7 @@ window.Story = (function () {
     await G.say("ezra", `You want coin. Everyone does. My rate is ${t0.rateBp / 100}% a week. Show me your forecast first, and I'll see.`);
     const r = await Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
     G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
-    mastered("tvm");
+    if (r.okLow && r.okDay) { mastered("tvm"); mastered("wc"); } // right = the lowest coin (within 5) and the day
     const c = await G.say("ezra", `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`,
       ["Borrow 100", "Borrow 200", "Nothing today"]);
     if (c < 2) G.act(() => S.borrow(G.s, c ? 200 : 100));
@@ -226,9 +226,9 @@ window.Story = (function () {
     await G.reveal("bs", `Your balance sheet, start and end: what you own and what you owe. Owner's equity moved by exactly your net income.`);
     await G.reveal("cf", `And the cash-flow statement: net income, then every place the Cash actually went. It ends at the change in Cash: ${stm.cf.change}.`);
     const target = (h.lines.find(l => l.startsWith("cf:")) || "cf:cfo");
-    await G.pickLine("Net income " + stm.is.net + ", Cash " + (stm.cf.change >= 0 ? "+" : "") + stm.cf.change + ". Click the line in the cash-flow statement where most of the difference went.", target,
+    const misses = await G.pickLine("Net income " + stm.is.net + ", Cash " + (stm.cf.change >= 0 ? "+" : "") + stm.cf.change + ". Click the line in the cash-flow statement where most of the difference went.", target,
       ["Look at the brackets: they're Cash that left, or never came.", "The biggest bracketed number between Net income and Cash from operations."]);
-    mastered("cfs"); mastered("statements");
+    if (misses === 0) { mastered("cfs"); mastered("statements"); } // right on the first tap
     await G.reveal("none", `${h.text}<br>That's what killed Edric: profit in the Ledger, the coin in other people's purses.`);
     if (st.pages.indexOf(4) < 0) st.pages.push(4);
     await G.reveal("none", `<span class="journal small">Edric's last page: “${PAGES[4]}”</span>`);

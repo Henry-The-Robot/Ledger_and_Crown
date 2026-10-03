@@ -66,7 +66,8 @@ window.Verbs = (function () {
     const d = tagSt.cfg.decoys.find(o => hit(o, tx, ty)); if (d) { remark(d.says); return true; }
     return false;
   }
-  function whereElse() { if (!tagSt) return; const left = tagSt.cfg.targets.filter(o => !tagSt.done.has(o.id)); if (!left.length) return;
+  function whereElse() { if (!tagSt) return; window.__walked = true; // asking "Where else?" is a hint: no mastery credit for this tag
+ const left = tagSt.cfg.targets.filter(o => !tagSt.done.has(o.id)); if (!left.length) return;
     const pl = G.pl, px = pl.x / T, py = pl.y / T, d = o => Math.min(...tilesOf(o).map(([x, y]) => Math.hypot(x - px, y - py)));
     left.sort((a, b) => d(a) - d(b)); tagSt.pulse = left[0].id; tagSt.pulseUntil = Date.now() + 5000; }
   // test helper: tap the first untagged target through the real hit-test; returns false when nothing is left
@@ -92,7 +93,7 @@ window.Verbs = (function () {
       const docs = cfg.docs || [], labels = ["Place my bet"].concat(docs.map(d => d.label), cfg.how ? ["Explain how"] : []);
       const r = await G.dlg({ who: "maud", text: cfg.prompt + extra, input: "your number", choices: labels });
       const lab = labels[r.i];
-      if (lab === "Explain how") { extra = `<br><span class="hintline"><b>How:</b> ${cfg.how}</span>`; continue; }
+      if (lab === "Explain how") { extra = `<br><span class="hintline"><b>How:</b> ${cfg.how}</span>`; window.__walked = true; continue; } // taking the hint means the lesson was walked: no mastery credit
       if (r.i > 0 && lab !== "Place my bet") { await G.openDoc(docs[r.i - 1].open); continue; }
       if (r.v == null || isNaN(r.v)) { extra = `<br><i class="hintline">Type a number first.</i>`; continue; }
       guess = r.v; break;

@@ -92,6 +92,12 @@ async function drive(w, until) {
     log(`close: statements unveiled ${d.querySelectorAll("#panelBody .veil").length === 0}, reconciles ${/reconciles ✓/.test(d.getElementById("panelBody").textContent)}, Ezra button ${!!d.getElementById("goEzra")}`);
     const tr = w.Transcript, all = Object.values(tr.CONCEPTS).flat();
     log(`transcript: ${all.filter(([i]) => tr.state(i) !== "unseen").length} used, ${all.filter(([i]) => tr.state(i) === "mastered").length} mastered`);
+    // Mastery is evidence of a RIGHT answer, not of a passive screen or a walk-through. This driver answers the forecast and the bets correctly, takes no Tomas
+    // discount, and picks "More" at Crane's question (wrong: the equity is negative), so the right verbs must have recorded an answer and the wrong ones must not.
+    const ans = id => tr.evidence(id).some(e => e.kind === "answer");
+    const want = { tvm: true, wc: true, margin: true, ap: false, equation: false };
+    const bad = Object.keys(want).filter(id => ans(id) !== want[id]);
+    log(`mastery evidence: answered ${all.filter(([i]) => ans(i)).map(([i]) => i).join(", ")}; ${bad.length ? "FAIL mastery rules broken for " + bad.join(", ") : "right answers counted, wrong ones and passive screens did not"}`);
     const road = [...d.querySelectorAll("#hud .deskonly")].length;
     log(`Desk/Road: ${road} desk-only HUD boxes hidden on the road`);
     log(`Try beats with a missing or misplaced setting: ${w.__badAsks.length} ${JSON.stringify(w.__badAsks)}`);
