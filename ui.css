@@ -45,6 +45,9 @@ body.touch #hud{left:calc(8px + env(safe-area-inset-left));right:calc(132px + en
 #dlg .np button.ok,body.touch #dlg .np button.ok{grid-column:1/-1;font:bold 18px var(--font-body);background:var(--gold);color:#1a1208;min-height:var(--tap)}
 #dlg .np button:active{background:#ffcf3a}
 #dlg.hasin .sgn{display:none}
+/* One Check per ask: on touch the number pad's own Check button (big, under the keys) is the only one; on a desktop the inline Check beside the box is the only one. The hidden one stays in the DOM: the other calls it (and Enter does too). */
+body.touch #dlg .dc.withpad .ch button:first-child{display:none}
+body:not(.touch) #dlg .np button.ok{display:none}
 body.touch #dlg.hasin{bottom:calc(16px + env(safe-area-inset-bottom))}
 
 /* ---- panels and buttons use the tokens ---- */
