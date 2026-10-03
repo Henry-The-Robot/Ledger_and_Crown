@@ -14,4 +14,7 @@ const a = S.newGame(), b = S.newGame(); for (let i = 0; i < 12; i++) { S.sleep(a
 ok(JSON.stringify(a.offers) === JSON.stringify(b.offers), "offers are deterministic (nothing extra to save)");
 const st = S.newGame({ story: true }); S.addOffer(st, "ashby", 6, 7, 0, 4, 4);
 ok(st.offers[0].reserve == null && st.offers[0].price === 7, "scripted story offers keep their fixed numbers");
+// spot cart / trader follow the going price; the Duke's big order is the story's 10
+ok(S.R.market.every((p, i) => S.spotPrice(i + 1) === Math.max(S.R.unitCost, p - 2) && S.traderPrice(i + 1) === Math.max(S.R.unitCost, p - 1) && S.spotPrice(i + 1) < S.traderPrice(i + 1) + 1), "spot = going price - 2, trader = going price - 1, never below cost");
+{ const d = S.newGame(); while (d.day < 10) S.sleep(d); const duke = d.offers.find(o => o.who === "duke"); ok(duke && duke.price === 10 && duke.sacks === 90, "sandbox Duke order is 90 sacks at the story's 10 a sack"); }
 process.exit(fail ? 1 : 0);

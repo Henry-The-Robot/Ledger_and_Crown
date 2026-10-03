@@ -9,7 +9,7 @@
     days: 28, seedCost: 12, sacksPerPlot: 3, unitCost: 4, growDays: 4, // a plot: 12 of seed -> 3 sacks at 4 each
     upkeep: 45,                 // weekly farmhand wages + upkeep (Operating expense), paid in Cash
     sprinklerSaving: 20, wageFloor: 20, // each placed sprinkler saves the hands 20 a week of hauling water (wages never fall below the floor)
-    spotPrice: 5,               // the market cart buys any surplus for Cash
+    spotDelta: -2, traderDelta: -1, // the market cart buys surplus for Cash at the going price - 2, the road trader at the going price - 1 (never below cost)
     sprinklerHead: 1,           // a crop planted in sprinkled soil starts this many days along (a shorter cycle, so more harvests)
     sprinklerCost: 80, depPerWeek: 5, // Equipment: 16-week life, straight-line, no salvage (C1.05)
     lateGrace: 3, breachPct: 0.1, // an order more than 3 days late is cancelled, with a forfeit of 10% of its value
@@ -22,7 +22,7 @@
     rain: [5, 12, 13, 20, 26],
     // the going price per sack by day (index = day - 1): steady at first, then a glut around days 10-13, a Duke-fuelled rise by day 17, a dip, a late rally
     market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
-    premium: { ashby: 0, hobb: 1, duke: 2 }, // what each buyer pays over the going price on a standard offer
+    premium: { ashby: 0, hobb: 1 }, // what each buyer pays over the going price on a standard offer (the Duke's order is a fixed 10, see OFFERS)
     // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
     // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
     // customers who pay part up front: [day offered, buyer, sacks, price, days to deliver, deposit share, what they say]
@@ -43,6 +43,7 @@
   const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
     mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
+  // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.
   const OFFERS = [
     [1, "ashby", 6, 8, 0, 4], [2, "hobb", 18, 9, 14, 6], [4, "ashby", 9, 8, 0, 4], [6, "hobb", 24, 9, 14, 6],
     [8, "ashby", 9, 8, 0, 4], [10, "duke", 90, 10, 21, 12], [11, "ashby", 12, 8, 0, 4], [13, "hobb", 27, 9, 14, 6],
@@ -51,6 +52,7 @@
   ];
 
   const marketPrice = d => R.market[clamp(d, 1, R.days) - 1];
+  const spotPrice = d => Math.max(R.unitCost, marketPrice(d) + R.spotDelta), traderPrice = d => Math.max(R.unitCost, marketPrice(d) + R.traderDelta);
   function roll(d, who, salt) { // a stateless 0..1 roll from (day, buyer, salt): same game, same offers, nothing to save
     let h = 2166136261; for (const c of who + ":" + d + ":" + salt) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
     h = Math.imul(h ^ (h >>> 15), 2246822507); h ^= h >>> 13; return (h >>> 0) % 1000 / 1000;
@@ -181,7 +183,7 @@
   }
   function sellSpot(s, n, price) {
     n = Math.min(n, s.sacks); if (n <= 0) return err("Nothing to sell.");
-    const v = n * (price || R.spotPrice), c = n * R.unitCost; s.sacks -= n;
+    const v = n * (price || spotPrice(s.day)), c = n * R.unitCost; s.sacks -= n;
     post(s, "sale", `Sold ${n} surplus sacks to the market cart for Cash`, { cash: v, revenue: -v });
     post(s, "cogs", `Cost of the ${n} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += n; return ok();
@@ -359,7 +361,7 @@
     const id = NOTICE_DAYS[s.day]; if (!id || s.notices[s.day] != null) return null;
     return { id, ...{
       tinker: { title: "A tinker's cart of seed", text: "A tinker is selling 6 packets of seed for 60: ten a packet, cheaper than Tomas. He won't let you open them first, though. Or he'll let you inspect them for a fee of 5.", options: ["Buy all 6 unseen (60)", "Pay 5 to inspect first", "Walk past"] },
-      trader: { title: "A grain trader on the road", text: `A trader will buy up to 9 spare sacks today for ${R.spotPrice + 1} each, Cash. Sacks you sell now can't fill tomorrow's orders.`, options: ["Sell what I can spare (up to 9)", "Keep my grain"] },
+      trader: { title: "A grain trader on the road", text: `A trader will buy up to 9 spare sacks today for ${traderPrice(s.day)} each, Cash (the going price is ${marketPrice(s.day)}). Sacks you sell now can't fill tomorrow's orders.`, options: ["Sell what I can spare (up to 9)", "Keep my grain"] },
       hands: { title: "Hands for hire", text: "Day-labourers will weed and water every crop in the ground tonight for 25 Cash: everything growing gains a day.", options: ["Hire them (25)", "No, thanks"] } }[id] };
   }
   function answerNotice(s, i) {
@@ -371,7 +373,7 @@
         post(s, "seed", "Bought the 4 good packets of seed from the tinker for Cash (40 for 48 of standard cost)", { inv: 48, cash: -40, cogs: -8 }); s.seeds += 4; note(s, "Inspected: two packets were mouldy. You bought the 4 good ones for 40, 11.25 a packet including the fee."); return ok("inspected"); }
       return ok("pass");
     }
-    if (n.id === "trader") { if (i !== 0) return ok("pass"); const k = Math.min(9, s.sacks); if (k <= 0) { s.notices[s.day] = null; return err("The barn is empty."); } sellSpot(s, k, R.spotPrice + 1); note(s, `Sold ${k} sacks to the trader at ${R.spotPrice + 1}.`); return ok("sold"); }
+    if (n.id === "trader") { if (i !== 0) return ok("pass"); const k = Math.min(9, s.sacks); if (k <= 0) { s.notices[s.day] = null; return err("The barn is empty."); } sellSpot(s, k, traderPrice(s.day)); note(s, `Sold ${k} sacks to the trader at ${traderPrice(s.day)}.`); return ok("sold"); }
     if (n.id === "hands") { if (i !== 0) return ok("pass"); if (s.bal.cash < 25) { s.notices[s.day] = null; return err(`That's 25; Cash is ${s.bal.cash}.`); } post(s, "upkeep", "Day-labourers weeded and watered every crop (Operating expense)", { upkeep: 25, cash: -25 }); s.boost = s.day; note(s, "The labourers will be at the crops tonight."); return ok("hired"); }
     return err("");
   }
@@ -383,9 +385,9 @@
   }
   function makeOffers(s) {
     if (s.quiet) return; // the story's first lessons run without stray orders
-    OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, , tdays, dueIn]) => {
+    OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, fixed, tdays, dueIn]) => {
       let sacks = who === "duke" ? base : Math.max(3, Math.round(base * (0.6 + s.trust[who] / 10) / 3) * 3);
-      let price = marketPrice(d) + (R.premium[who] || 0), due = dueIn, terms = tdays, tag = "";
+      let price = who === "duke" ? fixed : marketPrice(d) + (R.premium[who] || 0), due = dueIn, /* the Duke's one big order is a fixed 10, as the story tells it; everyone else follows the market */ terms = tdays, tag = "";
       if (who !== "duke") { // buyers differ day to day: a rush, a bigger order on longer terms, a small one on short terms
         const r = roll(d, who, 1), rescale = k => Math.max(3, Math.round(sacks * k / 3) * 3);
         if (who === "ashby") { if (r >= .8 && d <= 20) { terms = 7; price += 1; tag = "pays in a week"; } else if (r >= .55) { sacks = rescale(.75); due = 2; price += 1; tag = "rush"; } }
@@ -414,7 +416,7 @@
     return null;
   }
 
-  root.Spring = { R, marketPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
+  root.Spring = { R, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
     weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, sprinklerFacts, buyFence, crownFund, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);
