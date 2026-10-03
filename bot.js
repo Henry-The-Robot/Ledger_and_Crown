@@ -44,6 +44,13 @@
   } };
   const noDuke = { name: "careful, declines the Duke", day(s) { s.offers.filter(o => o.who === "duke").forEach(o => S.decline(s, o.id)); careful.day(s); } };
   const sprinkler = { name: "careful + sprinkler", day(s) { if (s.day === 3) { S.buySprinkler(s); S.act(s, 13); } careful.day(s); } };
-  root.Bot = { farm, deliverAll, careful, reckless, overtrader, noDuke, sprinkler };
+  // The wages-day walk-off (a story game's first pay-day Cash can't cover): this player spends everything before day 7. Careful keeps a reserve and never triggers it.
+  const spender = { name: "spender (9+ packets and a sprinkler before the first pay-day, then every spare coin on seed)", day(s) {
+    if (s.day === 1) S.buySeeds(s, 9, false);
+    if (s.day === 2 && s.sprinklersHeld === 0 && !s.plots.some(p => p.sprinkler)) { S.buySprinkler(s); S.act(s, 13); }
+    s.offers.slice().forEach(o => S.accept(s, o.id)); farm(s); deliverAll(s);
+    if (s.day <= 6) { const spare = Math.floor((s.bal.cash - (s.day === 6 ? 0 : 20)) / 12), room = freePlots(s) - s.seeds; if (spare > 0 && room > 0) S.buySeeds(s, Math.min(spare, room), false); farm(s); }
+  } };
+  root.Bot = { farm, deliverAll, careful, reckless, overtrader, noDuke, sprinkler, spender };
   if (typeof module !== "undefined") module.exports = root.Bot;
 })(typeof window !== "undefined" ? window : globalThis);
