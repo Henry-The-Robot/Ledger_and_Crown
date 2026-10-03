@@ -32,6 +32,7 @@
     events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
     field: { x0: 5, y0: 10, w: 9, h: 4 },
   };
+  R.pigDay = +Object.keys(R.events).find(d => R.events[d] === "pigs"); // the fence is only worth offering up to the night the pigs come
   const ACCTS = {
     cash: ["Cash", "A"], ar: ["Accounts receivable", "A"], inv: ["Inventory", "A"], equip: ["Equipment", "A"],
     accdep: ["Accumulated depreciation", "A"], ap: ["Accounts payable", "L"], loan: ["Loan payable", "L"], crown: ["Crown debt", "L"],
