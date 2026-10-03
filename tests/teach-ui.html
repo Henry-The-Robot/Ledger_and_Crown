@@ -31,7 +31,7 @@ f.onload = async () => { try {
   // 5. predict before sleeping, with an invoice due tonight
   s.invoices.push({ id: 9999, who: "hobb", amount: 30, due: s.day }); s.bal.ar += 30; s.bal.revenue -= 30; s.bal.capital += 0;
   G.sleepNow(); await sleep(60); out.push(`asks for a guess when money moves tonight: ${/What will Cash be when you wake/.test(txt())}`);
-  d.getElementById("num").value = 1; btn(/Check my guess/).click(); await sleep(2500);
+  d.getElementById("num").value = 1; btn(/Check my guess/).click(); await sleep(4500); // WS2: the day-end card stays up a little longer (tap dismisses)
   out.push(`reveals the real number and the arithmetic: ${/You said 1/.test(txt()) && /collected/.test(txt())}`); G.closeDlg();
   // 6. insolvency post-mortem
   const t = S.newGame(); t.rescued = true; S.buySeeds(t, 16); while (t.day < 7) S.sleep(t); S.sleep(t); const pm = w.Books.postmortem(t);

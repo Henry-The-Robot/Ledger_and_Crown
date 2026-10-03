@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><title>WS2 UI kit</title></head><body><pre id="out">running</pre>
+<!-- Design tokens, readable sizes, one-row HUD clear of the Menu button, Books strip opens on a spotlight, mouse-only number pad
+     (and inputmode=none on touch), fast travel, day-end card, sound muted by default.
+     Run: chrome --headless --allow-file-access-from-files --virtual-time-budget=30000 --dump-dom tests/ws2-ui.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+function load(q, w, h) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = w + "px"; f.style.height = h + "px"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => res(f); }); }
+(async () => { try {
+  for (const [name, q, W, H] of [["desktop 1280x800", "?sandbox&new=1&touch=0", 1280, 800], ["iPad landscape 1194x834", "?sandbox&new=1&touch=1", 1194, 834], ["iPad portrait 834x1194", "?sandbox&new=1&touch=1", 834, 1194]]) {
+    const f = await load(q, W, H), w = f.contentWindow, d = w.document, G = w.G, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); G.closeDlg(); G.hidePanel();
+    const cs = (sel, p) => parseFloat(w.getComputedStyle(d.querySelector(sel))[p]), rect = sel => d.querySelector(sel).getBoundingClientRect();
+    const tok = ["--bg", "--panel", "--panel-edge", "--ink", "--muted", "--gold", "--green", "--red", "--font-body", "--font-num", "--sp1", "--sp5", "--radius", "--shadow", "--tap"].filter(t => !w.getComputedStyle(d.documentElement).getPropertyValue(t).trim());
+    out.push(`[${name}] tokens missing: ${JSON.stringify(tok)}`);
+    out.push(`[${name}] HUD number >= 18px: ${cs("#h-cash .v", "fontSize") >= 18} (${cs("#h-cash .v", "fontSize")}); body text >= 16px: ${cs("body", "fontSize") >= 16 || cs("#goal", "fontSize") >= 16}`);
+    const mb = rect("#menubtn"), hr = [...d.querySelectorAll("#hudrow > *")].filter(e => e.offsetParent).map(e => e.getBoundingClientRect()), over = hr.some(r => r.right > mb.left && r.left < mb.right && r.bottom > mb.top && r.top < mb.bottom);
+    out.push(`[${name}] HUD clear of the Menu button: ${!over}; Day/Cash/Crown on one row: ${rect("#h-day").top === rect("#h-cash").top && rect("#h-cash").top === rect("#h-fund").top}`);
+    G.ask("maud", "Type the number twelve", 12, ["hint"], ["h-ar"], 0, null, "w", "h"); await sleep(120);
+    out.push(`[${name}] books strip opens when a lesson spotlights h-ar: ${d.getElementById("books").classList.contains("open")}`);
+    out.push(`[${name}] dialog text >= 18px: ${cs("#dlg .tx", "fontSize") >= 18}; portrait >= 96px: ${rect("#dlg canvas").width >= 96}; input mode on touch is none: ${d.body.classList.contains("touch") ? d.getElementById("num").getAttribute("inputmode") === "none" : "n/a"}`);
+    const pad = k => [...d.querySelectorAll("#dlg .np button")].find(b => b.textContent === k);
+    pad("1").click(); pad("5").click(); pad("⌫").click(); pad("−").click(); pad("−").click(); pad("2").click(); out.push(`[${name}] pad types 1,5,backspace,minus,minus,2 -> "${d.getElementById("num").value}" (want "12")`);
+    const ok = d.querySelector("#dlg .np .ok"); out.push(`[${name}] pad keys >= 44px tall: ${[...d.querySelectorAll("#dlg .np button")].every(b => b.getBoundingClientRect().height >= 44)}`);
+    ok.click(); await sleep(60); out.push(`[${name}] pad Check submits (right answer, dialog moves on): ${d.getElementById("dlg").style.display !== "none" ? "still open (toast + closes next)" : "closed"}`); G.closeDlg();
+    out.push(`[${name}] books strip closes again: ${!d.getElementById("books").classList.contains("open")}`);
+    const x0 = G.pl.x; d.getElementById("travelbtn").click(); await sleep(30); out.push(`[${name}] Travel button opens a map with 6 stops: ${d.querySelectorAll("#travel [data-i]").length === 6}`);
+    d.querySelector('#travel [data-i="2"]').click(); await sleep(700); out.push(`[${name}] Mill stop moves the player: ${G.pl.x !== x0 && Math.floor(G.pl.x / 16) === 34 && Math.floor(G.pl.y / 16) === 7}`);
+    out.push(`[${name}] sound muted by default: ${w.FX.muted}`); w.G.hud();
+    const cash0 = G.s.bal.cash; G.act(() => { G.s.bal.cash += 5; G.s.bal.equity = (G.s.bal.equity || 0); return { ok: true }; }); await sleep(40);
+    out.push(`[${name}] cash change spawns coins and a floating number: ${d.querySelectorAll("i.coin").length > 0 && d.querySelectorAll(".fl").length > 0}`);
+    out.push(`[${name}] errors: ${JSON.stringify(errs)}`); f.remove();
+  }
+  const f = await load("?sandbox&new=1&touch=0", 1280, 800), w = f.contentWindow, d = w.document, G = w.G; await sleep(300); G.closeDlg();
+  G.night("Day 7", ["note"], null, { day: 6, d: -4, owes: ["Hobb owes you <b>81</b>"], losses: [] }); await sleep(50);
+  out.push(`day-end card shows Cash change and who owes: ${/Cash −4/.test(d.getElementById("night").textContent) && /Hobb owes you 81/.test(d.getElementById("night").textContent)}`);
+  d.getElementById("night").click(); await sleep(50); out.push(`tap dismisses it: ${!d.getElementById("night").classList.contains("on")}`);
+ } catch (e) { out.push("EXCEPTION " + e.message + " " + e.stack); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); document.querySelectorAll("iframe").forEach(f => f.remove());
+})();
+</script></body></html>
