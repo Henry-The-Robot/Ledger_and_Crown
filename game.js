@@ -281,8 +281,8 @@
   }
   async function pellTalk() {
     if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
-    const asks = `Neighbour, I'm short. Twelve sacks of grain for my pigs, and I can't pay what it's worth until the pigs go to market at Midwinter. I can give you ${S.R.unitCost} a sack, 21 days on. I'd be grateful.`;
-    const pick = await sayP("pell", asks, ["Haggle for a better price (paid in 14 days)", `Grain at 3 a sack, for a quarter of what the pigs fetch at Midwinter`, "Turn him away", "Not yet"]);
+    const asks = `Neighbour, I'm short. Twelve sacks of grain for my pigs, and I can't pay what it's worth until the pigs go to market at Midwinter. I can give you ${S.R.unitCost} a sack, 14 days on. Or, if you'd rather, grain at 3 a sack, 21 days on, and a quarter of what the pigs fetch at Midwinter. I'd be grateful.`;
+    const pick = await sayP("pell", asks, ["Haggle for a better price (paid in 14 days)", `Grain at 3 a sack, paid in 21 days, plus a quarter of what the pigs fetch at Midwinter`, "Turn him away", "Not yet"]);
     if (pick === 0) { const o = S.addOffer(s, "pell", S.R.pellSacks, S.R.unitCost, 14, 4, 2), deal = await haggle(o, { open: S.R.unitCost, walk: S.R.unitCost + 1, line: "Four a sack. It's all I have, neighbour." });
       if (!deal) S.decline(s, o.id); else await sayP("pell", "Twelve sacks by day " + (s.day + 4) + ". I'll keep the pigs in.", ["Close"]); }
     else if (pick === 1) { const o = S.addOffer(s, "pell", S.R.pellSacks, 3, 21, 4, 2); o.share = true; const r = act(() => S.accept(s, o.id));
