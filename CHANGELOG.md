@@ -14,6 +14,13 @@
 - The ending card, week card and Court count as screens for the stall detector; the Sold ending has a Close button; `?ending=` previews a copy and writes no unlock.
 - Edric's cash book: one row per day, profit / Cash cleared / tied up in grain and unpaid invoices (Inventory + Receivables - Payables - Deposits).
 - No "(coming)" text; the day-28 goal mentions the Reeve's Court. Tests: `test-t3b.js`, `test-offer.js` updated.
+## Creative calls 1-5 (docs/TASKS-season1.md)
+1. **Week 4:** Maud stops teaching (no daily problem, no menu of lessons; her story scenes and danger warnings still play). The daily problem comes from Ezra, with no Explain-how button; he earns trust for right answers.
+2. **Letters** list in the order you found them (day found shown), and "The thing I signed" is always last.
+3. **Clue cards:** title + your number + where found, at most 12 words in all (trimmed automatically; the six scene cards are authored to fit).
+4. **Market Day** is on days 7, 14 and 21 only; day 28 belongs to the Court (story and sandbox).
+5. **Crane's one voice** ("Item:" sentences) is in the T3b PR.
+- Tests: `test-calls.js`, `week4.html`; `test-market-day.js` updated.
 
 All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
