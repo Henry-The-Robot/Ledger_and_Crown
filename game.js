@@ -4,7 +4,8 @@
 // negotiation scene: open, counter, leverage, walk away (2-4 rounds). The story (story.js) drives chapters 1-9 on top.
 // All accounting lives in engine.js/books.js. Game-feel exemplar: Stardew Valley.
 (function () {
-  const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26, VW = 320, VH = 200;
+  const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26;
+  let VW = 320, VH = 200; // the view in map pixels: fixed on a desktop, sized to the screen on an iPad (see fit)
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
   const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
   // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
@@ -32,7 +33,7 @@
   const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
     abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
-  const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 8 };
+  const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 7 }; // beside the road (the path runs along y=8), not on it
   const CHEST = { x: 5, y: 7 }, SACKS = { x: 10, y: 7 }, FWELL = { x: 13, y: 7 }; // WS3 (see Story.ch1: the tag verb's targets and decoys)
   (function buildMap() {
     let r = 5; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
@@ -742,29 +743,38 @@
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
     const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
       p ? "E: " + (!p.tilled ? "till" : p.sprinkler ? "pick up sprinkler" : !p.crop ? (s.sprinklersHeld ? "place sprinkler" : s.seeds ? "plant seed" : "no seed: buy from Tomas") : S.stage(s, p) === 4 ? "harvest" : p.watered || S.rain(s.day) ? "watered" : "water") : "";
-    $("hint").textContent = TOUCH ? hintText.replace(/^E: /, "Tap Act: ") : hintText;
-    if (TOUCH) { const lab = hintText.replace(/^E: /, "") || "Act", act = $("act"); if (act && act.dataset.l !== lab) { act.dataset.l = lab; act.textContent = lab.charAt(0).toUpperCase() + lab.slice(1); } }
+    $("hint").textContent = TOUCH ? "" : hintText; // the "E: ..." hint is for a keyboard; on an iPad you just tap
+    const act = TOUCH && $("act"); if (act) { const lab = hintText.replace(/^E: /, "") || "Act"; if (act.dataset.l !== lab) { act.dataset.l = lab; act.textContent = lab.charAt(0).toUpperCase() + lab.slice(1); } }
   }
   let last = 0;
   function tick(dt) { frame++; const modal = dlgOpen() || panelOpen(); if (TOUCH) { document.body.classList.toggle("inmodal", modal); if (modal) for (const k in keys) keys[k] = false; } if (!modal) move(dt); draw(); }
   function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; tick(dt); requestAnimationFrame(loop); }
-  // whole pixels on a desktop, half steps on an iPad so the map fills the screen
-  function fit() { const fitSc = Math.min(innerWidth / VW, innerHeight / VH), sc = Math.max(2, TOUCH ? Math.floor(fitSc * 2) / 2 : Math.floor(fitSc)); cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px"; }
+  // A desktop shows a fixed 320x200 view in whole-pixel steps. An iPad scales in half steps and then shows as much MAP as the screen holds, so the game
+  // fills the whole screen in either orientation instead of floating in a letterbox.
+  function fit() {
+    const base = Math.min(innerWidth / 320, innerHeight / 200), sc = Math.max(2, TOUCH ? Math.floor(base * 2) / 2 : Math.floor(base));
+    VW = TOUCH ? Math.min(MW * T, Math.max(320, Math.floor(innerWidth / sc))) : 320; VH = TOUCH ? Math.min(MH * T, Math.max(200, Math.floor(innerHeight / sc))) : 200;
+    if (cv.width !== VW) cv.width = VW; if (cv.height !== VH) cv.height = VH;
+    cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px";
+  }
   addEventListener("resize", fit); addEventListener("orientationchange", () => setTimeout(fit, 150));
   // ---------- touch: on-screen pad and Act button, minus-sign helper, and keeping the typing box above the iPad keyboard ----------
   function initTouch() {
-    const tc = document.createElement("div"); tc.id = "tc";
-    tc.innerHTML = `<div id="dpad">${[["up", "▲"], ["left", "◀"], ["right", "▶"], ["down", "▼"]].map(([d, g]) => `<button type="button" data-d="${d}" aria-label="Walk ${d}">${g}</button>`).join("")}</div><button type="button" id="act" aria-label="Act">Act</button>`;
-    document.body.appendChild(tc);
-    tc.querySelectorAll("#dpad button").forEach(b => { const d = b.dataset.d;
-      b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} keys[d] = true; pl.target = null; b.classList.add("down"); });
-      ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, () => { keys[d] = false; b.classList.remove("down"); })); });
-    $("act").addEventListener("pointerdown", e => { e.preventDefault(); if (!dlgOpen() && !panelOpen()) { const f = facing(); interactTile(f.x, f.y); } });
+    // Taps do everything (walk, talk, farm, open doors), so there is no on-screen pad or Act button by default. ?pad=1 adds them back for anyone who wants them.
+    if (q.get("pad") === "1") {
+      const tc = document.createElement("div"); tc.id = "tc";
+      tc.innerHTML = `<div id="dpad">${[["up", "▲"], ["left", "◀"], ["right", "▶"], ["down", "▼"]].map(([d, g]) => `<button type="button" data-d="${d}" aria-label="Walk ${d}">${g}</button>`).join("")}</div><button type="button" id="act" aria-label="Act">Act</button>`;
+      document.body.appendChild(tc);
+      tc.querySelectorAll("#dpad button").forEach(b => { const d = b.dataset.d;
+        b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} keys[d] = true; pl.target = null; b.classList.add("down"); });
+        ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, () => { keys[d] = false; b.classList.remove("down"); })); });
+      $("act").addEventListener("pointerdown", e => { e.preventDefault(); if (!dlgOpen() && !panelOpen()) { const f = facing(); interactTile(f.x, f.y); } });
+    }
     document.addEventListener("focusin", e => { if (e.target.tagName === "INPUT" && $("dlg").contains(e.target)) $("dlg").classList.add("kb"); });
     document.addEventListener("contextmenu", e => e.preventDefault());
   }
   function addSignButtons(root) { // the iPad number pad has no minus key, and a forecast can go negative
-    if (!TOUCH) return; root.querySelectorAll('input[inputmode="decimal"]').forEach(inp => { if (inp.dataset.sign) return; inp.dataset.sign = 1;
+    if (!TOUCH) return; root.querySelectorAll('input[inputmode="decimal"]').forEach(inp => { if (inp.dataset.sign || inp.id === "num") return; inp.dataset.sign = 1; // (dialog boxes have the on-screen number pad, which has its own minus key)
       const b = document.createElement("button"); b.type = "button"; b.className = "sgn"; b.textContent = "±"; b.setAttribute("aria-label", "Make negative or positive"); b.tabIndex = -1;
       b.addEventListener("pointerdown", e => e.preventDefault()); // don't steal focus from the box, so the keyboard stays up
       b.addEventListener("click", () => { inp.value = inp.value.startsWith("-") ? inp.value.slice(1) : "-" + inp.value; inp.focus(); }); inp.after(b); });

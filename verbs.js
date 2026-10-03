@@ -20,17 +20,18 @@ window.Verbs = (function () {
   async function stamp(text, sub) { const e = el("vstamp", `${text}${sub ? `<small>${sub}</small>` : ""}`); thud(); await wait(window.__fastVerbs ? 30 : 1300); return e; }
 
   // ---------- the parchment ----------
-  const P = { assets: [], liab: [], aTot: null, lTot: null, eq: null, hint: "" };
+  const P = { assets: [], liab: [], aTot: null, lTot: null, eq: null, hint: "", on: false }; // on: the parchment is part of a lesson right now; nothing may re-create it once it is closed
   function parchHtml() {
     const rows = a => a.map(r => `<div class="vp-row"><span>${r.line}</span><b>${fmt(r.value)}</b></div>`).join("");
-    return `<h4>Thornfield, as the Crown sees it</h4><div class="vp-sec">Assets <span style="font-weight:normal;font-size:13px">(what the farm owns)</span></div>${rows(P.assets)}${P.aTot != null ? `<div class="vp-tot"><span>Total assets</span><b>${fmt(P.aTot)}</b></div>` : ""}` +
+    return `${tagSt ? "" : `<button type="button" class="vp-x" aria-label="Close this page">✕</button>`}<h4>Thornfield, as the Crown sees it</h4><div class="vp-sec">Assets <span style="font-weight:normal;font-size:13px">(what the farm owns)</span></div>${rows(P.assets)}${P.aTot != null ? `<div class="vp-tot"><span>Total assets</span><b>${fmt(P.aTot)}</b></div>` : ""}` +
       (P.liab.length ? `<div class="vp-sec">Liabilities <span style="font-weight:normal;font-size:13px">(what it owes)</span></div>${rows(P.liab)}${P.lTot != null ? `<div class="vp-tot"><span>Total liabilities</span><b>${fmt(P.lTot)}</b></div>` : ""}` : "") +
       (P.eq != null ? `<div class="vp-tot"><span>Owner's equity</span><b class="${P.eq < 0 ? "vp-neg" : ""}">${fmt(P.eq)}</b></div>` : "") + (P.hint ? `<div class="vp-hint">${P.hint}</div>` : "") +
       (P.where ? `<button type="button" class="vp-where">Where else?</button>` : "");
   }
-  function parch(show) { let e = $("vparch"); if (!e && show !== false) e = el("vparch"); if (e) { e.innerHTML = parchHtml(); const w = e.querySelector(".vp-where"); if (w) w.onclick = () => whereElse(); } return e; }
-  function parchReset() { Object.assign(P, { assets: [], liab: [], aTot: null, lTot: null, eq: null, hint: "", where: false }); const e = $("vparch"); if (e) e.remove(); }
-  function parchClose() { const e = $("vparch"); if (e) e.remove(); document.querySelectorAll(".vstamp").forEach(x => x.remove()); }
+  // the card needs an id: without one getElementById never found it, so every update made a NEW card and none could ever be closed
+  function parch(show) { let e = $("vparch"); if (!e && show !== false && P.on) { e = el("vparch"); e.id = "vparch"; } if (e) { e.innerHTML = parchHtml(); const w = e.querySelector(".vp-where"); if (w) w.onclick = () => whereElse(); const x = e.querySelector(".vp-x"); if (x) x.onclick = ev => { ev.stopPropagation(); parchClose(); }; e.onclick = () => { if (!tagSt) parchClose(); }; } return e; }
+  function parchReset() { Object.assign(P, { assets: [], liab: [], aTot: null, lTot: null, eq: null, hint: "", where: false, on: true }); const e = $("vparch"); if (e) e.remove(); }
+  function parchClose() { P.on = false; const e = $("vparch"); if (e) e.remove(); document.querySelectorAll(".vstamp").forEach(x => x.remove()); }
   async function countTotal(key, to) { // the totals add themselves with a counting animation
     const steps = window.__fastVerbs ? 1 : 14; for (let i = 1; i <= steps; i++) { P[key] = Math.round(to * i / steps); parch(); await wait(window.__fastVerbs ? 0 : 45); } P[key] = to; parch();
   }
@@ -41,7 +42,7 @@ window.Verbs = (function () {
   // Resolves when every target is tagged. The canvas tap arrives through canvasTap() (game.js calls it before it turns a tap into a walk).
   function tag(cfg) {
     return new Promise(res => {
-      tagSt = { cfg, done: new Set(), res, pulse: null, pulseUntil: 0, timer: null };
+      tagSt = { cfg, done: new Set(), res, pulse: null, pulseUntil: 0, timer: null }; P.on = true;
       P.where = false; P.hint = "Tap what the farm owns."; parch();
       (cfg.targets.slice(0, cfg.show || 0)).forEach(t => tagged(t, true));
       tagSt.timer = setTimeout(() => { if (tagSt) { P.where = true; parch(); } }, cfg.hintAfter != null ? cfg.hintAfter : 20000);

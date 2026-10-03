@@ -24,7 +24,7 @@ f.onload = async () => { try {
   d.getElementById("num").value = debits; btn(/Check/).click(); await sleep(60);
   out.push(`tour accepts the right total and moves on: ${/balance sheet/.test(txt())}`); G.closeDlg();
   // 4. notice board
-  while (s.day < 2) S.sleep(s); G.interactTile(18, 8); await sleep(40);
+  while (s.day < 2) S.sleep(s); G.interactTile(18, 7); await sleep(40);
   out.push(`board shows the market outlook and the tinker: ${/Village notices/.test(txt()) && /Day 3/.test(txt()) && /tinker/.test(txt())}`);
   btn(/Pay 5 to inspect/).click(); await sleep(60);
   out.push(`inspecting teaches after the choice: ${/Smart/.test(txt())}`, `four good packets bought: ${s.seeds === 7}`); G.closeDlg();

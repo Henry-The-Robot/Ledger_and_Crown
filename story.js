@@ -35,7 +35,7 @@ window.Story = (function () {
     "done": "Spring is closed. Your notebook (N) has everything you learned.",
   })[st.stage] || "";
   function goal() { G.goal(goalText(), st.ch); }
-  function to(ch, stage) { st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
+  function to(ch, stage) { if (window.Verbs) Verbs.parchClose(); /* a lesson page never outlives its stage */ st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
   async function page(i) { if (st.pages.indexOf(i) < 0) st.pages.push(i); await G.page(PAGES[i]); }
   function addEx(id, more) { const n = st.notebook.find(x => x.id === id); if (n) n.example += " " + more; }
   function keep(id, term, line, example) { if (!st.notebook.some(n => n.id === id)) st.notebook.push({ id, term, line, example }); G.toast(`Maud's notebook: ${term} (N)`); }
