@@ -57,7 +57,8 @@ window.Story = (function () {
     "run9": "Run the farm to the end of spring (day 28), then close the books",
     "done": "Spring is closed. Your notebook (N) and case board have everything you learned.",
   };
-  const goalText = () => GOALS[st.stage] || "";
+  GOALS.sleep8now = "The steward: sleep; Corvin Vale comes to the well in the morning"; GOALS.sleep9now = "The squeeze: sleep; Corvin Vale returns to the well in the morning";
+  const goalText = () => { const d = G && G.s ? G.s.day : 1; return (st.stage === "sleep8" && d >= 12 ? GOALS.sleep8now : st.stage === "sleep9" && d >= 15 ? GOALS.sleep9now : GOALS[st.stage]) || ""; };
   function goal() { const w = weekOf(G.s.day); G.goal(goalText(), st.ch, `${w === 0 ? "" : "Week " + w} · ${WEEKS[w].title}`); }
   function to(ch, stage) { if (window.Verbs) Verbs.parchClose(); /* a lesson page never outlives its stage */ st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
   // ---------- the case board (item 5): every lesson and journal page pins a clue; WS8's Ledger Duel reads Story.state.clues ----------
@@ -164,13 +165,13 @@ window.Story = (function () {
     await G.say("ashby", "So you're Edric's heir. I need 6 sacks for the ovens. I'll give you 7 a sack, Cash.");
     await tell(`Each sack cost you ${cost}: ${S.R.seedCost} of seed for ${S.R.sacksPerPlot} sacks. At 7 you keep ${7 - cost} a sack. That's gross profit.<br>${7 - cost} out of every 7 is ${pct(7)}%: your margin.`, ["h-inv"]);
     // The worked example goes in the notebook as it's shown, so the Try that follows can point to it.
-    keep("margin", "Gross profit & margin", "Price minus cost per sack is gross profit. Divide by the price: margin. Never go below your floor (your cost per sack).", `Maud at 7: 7 − ${cost} = ${7 - cost} profit a sack; ${7 - cost} ÷ 7 = ${pct(7)}% margin.`);
+    keep("margin", "Gross profit & margin", "Price minus cost per sack is gross profit. Divide by the price: margin. Your cost floor is your cost per sack: below it you lose money (a sale you give up can raise the real floor later).",`Maud at 7: 7 − ${cost} = ${7 - cost} profit a sack; ${7 - cost} ÷ 7 = ${pct(7)}% margin.`);
     // The floor is asked first, and it is used: it becomes the red walk-away line on the price track in the haggle.
-    await ask("Before you name a price: what's your floor? The lowest you'd take for a sack before it loses money.", cost, ["What did each sack cost you? Seed for a plot, divided by the sacks it gives."], null, 0, null, `A packet of seed is ${S.R.seedCost} and gives ${S.R.sacksPerPlot} sacks, so each sack cost ${cost}. Sell below ${cost} and you lose money.`, `Your floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.`);
+    await ask("Before you name a price: what's your cost floor? The lowest you'd take for a sack before it loses money.", cost, ["What did each sack cost you? Seed for a plot, divided by the sacks it gives."], null, 0, null, `A packet of seed is ${S.R.seedCost} and gives ${S.R.sacksPerPlot} sacks, so each sack cost ${cost}. Sell below ${cost} and you lose money.`, `Your cost floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.`);
     await G.say("ashby", "Times are hard, dear. Would you take 6?");
     await ask("Work it out before you answer. Your margin at 6, in %?", pct(6), ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], null, 1, [DOC.notebook], `At 6 you keep 6 − ${cost} = ${6 - cost} a sack. ${6 - cost} ÷ 6 = 0.33, so ${pct(6)}%.`, "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%.");
     mastered("gross"); mastered("margin");
-    await tell(`Your floor, ${cost}, is drawn on the price track in red. Sell below it and the sack costs you more than it earns. Name your price; she'll counter. You can always walk away.`);
+    await tell(`Your cost floor, ${cost}, is drawn on the price track in red. Sell below it and the sack costs you more than it earns. Name your price; she'll counter. You can always walk away.`);
     const deal = await G.haggle(o, { open: 6, walk: 7, floor: cost, line: "Well, dear? 6 sacks. What do you want for them?" });
     if (!deal) { await G.say("ashby", "Come back when you've thought it over."); return; }
     const price = deal.price;
@@ -181,7 +182,7 @@ window.Story = (function () {
   // ---------- chapter 4: Hobb pays later (C1.02: accounts receivable, accrual vs cash) ----------
   async function ch4() {
     const o = G.s.offers.find(x => x.who === "hobb") || S.addOffer(G.s, "hobb", 9, 9, 14, 5, 4); S.setPrice(G.s, o.id, 9);
-    await tell("Before you go in: know your floor price. And listen for when he pays.");
+    await tell("Before you go in: know your cost floor. And listen for when he pays.");
     await G.say("hobb", `Edric's heir! Nine sacks. I pay 14 days after delivery, same as always.`);
     await tell("Your uncle loved Hobb. Hobb always paid. Eventually.");
     const deal = await G.haggle(o, { open: 8, walk: 9, floor: S.R.unitCost, line: "Nine sacks. Name your price; I'm not a charity." });
@@ -224,54 +225,106 @@ window.Story = (function () {
     keep("forecast", "Cash forecast", "Cash at the start + cash in − cash out, day by day. Profit doesn't pay wages; Cash does.", `Day ${G.s.day}: lowest Cash in two weeks ${low.close}, on day ${low.day}.${walked ? " Jory walked off on wages day." : ""} Markup 50% = margin ${m}%.`);
     await page(2); to(6, "tomas6");
   }
-  // ---------- chapter 6: Tomas's terms (C1.06: accounts payable, the cost of trade credit) ----------
-  async function ch6() {
-    await G.say("tomas", "On account: the full bill in 14 days, or 2% off if you pay within 7.");
-    await tell("On a bill of 100, 2% is 2. Pay a week early and you keep 2; wait, and you keep the Cash a week longer.", ["h-ap"]);
-    const c = await G.say("tomas", "How many on account?", ["6 packets (72)", "9 packets (108)"]);
-    const r = G.act(() => S.buySeeds(G.s, c ? 9 : 6, true));
-    if (!r.ok) { await G.say("tomas", r.msg); return; }
-    const bill = G.s.bills[G.s.bills.length - 1];
-    const V = Verbs, r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and you save ${bill.disc}; pay later and you keep the coin. But the Cash has to be there on day ${bill.due}.` });
-    if (r2.saved > 0 && r2.low >= 0) mastered("ap"); // right = took the discount and the plan never empties the chest
-    const pay = r2.paidNow ? 0 : 1; if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
-    keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${G.s.day}: seed bill ${bill.amount}, 2% off by day ${bill.discBy} = ${bill.disc}; you ${pay === 0 ? "paid early" : r2.day < bill.due ? `planned to pay on day ${r2.day}` : "kept the Cash"}.`);
-    to(7, "ezra7");
+  // ---------- chapter 6: Tomas's terms (week 2). Time value (C0.01, C5.01) beside payables (C1.01) — SEASON-1-REDESIGN.md §7 item 1 ----------
+  // Tomas: "2% off if you pay within 7 days". A discount for paying early is an interest rate: paying a week early costs the Cash you would
+  // otherwise hold for that week, and Ezra's weekly rate prices that Cash. Early is cheaper iff 2% > 98% x rate, i.e. rate < 204 bp.
+  // The rate comes from terms() THAT WEEK. Ezra's forecast scene lowers it, so in week 3 Tomas offers again and the answer can flip.
+  // `tvm` mastery is earned only here, and only when the player's choice matched the cheaper option.
+  const tvmFacts = bill => { const rate = S.terms(G.s).rateBp, discX = bill.amount * S.R.discPct, carryX = bill.amount * (1 - S.R.discPct) * rate / 10000;
+    return { rate, discX, carryX, cheaper: discX > carryX ? "early" : "wait" }; };
+  async function tvmScene(again) {
+    const V = Verbs, t = S.terms(G.s), sc = S.R.seedCost, rate = t.rateBp / 100, left = Math.floor((t.apLimit + G.s.bal.ap) / sc), disc = Math.round(S.R.discPct * 100);
+    if (!t.apDays || left < 3) { await G.say("tomas", "I can't put more on your account while you owe me this much. Pay what I'm owed first.", ["Next"]); return false; }
+    if (again) await G.say("tomas", `Seed again? Same terms: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
+    else await G.say("tomas", `On account: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
+    await tell(again ? `Ezra's rate was ${st.tvmRate}% a week when you last bought. Today it is ${rate}%. Same discount, different Cash. I won't say whether that changes the answer.`
+      : `A discount for paying early is an interest rate in disguise. Ezra charges ${rate}% a week for Cash. I won't say which is cheaper: buy, then move the bill and see.`, ["h-ap"]);
+    const small = Math.min(6, left), big = Math.min(9, left);
+    const c = await G.say("tomas", "How many on account?", [`${small} packets (${small * sc})`, { label: `${big} packets (${big * sc})`, disabled: big <= small }]);
+    const r = G.act(() => S.buySeeds(G.s, c ? big : small, true));
+    if (!r.ok) { await G.say("tomas", r.msg); return false; }
+    const bill = G.s.bills[G.s.bills.length - 1], day0 = G.s.day;
+    const note = day => day <= bill.discBy ? `Paying by day ${bill.discBy}: Tomas takes <b>${disc}% off</b> (${bill.disc}) for the Cash you hand over ${bill.due - day} days early. <b>Ezra's rate: ${rate}% a week.</b>` : `Paying on day ${day}: no discount, and the Cash stays with you. <b>Ezra's rate: ${rate}% a week.</b>`;
+    const r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", footNote: note,
+      maud: `Your Tomas bill is ${bill.amount}. Move it: pay by day ${bill.discBy} and he takes ${disc}% off, a week early. Ezra sells a week of Cash for ${rate}%. Which is cheaper? The Cash has to be there on day ${bill.due} either way.` });
+    const F = tvmFacts(bill), took = r2.day <= bill.discBy, right = took === (F.cheaper === "early");
+    if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
+    await tell(`${took ? `You took the discount: ${bill.disc} off.` : "You kept the Cash."} A week of ${Math.round(bill.amount * (1 - S.R.discPct))} from Ezra at ${rate}% costs ${F.carryX.toFixed(1)}; the discount is worth ${F.discX.toFixed(1)}. ${F.cheaper === "early" ? "Paying early was the cheaper way." : "Waiting was the cheaper way."}${again ? "" : " The rate is not fixed. Watch what it does."}`, ["h-ap"]);
+    if (right) mastered("tvm"); // earned only here, only when the choice matched the cheaper option
+    const ex = `Day ${day0}: Tomas's ${disc}% (${F.discX.toFixed(1)}) vs Ezra's ${rate}% a week (${F.carryX.toFixed(1)}): ${F.cheaper === "early" ? "paying early" : "waiting"} was cheaper. You ${took ? "paid early" : "waited"}.`;
+    if (!again) {
+      keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${day0}: seed bill ${bill.amount}, ${disc}% off by day ${bill.discBy} = ${bill.disc}; you ${took ? "paid early" : "kept the Cash"}.`, `owed ${bill.amount}, due day ${bill.due}`);
+      keep("tvm", "Money now vs money later (time value)", "A discount for paying early is an interest rate. Compare it with what the Cash would cost you, Ezra's weekly rate. Whichever is cheaper this week wins, and the answer can flip when the rate moves.", ex, `${disc}% vs ${rate}% a week`, `Day ${day0} · Tomas's terms`);
+      st.tvmRate = rate;
+    } else { addEx("tvm", ex); pin("tvm2", "Tomas offers again", `${disc}% vs ${rate}% a week`, `Day ${day0} · the answer ${st.tvmRate !== rate ? "flipped" : "held"} when Ezra's rate moved`); }
+    return true;
   }
-  // ---------- chapter 7: Ezra (C1.06, C5.01: debt, interest, what lenders read) ----------
+  async function ch6() { if (await tvmScene(false)) to(7, "ezra7"); }
+  // ---------- chapter 7: Ezra (week 2; C1.06, C5.01: debt, interest, what lenders read) — the forecast scene is tagged `interest` ----------
   async function ch7() {
     const t0 = S.terms(G.s);
     await G.say("ezra", `You want coin. Everyone does. My rate is ${t0.rateBp / 100}% a week. Show me your forecast first, and I'll see.`);
     const r = await Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
     G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
-    if (r.okLow && r.okDay) { mastered("tvm"); mastered("wc"); } // right = the lowest coin (within 5) and the day
+    if (r.okLow && r.okDay) { mastered("interest"); mastered("wc"); } // right = the lowest coin (within 5) and the day (time value is earned in Tomas's scene, not here)
     const c = await G.say("ezra", `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`,
       ["Borrow 100", "Borrow 200", "Nothing today"]);
     if (c < 2) G.act(() => S.borrow(G.s, c ? 200 : 100));
-    keep("tvm", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${c < 2 ? ` You borrowed ${c ? 200 : 100}: ${Math.round((c ? 200 : 100) * t.rateBp / 10000)} interest a week.` : ""}`);
+    keep("interest", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${c < 2 ? ` You borrowed ${c ? 200 : 100}: ${Math.round((c ? 200 : 100) * t.rateBp / 10000)} interest a week.` : ""}`, `${t0.rateBp / 100}% → ${t.rateBp / 100}% a week`, `Day ${G.s.day} · Ezra's forecast`);
     to(8, "sleep8");
   }
-  // ---------- chapter 8: the Duke's steward (C2.09 overtrading; case W.T. Grant). Maud asks; she doesn't show. ----------
-  function ch8arrive() { if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", S.R.duke.sacks, S.R.duke.price, S.R.duke.terms, S.R.duke.dueIn, 4); to(8, "duke8"); }
-  async function ch8() {
-    const o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(9, "run9"); return; }
-    const D = S.R.duke, half = Math.round(D.sacks / 6) * 3;
-    await G.say("duke", `His Grace orders ${D.sacks} sacks at ${D.price}: ${(D.sacks * D.price).toLocaleString("en-US")} of Revenue. Due in ${D.dueIn} days; he pays ${D.terms} days after delivery.`);
-    await page(3);
-    await tell("This is the order that killed your uncle. I won't tell you what to do. I'll ask.");
-    const need = Math.max(0, Math.ceil((D.sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * 12;
-    const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a);
-    await G.board({ title: `What if: you take it and buy ${need} packets of seed today (${extra})`, show: 14, fill: [], extra, maud: "Read your own board. Then answer me." });
-    await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the closing Cash column for the smallest number.", "A minus sign means the chest is empty before then."], null, 0, [{ label: "Open the what-if forecast", open: () => G.board({ title: `What if: you take it and buy ${need} packets of seed today (${extra})`, show: 14, fill: [], extra }) }], `Going down the closing Cash column, the smallest number is ${low.close}, on day ${low.day}.`, "Open the forecast and read down the Closing Cash column. The smallest number is your lowest point; a minus number is smaller than any plus.");
-    const c = await G.say("duke", "Well? His Grace doesn't wait.", [`Take all ${D.sacks}`, `Offer ${half} (half)`, "Decline"]);
-    if (c === 1) { S.addOffer(G.s, "duke", half, D.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
+  // ---------- chapters 8 and 8b: Corvin Vale, the Duke's steward (week 2 midpoint, week 3 squeeze). C2.09 overtrading; case W.T. Grant. Maud asks, then bets; she doesn't show. ----------
+  // Escalation (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order (half of R.duke.sacks), day 15 a double order (R.duke.sacks). The timeline's second line
+  // (tied up in sacks and invoices) shows what each order does to the working capital. Mastery only if the choice matched the player's OWN board.
+  function arrive(n) { // Corvin's order n comes to the well (sizes and due dates: S.R.corvin)
+    const c = S.R.corvin[n - 1];
+    if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", c.sacks, S.R.duke.price, S.R.duke.terms, c.dueIn, 4);
+    to(8, n === 1 ? "duke8" : "duke9");
+  }
+  async function dukeScene(n) {
+    const V = Verbs, o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(8, n === 1 ? "page8" : "tomas9"); return; }
+    const D = S.R.duke, sacks = o.sacks, half = Math.round(sacks / 6) * 3, value = sacks * o.price;
+    await G.say("duke", n === 1 ? `Corvin Vale, steward to His Grace the Duke. You will be the heir. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery.`
+      : `Corvin Vale again, heir. His Grace is delighted with the first. Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
+    if (n === 1) { await page(3); await tell("This is the order that killed your uncle. I won't tell you what to do. I'll ask."); }
+    const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * S.R.seedCost;
+    const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a), ord = { sacks, price: o.price, due: o.due };
+    const base = V.rows({ n: 14, tied: true }), withO = V.rows({ n: 14, tied: true, extra, order: ord });
+    const delta = withO[withO.length - 1].tied - base[base.length - 1].tied; // what this order ties up by the end of the window
+    const title = `What if: you take it and buy ${need} packets of seed today (${extra})`;
+    await V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title, maud: n === 1 ? "Read your own board: Cash on top, and under it what is tied up in sacks and invoices." : `Last time ${money(st.tied1 || 0)} was tied up by this order. This time: ${money(delta)}.` });
+    let ans;
+    if (n === 1) ans = await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the Cash line for the smallest number.", "A minus sign means the chest is empty before then."], null, 0,
+      [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }], `Reading the Cash line, the smallest number is ${low.close}, on day ${low.day}.`, "Open the timeline and read the Cash number under each day. The smallest is your lowest point; a minus number is smaller than any plus.");
+    else ans = await V.bet({ prompt: `Three coin says you can't tell me your lowest Cash in the next two weeks if you take all ${sacks} and buy the seed today.`, docs: [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }],
+      how: "Read the Cash number under each day of the what-if timeline. The smallest is the lowest point; a minus is below zero.", stake: { min: 0, max: 3 }, tol: 0, answer: () => low.close, reveal: "now", kind: "duke2", explain: () => `Cash bottoms at ${low.close} on day ${low.day}. The order ties up ${money(delta)} in sacks and invoices.` });
+    const c = await G.say("duke", "Well? His Grace doesn't wait.", [`Take all ${sacks}`, `Offer ${half} (half)`, "Decline"]);
+    if (c === 1) { S.addOffer(G.s, "duke", half, o.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
     else if (c === 0) G.act(() => S.accept(G.s, o.id)); else S.decline(G.s, o.id);
-    const wise = low.close >= 0 ? true : c > 0;
+    const wise = low.close >= 0 ? c === 0 : c > 0; // matched the player's own board: Cash stays >= 0 -> taking it is right; below 0 -> half, decline (or factoring) is right
     if (wise) mastered("overtrading");
-    await tell(c === 0 && low.close < 0 ? `Your own board says Cash goes to ${low.close}. Edric did the same. Borrow, or sell his invoice to Ezra for 85% (factoring), or it ends the same way.`
-      : c === 0 ? "Your board says you can carry it. Then carry it." : "Growth you can't fund isn't growth. Edric never learned that.");
-    keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. Forecast before you say yes.", `The Duke's ${D.sacks} sacks: lowest Cash ${low.close} on day ${low.day} if taken. You chose: ${[`all ${D.sacks}`, "half", "to decline"][c]}.`);
-    to(9, "run9");
+    if (n === 1) st.tied1 = delta;
+    await tell(c === 0 && low.close < 0 ? `Your own board says Cash goes to ${low.close}. Edric did the same. Borrow, or sell the invoice to Ezra for 85% (factoring), or it ends the same way.`
+      : c === 0 ? "Your board says you can carry it. Then carry it." : c === 1 ? `Half: ${half} sacks, and about ${money(Math.round(delta / 2))} less tied up. Growth you can't fund isn't growth.` : "Growth you can't fund isn't growth. Edric never learned that.");
+    const choice = [`all ${sacks}`, "half", "to decline"][c];
+    if (n === 1) keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. The gap grows with sales and only comes back when growth stops. Forecast before you say yes.", `Corvin's first order, ${sacks} sacks: lowest Cash ${low.close} on day ${low.day} if taken, ${money(delta)} tied up. You chose: ${choice}.`, `Cash low ${low.close}, ${money(delta)} tied up`, `Day ${G.s.day} · Corvin's first order`);
+    else { addEx("overtrading", `The double order, ${sacks} sacks: lowest Cash ${low.close}, ${money(delta)} tied up (the first tied up ${money(st.tied1 || 0)}). You chose: ${choice}.`); pin("duke2", "Corvin's double order", `${money(delta)} tied up (was ${money(st.tied1 || 0)})`, `Day ${G.s.day} · Corvin's second order`); }
+    if (n === 1) to(8, "page8"); else { await vale(); to(8, "tomas9"); }
+  }
+  async function ch9t() { await tvmScene(true); to(9, "run9"); } // week 3: Tomas offers again; Ezra's rate has moved, and the answer can flip
+  const ch8 = () => dukeScene(1), ch8b = () => dukeScene(2);
+  // That night: Maud finds Edric's page (the midpoint turn): the same order every spring.
+  async function chPage() {
+    await tell("I couldn't sleep. I went through Edric's desk, and there was a page under the lining.");
+    await page(5);
+    await tell("The same order, every spring, from the same man. Edric didn't miscount. Someone made sure the coin ran out.");
+    to(8, "sleep9");
+  }
+  // Week 3: Crane is revealed as Corvin's man.
+  async function vale() {
+    const o = Endings.offer(G.s);
+    await G.say("crane", `Master Vale sends his regards, heir. He asks me to say the Crown's collector is a patient man. ${farmName()} can be mine any day for ${money(o.price)}.`, ["Next"]);
+    pin("crane-vale", "Crane works for Vale", "“Master Vale sends his regards”", `Day ${G.s.day} · Crane, week 3`);
   }
   // ---------- chapter 9: closing the books (C1.08), guided ----------
   async function close(stm, h) { // the game shows the statements one at a time; the player finds where the cash went
@@ -289,6 +342,11 @@ window.Story = (function () {
     to(9, "done");
   }
 
+  // Deposits are named unearned revenue (C1.01/C1.03) in the scene (game.js depositLesson) and in the notebook.
+  function noteDeposit(o) {
+    keep("unearned", "Unearned revenue (customer deposits)", "Cash received for work not yet done. It's a liability, not Revenue, until you deliver; fail to deliver and you refund it.",
+      `Day ${G.s.day}: ${S.NAMES[o.who]} paid ${o.paid} up front for ${o.sacks} sacks. Cash +${o.paid}, Revenue +0, Customer deposits +${o.paid}; grain due day ${o.due}.`, `${o.paid} received, ${o.sacks} sacks owed`, `Day ${G.s.day} · ${S.NAMES[o.who].split(" ").slice(-1)[0]}'s deposit`);
+  }
   // ---------- name your farm (item 10): the name appears on the writ, the week cards and the epilogue ----------
   function nameFarm() {
     return new Promise(res => {
@@ -372,7 +430,7 @@ window.Story = (function () {
   function start() { goal(); if (st.stage === "intro") { const w = dueCard(); if (w) weekCard(w); run(ch1); } }
   function onTalk(who) { // returns true when the story takes the conversation
     if (busy) return true;
-    const m = { tomas: { tomas2: ch2, tomas6: ch6 }, ashby: { ashby3: ch3 }, hobb: { hobb4: ch4 }, ezra: { ezra7: ch7 }, duke: { duke8: ch8 } }[who];
+    const m = { tomas: { tomas2: ch2, tomas6: ch6, tomas9: ch9t }, ashby: { ashby3: ch3 }, hobb: { hobb4: ch4 }, ezra: { ezra7: ch7 }, duke: { duke8: ch8, duke9: ch8b } }[who];
     if (m && m[st.stage]) { run(m[st.stage]); return true; }
     if (who === "maud" && st.ch < 9 && st.stage !== "done") { run(() => tell(`Next: ${goalText().split(": ").slice(1).join(": ")}`)); return true; }
     return false;
@@ -388,11 +446,17 @@ window.Story = (function () {
     if (evt === "deliver" && st.stage === "ship3" && info.who === "ashby")
       run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}. And it came in as Cash, today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
-    if (evt === "morning" && st.stage === "sleep5" && G.s.day >= 8) run(async () => { await ch5(); await revealIfDue(); });
-    else if (evt === "morning" && G.s.bet && G.s.day >= G.s.bet.revealDay) run(revealIfDue);
-    if (evt === "morning" && st.stage === "sleep8") run(async () => { ch8arrive(); await tell("The Duke's steward is in the square. He's asking for you by name."); });
+    if (evt === "morning") run(async () => { // one ordered chain per morning, so two scenes never race for the same dialog
+      const d = G.s.day;
+      if (st.stage === "sleep5" && d >= 8) await ch5();
+      if (G.s.bet && d >= G.s.bet.revealDay) await revealIfDue();
+      if (st.stage === "sleep8" && d >= 12) { arrive(1); await tell("A man in a feathered cap is waiting at the well. He's asking for you by name."); } // the midpoint: day 12
+      else if (st.stage === "page8") await chPage();
+      else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
+      else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
+    });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
   return { init, start, onTalk, after, close, quietOffers, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm }; // WS6 hooks used by game.js and the tests
+    noteDeposit, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm }; // WS6 hooks used by game.js and the tests
 })();

@@ -278,7 +278,7 @@
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
   function floorTrack(fl, offer, top) { // a price track: red below your floor, a marker for their offer
     const lo = Math.max(0, Math.min(fl, offer) - 2), hi = Math.max(top, offer, fl) + 2, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
-    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Your floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
+    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Cost floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
   }
   async function haggle(o, cfg) {
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
@@ -296,7 +296,7 @@
       if (pick.startsWith('"I always')) { used.rec = 1; walk += 1; line = "True enough. You've never let me down."; continue; }
       const p = r.v; round++;
       if (p == null || isNaN(p) || p <= 0) { line = "Say a number, dear."; continue; }
-      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
+      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your cost floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
       if (p <= theirs) return close(theirs);
       if (p <= walk) { line = "Done."; return close(p); }
       if (p > walk + 2) { s.trust[o.who] = Math.max(0, s.trust[o.who] - 1); line = `${p}? That's an insult. ${theirs} is my offer.`; continue; }
@@ -323,8 +323,9 @@
     say(who, idle[s.day % idle.length]);
   }
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
-  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability
-    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
+  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability (WS6: named unearned revenue, C1.01/C1.03)
+    if (storyOn) Story.noteDeposit(o);
+    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Accountants call it <b>unearned revenue</b>: money received for work not yet done. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
   }
   async function pellTalk() {
     if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
@@ -627,7 +628,7 @@
   const fmt = v => typeof v === "number" ? (v < 0 ? `(${-v})` : String(v)) : v;
   function bsTable(b, title, p) {
     pre = p || "bs1"; return `<table class="stm"><tr><th>${title}</th><th></th></tr>` + tr("Cash", b.cash, "sub", "cash") + tr("Accounts receivable", b.ar, "sub", "ar") + tr("Inventory", b.inv, "sub", "inv") +
-      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
+      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits = unearned revenue (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
       tr("Crown debt (due at Midwinter)", b.crown, "sub", "crown") + tr("Owner's equity", b.equity, "sub", "equity") + tr("Liabilities + Owner's equity", b.liab + b.equity, "total") +
       `</table><div class="ok">${b.assets === b.liab + b.equity ? "Assets = Liabilities + Owner's equity ✓" : "OUT OF BALANCE"}</div>`;
   }
@@ -727,7 +728,7 @@
   }
   function drawPerson(who, x, y, dir, moving, stepv) { const f = A.people[who][dir], i = moving ? 1 + (Math.floor(stepv) % 2) : 0;
     ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(Math.round(x - 5 - cam.x), Math.round(y - 1 - cam.y), 10, 3); blit(f[i], x - 8, y - 16); }
-  const wants = who => storyOn ? ({ tomas: ["tomas2", "tomas6"], ashby: ["ashby3"], hobb: ["hobb4"], ezra: ["ezra7"], duke: ["duke8"] }[who] || []).indexOf(Story.state.stage) >= 0 : s.offers.some(o => o.who === who);
+  const wants = who => storyOn ? ({ tomas: ["tomas2", "tomas6", "tomas9"], ashby: ["ashby3"], hobb: ["hobb4"], ezra: ["ezra7"], duke: ["duke8", "duke9"] }[who] || []).indexOf(Story.state.stage) >= 0 : s.offers.some(o => o.who === who);
   function draw() {
     cam.x = Math.max(0, Math.min(MW * T - VW, pl.x - VW / 2)); cam.y = Math.max(0, Math.min(MH * T - VH, pl.y - VH / 2));
     ctx.fillStyle = "#79b851"; ctx.fillRect(0, 0, VW, VH); drawGround();

@@ -36,5 +36,9 @@ body.touch .wkcard{top:calc(122px + env(safe-area-inset-top));min-height:44px}
 .cbempty{grid-column:1/-1;text-align:center;color:#f1e4c8;font:italic 16px var(--serif);padding:30px 0}
 #casebtn{pointer-events:auto;cursor:pointer;font:bold 14px var(--serif);min-height:30px}
 body.touch #casebtn{min-height:44px}
+/* timeline: the second line (tied up in sacks and invoices), and Ezra's rate beside Tomas's discount */
+.vtl-tied{font:11px var(--mono);color:#7a5a3a;border-top:1px dotted #9a6a3a;margin-top:2px;padding-top:2px;text-align:center}
+.vtl-legend{font:13px var(--serif);color:#5a3a1a;background:#f6ecd2;border-left:4px solid #9a6a3a;padding:4px 10px;margin:6px 0}
+.vtl-rate{font:14px var(--serif);background:#eef4ff;border-left:4px solid #5b7fc4;padding:6px 10px;margin:6px 0}.vtl-rate b.good{color:#2f6f3a}.vtl-rate b.bad{color:#9b2335}
 /* Crane's offer, as a card at the Desk */
 .offercard{border:2px solid #26262c;background:#2b2b33;color:#f1e4c8;padding:8px 12px;border-radius:4px;margin:6px 0;font:15px var(--serif)}.offercard b{color:#ffcf3a}

@@ -20,6 +20,10 @@
     // The Duke's one big order (sandbox and story use the same numbers). 132 sacks is more than a careful player can grow and carry unless they borrow and
     // decline other orders; a player who says yes to everything runs out of Cash on a pay-day and is finished. Tuned with the bots in tests/test-crown.js.
     duke: { sacks: 132, price: 10, terms: 28, dueIn: 12 },
+    // WS6: the story's Corvin Vale escalates (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order of half of duke.sacks, day 15 the whole duke.sacks.
+    // The second order is due 9 days out (day 24, the same day as the first) so a player who says yes to everything has both fall due at once.
+    // Tuned with the bots in tests/test-spine.js: careful still pays the Crown, the overtrader is sued for the forfeit, reckless goes insolvent.
+    corvin: [{ day: 12, sacks: 66, dueIn: 12 }, { day: 15, sacks: 132, dueIn: 9 }],
     crownDebt: 1250,            // owed to the Crown at Midwinter (the story's goal); a careful season ends close to it, so the last weeks matter
     bridgeMax: 250, rescueRateBp: 200, // Ezra will bridge a small gap at Midwinter; his one emergency loan costs 2 points a week more
     rain: [5, 12, 13, 20, 26],
@@ -43,7 +47,7 @@
     upkeep: ["Wages & upkeep", "X"], depreciation: ["Depreciation", "X"], fines: ["Contract forfeits", "X"], losses: ["Crop & stock losses", "X"], interest: ["Interest expense", "X"],
     factoring: ["Factoring fees", "X"], deposits: ["Customer deposits", "L"],
   };
-  const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "the Duke's steward",
+  const NAMES = { maud: "Maud the reeve", ezra: "Ezra the moneylender", ashby: "Widow Ashby", hobb: "Hobb the Miller", tomas: "Tomas the seed merchant", duke: "Corvin Vale, the Duke's steward",
     crane: "Bailiff Crane", mira: "Mira, a travelling baker", abbey: "Brother Anselm of the Abbey", pell: "Pell the pig farmer", pedlar: "Barnaby the pedlar" };
   // [day offered, buyer, sacks, price per sack, days to pay after delivery, days to deliver]
   // NOTE: the price column is used ONLY for the Duke (a fixed 10, matching the story). Every other buyer's price is R.market + R.premium (see makeOffers); their column value is unused.
@@ -155,7 +159,7 @@
     const o = s.offers.splice(k, 1)[0]; s.orders.push(Object.assign(o, { status: "open", late: false }));
     if (o.who === "pell") { s.pell = "deal"; if (o.share) s.promises.push({ who: "pell", amount: R.pellShare, text: `A quarter of Pell's pig sale at Midwinter, about ${R.pellShare}`, day: s.day }); }
     if (o.who === "duke") { use(s, "wc", false); use(s, "overtrading", false); } // felt: growth that must be funded now and paid later
-    if (o.deposit) { o.paid = Math.round(o.value * o.deposit); post(s, "deposit", `${NAMES[o.who]} paid a ${o.paid} deposit on ${o.sacks} sacks (not Revenue yet: we still owe the grain)`, { cash: o.paid, deposits: -o.paid }); use(s, "accrual"); }
+    if (o.deposit) { o.paid = Math.round(o.value * o.deposit); post(s, "deposit", `${NAMES[o.who]} paid a ${o.paid} deposit on ${o.sacks} sacks (not Revenue yet: we still owe the grain)`, { cash: o.paid, deposits: -o.paid }); use(s, "accrual"); use(s, "unearned"); }
     note(s, `Agreed: ${o.sacks} sacks to ${NAMES[o.who]} at ${o.price}, due day ${o.due}, ${o.terms ? "paid " + o.terms + " days after delivery" : "Cash on delivery"}.`);
     return ok();
   }
