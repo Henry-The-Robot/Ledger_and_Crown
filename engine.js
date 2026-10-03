@@ -344,7 +344,8 @@
   // Ezra's emergency loan: once per season, just enough Cash to get through a payday you can't cover, at a rate that teaches what desperation costs.
   function rescue(s, need) {
     if (s.rescued) return false; const amt = Math.ceil(need / 10) * 10 + 10;
-    s.rescued = true; s.rescueAdj = R.rescueRateBp; // separate from rateAdj, which the story's forecast lesson overwrites bump(s, "ezra", -2);
+    s.rescued = true; s.rescueAdj = R.rescueRateBp; // separate from rateAdj, which the story's forecast lesson overwrites
+    bump(s, "ezra", -2);
     post(s, "borrow", `Ezra's emergency loan of ${amt}: you couldn't cover a payment (his rate is now ${terms(s).rateBp / 100}% a week)`, { cash: amt, loan: -amt });
     use(s, "insolvency", false); note(s, `Cash ran out. Ezra lent ${amt} on the spot, but he now charges ${terms(s).rateBp / 100}% a week, and he won't do it twice.`); return true;
   }

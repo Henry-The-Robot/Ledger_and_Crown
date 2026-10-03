@@ -12,6 +12,7 @@ const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 { const s = S.newGame(); S.buySeeds(s, 16); upTo(s, 7); S.sleep(s);
   ok(!s.over && s.rescued && s.bal.loan < -100, "can't cover the first pay-day: Ezra lends once instead of ending the game");
   ok(S.terms(s).rateBp > 300, "and his rate is now higher (" + S.terms(s).rateBp + " bp)");
+  { const t = S.newGame(); const before = t.trust.ezra; S.rescue(t, 10); ok(t.trust.ezra === before - 2, "the rescue costs Ezra's trust: " + before + " -> " + t.trust.ezra); }
   { const base = S.terms(s).rateBp; s.rateAdj = 75; ok(S.terms(s).rateBp === base - 75, "the story's forecast discount (rateAdj) does not erase the rescue penalty"); s.rateAdj = 0; }
   const st = B.close(s); ok(st.balanced && st.cf.reconciles, "statements still balance and reconcile");
   const t = S.newGame(); S.buySeeds(t, 16); t.rescued = true; upTo(t, 7); S.sleep(t); ok(t.over && t.outcome === "insolvent", "he won't do it twice: the second shortfall is insolvency"); }
