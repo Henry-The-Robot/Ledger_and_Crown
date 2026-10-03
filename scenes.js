@@ -23,7 +23,7 @@ window.Scenes = (function () {
         else { await c.lines("ashby", ["Eleven. The rest are still 'meaning to'. I keep their names in the flour bin. For luck."]); c.flag("ashbyPromise", "ledger"); }
         c.flag("ashbyAsked", true); c.trust("ashby", 1);
       } },
-    { id: "crane_offduty", who: "crane", from: 12, to: 16, at: [32, 10], hint: "Crane is standing by the well without his ledger.",
+    { id: "crane_offduty", who: "crane", from: 13, to: 17, at: [32, 10], card: ["A second seal on the writ", "small, scratched, under the Crown's"], hint: "Crane is standing by the well without his ledger.",
       async run(c) {
         await c.lines("crane", ["Heir. I am off duty. I have left my ledger at home. I feel exposed.", "I am not here to collect. I am here to say something I am not employed to say.", "Item: the writ you carry. I have read it eleven times. Item: it is longer than it should be. Item: a debt of this kind does not usually come with a second seal."]);
         const k = await c.ask("crane", "He waits, pen-less, which seems to hurt him.", ["A second seal?", "Why tell me?"]);
@@ -32,7 +32,7 @@ window.Scenes = (function () {
         await c.lines("crane", ["Keep your sacks counted, heir. I shall go back to being unpleasant."]);
         c.flag("craneSeal", true); c.clue(); c.trust("crane", 2);
       } },
-    { id: "tomas_contracts", who: "tomas", from: 13, hint: "Tomas is whispering. Tomas never whispers.",
+    { id: "tomas_contracts", who: "tomas", from: 13, card: ["A grey cloak buys seed contracts", "offered triple"], hint: "Tomas is whispering. Tomas never whispers.",
       async run(c) {
         await c.lines("tomas", ["My friend! Lean in. No further. Closer. I have something free and it isn't a sample.", "A man in a grey cloak came by. Very polite. Gloves on a warm day. Wanted every seed contract in the valley. Offered triple.", "I said 'not today'. 'Never' is an expensive word. And triple is what a man pays when he means to own the thing after you."]);
         const k = await c.ask("tomas", "He looks genuinely unsettled, which on Tomas is a new colour.", ["What did he want with seed?", "Whose contracts?"]);
@@ -58,7 +58,7 @@ window.Scenes = (function () {
         await c.lines("ezra", ["He's right that I never lied to him. It was the only kindness I knew how to do him.", "If you want the rest, bring me a forecast I can believe."]);
         c.trust("ezra", 2);
       } },
-    { id: "mira_rumour", who: "mira", from: 17, hint: "Mira is dying to tell someone something.",
+    { id: "mira_rumour", who: "mira", from: 17, card: ["Someone is buying the valley's notes", "forty cents on the coin"], hint: "Mira is dying to tell someone something.",
       async run(c) {
         await c.lines("mira", ["Between us and the cabbages: do you know who's buying paper?", "Grey cloak. Gloves. Every village from here to the river. Not grain, not seed: notes. Mortgages. A bakery guarantee, a mill loan, a sixty-coin promise from some widow's late husband."]);
         const k = await c.ask("mira", "She is whispering at the top of her voice.", ["Who sold him the paper?", "Why would he want it?"]);
@@ -75,7 +75,7 @@ window.Scenes = (function () {
         else await c.lines("maud", ["Mm. Now you sound like him. Let's hope it ends better."]);
         c.flag("maudConfessed", true); c.trust("maud", 2);
       } },
-    { id: "ashby_guarantee", who: "ashby", from: 21, hint: "Ashby has gone quiet over the dough.",
+    { id: "ashby_guarantee", who: "ashby", from: 21, card: ["Edric stood surety for Ashby", "“It's only my name.”"], hint: "Ashby has gone quiet over the dough.",
       async run(c) {
         await c.lines("ashby", ["Put the sack down, dear. I've been wondering how to say this since the day you walked in.", "When Bram died, the bakery was in debt. A sum I couldn't have paid in ten years. The Crown's collector came, polite as a hearse. Your uncle was in the shop that day.", "He didn't say a word. He walked to the collector's table and signed. 'Surety,' he called it. 'It's only my name, Ashby. It costs nothing.'", "It cost him everything, didn't it? I didn't know until the bailiff came for your farm. I've put an extra loaf in every order since, to try to balance it. You never noticed the loaves."]);
         const k = await c.ask("ashby", "Her ring is off its ribbon and in her fist.", ["It was his choice.", "How much was it?", "I'll find a way to pay it."]);
@@ -85,15 +85,15 @@ window.Scenes = (function () {
         await c.letter(6);
         c.flag("guarantee", true); c.clue(); c.trust("ashby", 3);
       } },
-    { id: "crane_seal", who: "crane", from: 22, at: [32, 10], need: s => s.flags && s.flags.craneSeal, hint: "Crane is by the well again. He has a paper.",
+    { id: "crane_seal", who: "crane", from: 23, at: [32, 10], card: ["The second seal is Vane's mark", "a note-buyer's mark: the Crown sold your debt"], need: s => s.flags && s.flags.craneSeal, hint: "Crane is by the well again. He has a paper.",
       async run(c) {
         await c.lines("crane", ["Item: I have a copy of the writ. Item: it is a copy I should not have made. Item: I made it.", "The second seal. I looked it up. A man in the counting-house taught me, once, to read the small ones. It is a note-buyer's mark. It means the Crown sold your debt, heir. To someone."]);
         const k = await c.ask("crane", "He holds the paper at arm's length, as if it might go off.", ["To whom?", "Can they do that?"]);
-        if (k === 0) await c.lines("crane", ["The mark is Steward Vane's. It is a small mark. Vane has never been a man for large ones."]);
+        if (k === 0) await c.lines("crane", ["The mark is Corvin Vane's. It is a small mark. Vane has never been a man for large ones."]);
         else await c.lines("crane", ["They can. A debt is a thing, like a sack. It can be bought and sold and called in. That is not the part I find unpleasant. The unpleasant part is the discount."]);
         c.flag("craneVane", true); c.clue(); c.trust("crane", 2);
       } },
-    { id: "vane_offer", who: "duke", from: 24, at: [36, 10], hint: "The Steward is in the square. He has brought a pen.",
+    { id: "vane_offer", who: "duke", from: 24, at: [36, 10], card: ["Vane's “partnership”", "a mortgage payable on demand"], hint: "The Steward is in the square. He has brought a pen.",
       async run(c) {
         await c.lines("duke", ["Heir. I'm told you've done the impossible: you've made a profit and kept the Cash. I'm delighted. Truly.", "I come with an offer. Nothing grand. I hold your note now, the Crown found it tedious. I should like to forgive it.", "All of it. The writ. Gone. In exchange for the millstream rights at the east boundary and a modest mortgage over the farm. A formality. We'd be partners."]);
         const k = await c.ask("duke", "He has uncapped the pen. He is a very patient man.", ["No.", "Tell me more.", "I'll think about it."]);

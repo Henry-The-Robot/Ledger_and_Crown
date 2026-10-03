@@ -85,7 +85,7 @@ window.Cast = (function () {
       ],
     },
     duke: {
-      name: "Steward Vane", look: "Grey cloak, a smile polished like a coin, gloves he never removes.",
+      name: "Corvin Vane, the Duke's steward", look: "Grey cloak, a smile polished like a coin, gloves he never removes.",
       habit: "Speaks in opportunities. Says 'we' for things only he will own. Compliments you in a way that lands as a price.", mantra: "A farm that cannot grow is only waiting to be bought.",
       voice: "velvet, patient, faintly amused",
       greet: ["Heir. Ambition suits you. It will suit His Grace better.", "I only want what's best for Thornfield. Which is, conveniently, what's best for the Duke.", "Think of a larger field. Now think who could fund it. We should speak.",

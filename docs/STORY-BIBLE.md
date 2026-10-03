@@ -7,8 +7,8 @@ Spring is the first of four seasons. The accounting is the plot: every lesson is
 ## The spine
 
 1. **The surface mystery (days 1-10, chapters 1-5):** why does a profitable farm have an empty chest? Answer: profit isn't cash; receivables and inventory eat it. (Equity, margin, receivables, wages day.)
-2. **The credit mystery (days 6-12, chapters 6-8):** who lends, on what terms, and what does waiting cost? Ends at the Duke's order, which is what broke Edric. Steward Vane arrives. (Payables, interest, overtrading.)
-3. **The deeper mystery (days 9-28, village scenes):** the Crown's 1,250 isn't all Edric's own debt. He **stood surety** for Ashby's bakery after her husband died (a *guarantee*: a liability the Ledger never showed). The Crown then **sold the note** to Steward Vane at a discount. Vane has been buying every note in the valley (Hobb's mill loan, Ashby's guarantee, Tomas's contracts) so that on a day of his choosing, Midwinter, he can call them all in at once and own the valley. The Duke's big order was never about grain: it was the gap in Edric's cash that Vane needed.
+2. **The credit mystery (days 6-12, chapters 6-8):** who lends, on what terms, and what does waiting cost? Ends at the Duke's order, which is what broke Edric. Corvin Vane arrives. (Payables, interest, overtrading.)
+3. **The deeper mystery (days 9-28, village scenes):** the Crown's 1,250 isn't all Edric's own debt. He **stood surety** for Ashby's bakery after her husband died (a *guarantee*: a liability the Ledger never showed). The Crown then **sold the note** to Corvin Vane at a discount. Vane has been buying every note in the valley (Hobb's mill loan, Ashby's guarantee, Tomas's contracts) so that on a day of his choosing, Midwinter, he can call them all in at once and own the valley. The Duke's big order was never about grain: it was the gap in Edric's cash that Vane needed.
 4. **The hook (end of spring):** Edric's last letter, after the examination: "I signed a paper I ought to have shown Maud first... Ask Crane to read it. Ask Ezra whose name stands beneath mine." The player now knows *who*, and that Vane's offer of "partnership" is a callable-debt leash. Summer (Act II, The Trading House) is about valuation and finance: the heir has to beat Vane at his own game, with Ezra, Crane, Maud and the valley behind them or not, depending on how the player treated them.
 
 ## The cast
@@ -21,7 +21,7 @@ Spring is the first of four seasons. The accounting is the plot: every lesson is
 | **Hobb**, miller | slow, deep, deadpan | long pauses; "eventually" | to keep the mill turning | he is trapped in the same chain of credit he puts you in | receivables, extending credit |
 | **Tomas**, seed merchant | showman, breathless | superlatives; self-interrupting prices; "my friend" | a sale | his cousin lost a farm to a very polite man; Vane tried to buy his contracts | trade credit, 2/7 net 14, concentration risk |
 | **Ezra**, moneylender | quiet, exact, honest to a fault | "patience has a price; I merely publish it" | to be believed | holds Edric's letters; loved his honesty about numbers | interest, rates, covenants, factoring |
-| **Steward Vane** | velvet, patient, faintly amused | "opportunity"; "we" for things only he will own | every note in the valley | he is the second seal | overtrading, callable debt, concentration |
+| **Corvin Vane** | velvet, patient, faintly amused | "opportunity"; "we" for things only he will own | every note in the valley | he is the second seal | overtrading, callable debt, concentration |
 | Pell, Barnaby, Mira, Brother Anselm | colour and clues | see `cast.js` | | Mira and Barnaby carry the rumour | contingent gains, insurance, market research, reconciliation |
 
 ## Edric's nine letters
@@ -45,7 +45,7 @@ Each is optional and once-only. A scene is marked played the moment it starts, s
 | 19 | Maud | confession: she was at the assizes | `maudConfessed`; trust |
 | 21 | Ashby | the guarantee: "it's only my name" | a guarantee is an off-ledger liability; clue 4; letter 7 |
 | 22+ | Crane | reads the seal: Vane's note-buyer's mark | clue 5; `craneVane` |
-| 24 | Steward Vane | offers to forgive the writ for the millstream and a mortgage "payable on demand" | clue 6; `vane` = refused / asked / waiting; **the callable-debt lesson** |
+| 24 | Corvin Vane | offers to forgive the writ for the millstream and a mortgage "payable on demand" | clue 6; `vane` = refused / asked / waiting; **the callable-debt lesson** |
 | 27 | Maud | the eve: the Reeve's Court, and a warning about the letter | `examReady` |
 
 Flags set here (`vane`, `hobbExt`, `ashbyPromise`, `guarantee`, `maudConfessed`, `craneVane`, ...) are saved with the game so Summer can read them.
@@ -55,7 +55,7 @@ Flags set here (`vane`, `hobbExt`, `ashbyPromise`, `guarantee`, `maudConfessed`,
 Chapters 1-9 are unchanged in what they teach (equity, inventory, gross margin, receivables, the cash forecast, trade credit, interest, overtrading, the three statements). What changed is who says them and why it matters to them:
 - Chapter 1: Crane's list of forty-one items, and Edric's first letter ("be civil to Crane").
 - Chapters 3-4: Ashby and Hobb are people, not buyers (cash on the nail vs "eventually").
-- Chapter 8: the Duke's order is **Steward Vane's** gambit; Maud calls it "a loan you make him at no interest, in your own seed".
+- Chapter 8: the Duke's order is **Corvin Vane's** gambit; Maud calls it "a loan you make him at no interest, in your own seed".
 - Between chapters, the scenes make the same ideas show up as decisions with faces: the Hobb scene *is* a credit decision; the Vane scene *is* a covenant.
 
 ## Still to build (next PRs)

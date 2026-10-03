@@ -22,8 +22,9 @@ ok(SC.SC.every(x => C.WHO[x.who] && typeof x.run === "function" && x.hint && x.f
 ok(new Set(SC.SC.map(x => x.id)).size === SC.SC.length, "scene ids are unique");
 { const s = S.newGame(); s.day = 8; ok(!SC.SC.some(x => SC.available(x.who, s)), "no scene before day 9 (the story's first lessons run first)"); s.day = 9; ok(SC.available("maud", s) && SC.available("maud", s).id === "maud_abacus", "day 9: Maud's first scene waits for you");
   s.scenes.maud_abacus = 9; ok(!SC.available("maud", s), "a scene played once is not offered again");
-  s.day = 12; ok(SC.available("crane", s) && SC.available("crane", s).id === "crane_offduty", "Crane stands by the well from day 12"); s.day = 17; ok(!SC.available("crane", s), "...and goes back to being unpleasant after day 16 if you missed him");
-  s.day = 22; ok(!SC.available("crane", s), "his second scene needs the first (no flag, no scene)"); s.flags.craneSeal = true; ok(SC.available("crane", s) && SC.available("crane", s).id === "crane_seal", "with the first clue found, day 22 brings the seal");
+  s.day = 12; ok(!SC.available("crane", s), "day 12 is Corvin Vane's first order at the well, so Crane's off-duty scene waits (integration: shifted +1 day)");
+  s.day = 13; ok(SC.available("crane", s) && SC.available("crane", s).id === "crane_offduty", "Crane stands by the well from day 13"); s.day = 18; ok(!SC.available("crane", s), "...and goes back to being unpleasant after day 17 if you missed him");
+  s.day = 23; ok(!SC.available("crane", s), "his second scene needs the first (no flag, no scene)"); s.flags.craneSeal = true; ok(SC.available("crane", s) && SC.available("crane", s).id === "crane_seal", "with the first clue found, day 23 brings the seal (day 22 is the week-4 card)");
   s.day = 14; ok(!SC.available("hobb", s), "Hobb's favour needs an invoice of his to be open"); s.invoices.push({ id: 1, who: "hobb", amount: 100, due: 20 }); ok(SC.available("hobb", s), "...and appears when one is"); }
 // every branch of every scene runs, and any money it moves keeps the books whole
 const mkctx = (s, pick, rec) => ({ s, S, lines: async (who, arr) => { rec.lines += arr.length; arr.forEach(t => { if (typeof t !== "string" || /undefined/.test(t)) rec.bad++; }); }, ask: async (who, text, labels) => { rec.asks++; return Math.min(pick, labels.length - 1); },
@@ -44,7 +45,7 @@ const mkctx = (s, pick, rec) => ({ s, S, lines: async (who, arr) => { rec.lines 
     const t = S.newGame(); t.day = 14; t.invoices.push({ id: 1, who: "hobb", amount: 100, due: 20 }); t.bal.ar += 100; t.bal.revenue -= 100; const c0 = t.bal.cash; await SC.BY.hobb_extension.run(mkctx(t, 2, { lines: 0, bad: 0, asks: 0, maud: 0, flags: [], clues: 0, trust: [], letters: [] }));
     ok(t.bal.cash === c0 + 50 && t.invoices[0].amount === 50 && t.invoices[0].due === 27, "Hobb: 'half now' moves 50 of Cash in and leaves a 50 invoice a week later"); }
   // ---- Edric's letters
-  if (story) { ok(story.PAGES.length === story.LETTERS.length && story.PAGES.length === 9, "nine letters, each with a title"); ok(story.PAGES.every(p => p.length > 60 && p.length < 520 && !/undefined/.test(p)), "each letter is a real paragraph that fits one page");
+  if (story) { ok(story.PAGES.length === story.LETTERS.length && story.PAGES.length === 10, "ten letters (nine from the cast PR plus WS6's midpoint page), each with a title"); ok(story.PAGES.every(p => p.length > 60 && p.length < 520 && !/undefined/.test(p)), "each letter is a real paragraph that fits one page");
     ok([...letters].every(i => i >= 0 && i < story.PAGES.length), "the scenes only unlock letters that exist (" + [...letters].join(",") + ")"); ok(/seal/.test(story.PAGES[8]) && /Crane/.test(story.PAGES[8]) && /Ezra/.test(story.PAGES[8]), "the last letter sends you to Crane, Ezra and the seal: it turns the season into a mystery"); }
   process.exit(fail ? 1 : 0);
 })();

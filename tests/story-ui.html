@@ -19,8 +19,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   G.talk("maud"); await sleep(60); out.push(`talking to Maud plays her scene (not the menu): ${/Sit\\.|hen after corn/.test(txt())}`);
   for (let i = 0; i < 8; i++) { const b = btns(); if (!b.length) break; const next = b.find(x => /Next|Mm\./.test(x.textContent)) || b[0]; next.click(); await sleep(40); }
   out.push(`the scene is marked played, trust went up (Maud ${s.trust.maud}), and it doesn't repeat: ${!!s.scenes.maud_abacus && !w.Scenes.available("maud", s) && s.trust.maud >= 4}`); G.closeDlg();
-  // Crane by the well on day 12
-  while (s.day < 12) S.sleep(s); G.tick(1 / 60); out.push(`day 12: Crane is back by the well (no ledger): ${!!w.Scenes.available("crane", s)}`);
+  // Crane by the well on day 13 (integration: shifted from 12, which is Corvin Vane's first order)
+  while (s.day < 13) S.sleep(s); G.tick(1 / 60); out.push(`day 13: Crane is back by the well (no ledger): ${!!w.Scenes.available("crane", s)}`);
   // letters panel
   s.flags.x = 1; G.hidePanel(); try { w.eval("Story"); } catch (e) {} 
   out.push(`errors: ${JSON.stringify(errs)}`);
