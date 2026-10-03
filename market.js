@@ -7,10 +7,11 @@
 // Game exemplars: Recettear and Moonlighter (price a shop item, see each customer's face react).
 //
 // The model. Each afternoon is 3 hours of 8 villagers (24). Each villager has a segment and a hidden reserve price (the most
-// they'll pay), fixed by roll(day, villager, salt), so the same game always meets the same villagers:
-//   thrifty      42%  reserve = going price - 1, +-2    buys 1 (2 if it is a bargain, 2+ under their reserve)
-//   comfortable  38%  reserve = going price + 2, +-1    buys 2 (1 if the price is right at their limit)
-//   in a hurry   20%  buys at almost any price          buys 1
+// they'll pay), fixed by roll(day, villager, salt), so the same game always meets the same villagers. Every hour has the same
+// mix, with reserves spread evenly inside each segment, so differences between hours come from YOUR PRICE (a fair experiment):
+//   thrifty      3 of 8  reserve = going price - 1, +-2   buys 1 (2 if the price is 2+ under their reserve)
+//   comfortable  3 of 8  reserve = going price + 2, +-1   buys 2 (1 if the price is right at their limit)
+//   in a hurry   2 of 8  reserve = going price + 4        buys 1
 // A buyer who can't pay shows 'hesitated' when the price is 1 over their reserve (a coin less would have won them) and
 // 'too dear' when it is 2+ over. Grisby (the rival, from day 14) sets his price after seeing yours at the start of each hour:
 // he undercuts by 1 when you are above the going price, otherwise holds at it. Thrifty villagers who see both buy the
@@ -20,7 +21,7 @@
   const S = root.Spring || require("./engine.js");
   const CFG = {
     hours: 3, perHour: 8, maxStock: 60, grisbyFrom: 14, maxPrice: 30, finale: 28,
-    seg: { thrifty: { share: .42, base: -1, spread: 5 }, comfortable: { share: .38, base: 2, spread: 3 }, hurry: { share: .20 } },
+    seg: { thrifty: { base: -1, spread: 5 }, comfortable: { base: 2, spread: 3 }, hurry: {} }, // reserve = going price + base, spread = how many whole-coin steps it ranges over
   };
   const FAIR_DAYS = [7, 14, 21, 28];
   const SEG_NAMES = { thrifty: "Thrifty", comfortable: "Comfortable", hurry: "In a hurry" };
@@ -31,15 +32,17 @@
   const grisbyIn = day => day >= CFG.grisbyFrom;
   const grisbyPrice = (market, mine) => mine > market ? mine - 1 : market; // undercut by 1 above the going price, otherwise hold
 
-  // the 8 villagers who walk by in an hour (same game, same villagers)
+  // the 8 villagers who walk by in an hour (same game, same villagers). Every hour has the same mix (3 thrifty, 3 comfortable, 2 in a hurry)
+  // and each segment's reserves are stratified (one from each band, with a roll inside the band), so an hour's demand depends on YOUR PRICE and
+  // not on which hour it happens to be. That keeps the player's own demand curve (price vs sacks per hour) readable: a fair experiment, not noise.
   function villagers(day, hour) {
-    const market = S.marketPrice(day), out = [];
-    for (let k = 0; k < CFG.perHour; k++) {
-      const id = "mk" + hour + "." + k, r = roll(day, id, 1), seg = r < CFG.seg.thrifty.share ? "thrifty" : r < CFG.seg.thrifty.share + CFG.seg.comfortable.share ? "comfortable" : "hurry";
-      const c = CFG.seg[seg], off = seg === "hurry" ? 0 : Math.floor(roll(day, id, 2) * c.spread) - Math.floor(c.spread / 2);
-      out.push({ id, k, hour, seg, reserve: seg === "hurry" ? market + 4 : market + c.base + off, t: (k + roll(day, id, 3) * .7) / CFG.perHour, look: Math.floor(roll(day, id, 4) * 6) });
-    }
-    return out;
+    const market = S.marketPrice(day), mix = { thrifty: 3, comfortable: 3, hurry: 2 }, slots = [];
+    Object.keys(mix).forEach(seg => { for (let j = 0; j < mix[seg]; j++) slots.push({ seg, j, n: mix[seg], key: roll(day, "mk" + hour + seg + j, 5) }); });
+    slots.sort((a, b) => a.key - b.key); // arrival order
+    return slots.map((o, k) => {
+      const id = "mk" + hour + "." + o.seg + o.j, c = CFG.seg[o.seg], off = o.seg === "hurry" ? 0 : Math.floor((o.j + roll(day, id, 2)) / o.n * c.spread) - Math.floor(c.spread / 2);
+      return { id, k, hour, seg: o.seg, reserve: o.seg === "hurry" ? market + 4 : market + c.base + off, t: (k + roll(day, id, 3) * .7) / CFG.perHour, look: Math.floor(roll(day, id, 4) * 6) };
+    });
   }
   // what one villager does when you ask `mine` and Grisby (or null) asks `g`; stock is what you have left
   function decide(v, mine, g, stock) {
@@ -328,7 +331,9 @@ if (typeof document !== "undefined") (function (root) {
     for (let u = 0; u <= ymax; u += 2) g += `<line x1="${L}" x2="${W - R}" y1="${Y(u)}" y2="${Y(u)}" class="gl"/><text x="${L - 8}" y="${Y(u) + 4}" class="tk" text-anchor="end">${u}</text>`;
     const fit = M.demandFit(all); let line = "";
     if (fit && fit.slope < 0) { const x1 = lo + .3, x2 = hi - .3, y1 = Math.max(0, fit.icpt + fit.slope * x1), y2 = Math.max(0, fit.icpt + fit.slope * x2); line = `<line x1="${X(x1)}" y1="${Y(y1)}" x2="${X(x2)}" y2="${Y(y2)}" class="fit"/>`; }
-    const dots = all.map(p => `<circle cx="${X(p.price)}" cy="${Y(p.units)}" r="${p.old ? 6 : 9}" class="${p.old ? "old" : "cur"}${p.short ? " short" : ""}"/>` + (p.old ? "" : `<text x="${X(p.price)}" y="${Y(p.units) - 14}" class="lb" text-anchor="middle">hour ${p.n}</text><text x="${X(p.price)}" y="${Y(p.units) + 4}" class="in" text-anchor="middle">${p.n}</text>`)).join("");
+    const stack = {}; // hours that landed on the same spot stack their labels instead of printing over each other
+    const dots = all.map(p => { const key = p.price + "," + p.units, lvl = p.old ? 0 : (stack[key] = (stack[key] == null ? 0 : stack[key] + 1)), dx = lvl ? (lvl % 2 ? 1 : -1) * 22 * Math.ceil(lvl / 2) : 0; // a little sideways jitter so same-spot hours stay visible
+      return `<circle cx="${X(p.price) + dx}" cy="${Y(p.units)}" r="${p.old ? 6 : 9}" class="${p.old ? "old" : "cur"}${p.short ? " short" : ""}"/>` + (p.old ? "" : `<text x="${X(p.price) + dx}" y="${Y(p.units) - 14}" class="lb" text-anchor="middle">hour ${p.n}</text><text x="${X(p.price) + dx}" y="${Y(p.units) + 4}" class="in" text-anchor="middle">${p.n}</text>`); }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="mk-chart" role="img" aria-label="Price against sacks sold per hour">${g}${line}${dots}<text x="${(W + L) / 2}" y="${H - 6}" class="ax" text-anchor="middle">Price per sack (coins)</text><text transform="translate(14 ${(H - B) / 2 + Tp}) rotate(-90)" class="ax" text-anchor="middle">Sacks sold in the hour</text></svg>`;
   }
   function tally(p) {
@@ -375,7 +380,7 @@ if (typeof document !== "undefined") (function (root) {
       const t = st.phase === "walk" ? st.hourT : 1, list = (st.evs || []).map(({ e, p }) => ({ e, p, a: at(p, t) })).filter(o => !o.a.off).sort((a, b) => a.a.y - b.a.y);
       list.forEach(({ e, a }) => { const sp_ = sprites(e.seg, e.look)[a.dir], fr = a.mv ? 1 + (Math.floor(time * 8 + e.k) % 2) : 0; ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(Math.round(a.x - 5), Math.round(a.y - 1), 10, 3); ctx.drawImage(sp_[fr], Math.round(a.x - 8), Math.round(a.y - 16)); });
       list.forEach(({ e, p, a }) => { if (t >= p.dec && t < p.dec + .13) { bubble(ctx, Math.round(a.x), Math.round(a.y - 20), e.react);
-        if (e.react === "bought" && e.to === "me") { const u = (t - p.dec) / .13; ctx.fillStyle = "#7a5a10"; ctx.font = "bold 7px monospace"; ctx.textAlign = "center"; ctx.fillText("+" + e.qty * e.price, 140 + (e.k % 3) * 8, 108 - u * 12); ctx.textAlign = "left"; } } });
+        if (e.react === "bought" && e.to === "me") { const u = (t - p.dec) / .13, tx = 124 + (e.k % 4) * 10, ty = 96 - u * 10; ctx.font = "bold 8px monospace"; ctx.textAlign = "center"; ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.strokeText("+" + e.qty * e.price, tx, ty); ctx.fillStyle = "#7a5a10"; ctx.fillText("+" + e.qty * e.price, tx, ty); ctx.textAlign = "left"; } } });
     }
     function sp(who) { return cache["g" + who] || (cache["g" + who] = tintFrames(LOOKS.grisby[0])); }
   }

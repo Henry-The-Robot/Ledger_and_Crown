@@ -21,7 +21,8 @@ ok([7, 14, 21].every(d => M.isDay(d, {})) && !M.isDay(8, {}) && M.isDay(28, {}) 
 { const all = []; for (const d of [7, 14, 21, 28]) for (let h = 0; h < 3; h++) all.push(...M.villagers(d, h).map(v => Object.assign({ d }, v)));
   const n = seg => all.filter(v => v.seg === seg).length, share = seg => n(seg) / all.length;
   ok(["thrifty", "comfortable", "hurry"].every(sg => n(sg) > 0), `all three segments walk by (${n("thrifty")} thrifty, ${n("comfortable")} comfortable, ${n("hurry")} in a hurry of ${all.length})`);
-  ok(Math.abs(share("thrifty") - .42) < .12 && Math.abs(share("comfortable") - .38) < .12 && Math.abs(share("hurry") - .2) < .1, "segment shares are near 42 / 38 / 20 percent");
+  ok(share("thrifty") === .375 && share("comfortable") === .375 && share("hurry") === .25, "every hour brings 3 thrifty, 3 comfortable and 2 in a hurry");
+  { const hrs = [0, 1, 2].map(h => M.villagers(7, h)); ok(hrs.every(v => v.length === 8) && hrs.every(v => v.filter(x => x.seg === "hurry").length === 2), "8 villagers an hour"); }
   const mean = (seg) => { const v = all.filter(x => x.seg === seg); return v.reduce((a, x) => a + x.reserve - S.marketPrice(x.d), 0) / v.length; };
   ok(mean("thrifty") < 0 && mean("comfortable") > 1 && mean("hurry") > mean("comfortable"), `thrifty pay under the going price (${mean("thrifty").toFixed(1)}), comfortable over it (+${mean("comfortable").toFixed(1)}), the hurried most (+${mean("hurry").toFixed(1)})`);
   const hurry = all.find(v => v.seg === "hurry"), thrifty = all.find(v => v.seg === "thrifty");
