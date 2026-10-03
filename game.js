@@ -6,7 +6,7 @@
 (function () {
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26, VW = 320, VH = 200;
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
-  const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v2";
+  const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
   let s, calm = 0, frame = 0, closing = null, atDesk = false, storyOn = !q.has("sandbox"), fairDay = {}, fairSeen = {};
   A.build();
   // ---------- the map ----------

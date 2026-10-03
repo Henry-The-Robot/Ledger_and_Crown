@@ -70,7 +70,7 @@ async function drive(w, until) {
     w.__badAsks = badAsks;
     const r1 = await drive(w, st => st === "tomas6");
     if (r1.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
-    const saved = JSON.parse(w.localStorage.getItem("lc_spring_save_v2") || "null");
+    const saved = JSON.parse(w.localStorage.getItem("lc_spring_save_v3") || "null");
     log(`chapters 1-5: stages ${r1.seen.join(" → ")}; day ${w.G.s.day}; Cash ${w.G.s.bal.cash}; save stage ${saved && saved.story.stage}`);
     const [f2, w2] = await load("?fast=1&savetest=1"); await sleep(150);
     const cont = [...w2.document.querySelectorAll("#dlg button")].find(b => /Continue/.test(b.textContent)); if (cont) cont.click(); await sleep(50);
