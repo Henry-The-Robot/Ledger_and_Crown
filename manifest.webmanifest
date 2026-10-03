@@ -1,0 +1,15 @@
+{
+  "name": "Ledger & Crown: Spring at Thornfield",
+  "short_name": "Thornfield",
+  "description": "A story game that teaches real business numbers by running a small farm.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1f2a1a",
+  "theme_color": "#1f2a1a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

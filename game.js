@@ -7,6 +7,9 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26, VW = 320, VH = 200;
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
   const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
+  // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
+  const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
+  if (TOUCH) document.body.classList.add("touch");
   let s, calm = 0, frame = 0, closing = null, atDesk = false, storyOn = !q.has("sandbox"), fairDay = {}, fairSeen = {};
   A.build();
   // ---------- the map ----------
@@ -129,12 +132,13 @@
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
       const d = $("dlg"), who = o.who, nm = who ? S.NAMES[who] || who : "", ht = who && s.trust[who] != null ? hearts(s.trust[who]) : "";
-      spot(o.spot);
+      spot(o.spot); d.classList.remove("kb");
       d.innerHTML = `${who && A.people[who] ? "<canvas width=16 height=16></canvas>" : ""}<div style="flex:1"><div><span class="nm">${cap(nm)}</span><span class="ht">${ht}</span></div><div class="tx">${o.text}</div>` +
-        (o.input ? `<div class="in"><input id="num" type="text" inputmode="decimal" placeholder="${o.input}" autocomplete="off"></div>` : "") + `<div class="ch"></div></div>`;
+        (o.input ? `<div class="in"><input id="num" type="text" inputmode="decimal" enterkeyhint="done" placeholder="${o.input}" autocomplete="off"></div>` : "") + `<div class="ch"></div></div>`;
       if (who && A.people[who]) d.querySelector("canvas").getContext("2d").drawImage(A.people[who].down[0], 0, 0);
+      addSignButtons(d);
       (o.choices || ["Next"]).forEach((c, i) => { const b = document.createElement("button"), lab = c.label || c; b.innerHTML = `<kbd>${i + 1}</kbd>${lab}`; b.disabled = !!c.disabled;
-        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; spot(null); res({ i, v }); };
+        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb"); spot(null); res({ i, v }); };
         d.querySelector(".ch").appendChild(b); });
       d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false; if (o.input) setTimeout(() => $("num") && $("num").focus(), 30);
     });
@@ -537,7 +541,7 @@
       (x ? `<div style="text-align:right;margin-top:10px"><button class="btn gold pclose">Done</button></div>` : "");
     if (x) document.querySelectorAll("#panelBody .pclose").forEach(b => b.onclick = hidePanel);
     $("panel").onclick = e => { if (x && e.target === $("panel")) hidePanel(); };
-    $("panel").style.display = "flex";
+    $("panel").style.display = "flex"; addSignButtons($("panelBody"));
   }
   let hideWaiters = [];
   function hidePanel() { $("panel").style.display = "none"; panelKind = null; const w = hideWaiters.splice(0); if (w.length) return w.forEach(f => f()); if (atDesk) desk(); }
@@ -664,17 +668,40 @@
     if (S.rain(s.day)) { ctx.fillStyle = "rgba(40,60,110,.18)"; ctx.fillRect(0, 0, VW, VH); ctx.fillStyle = "rgba(200,220,255,.55)"; for (let k = 0; k < 70; k++) { const rx = (k * 53 + frame * 3) % VW, ry = (k * 97 + frame * 6) % VH; ctx.fillRect(rx, ry, 1, 4); } }
     const f = facing(), p = plotAt(f.x, f.y), n = npcAt(f.x, f.y), b = buildingAt(f.x, f.y);
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
-    $("hint").textContent = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
+    const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
       p ? "E: " + (!p.tilled ? "till" : p.sprinkler ? "pick up sprinkler" : !p.crop ? (s.sprinklersHeld ? "place sprinkler" : s.seeds ? "plant seed" : "no seed: buy from Tomas") : S.stage(s, p) === 4 ? "harvest" : p.watered || S.rain(s.day) ? "watered" : "water") : "";
+    $("hint").textContent = TOUCH ? hintText.replace(/^E: /, "Tap Act: ") : hintText;
+    if (TOUCH) { const lab = hintText.replace(/^E: /, "") || "Act", act = $("act"); if (act && act.dataset.l !== lab) { act.dataset.l = lab; act.textContent = lab.charAt(0).toUpperCase() + lab.slice(1); } }
   }
   let last = 0;
-  function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; frame++; if (!dlgOpen() && !panelOpen()) move(dt); draw(); requestAnimationFrame(loop); }
-  function fit() { const sc = Math.max(2, Math.floor(Math.min(innerWidth / VW, innerHeight / VH))); cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px"; }
-  addEventListener("resize", fit);
+  function tick(dt) { frame++; const modal = dlgOpen() || panelOpen(); if (TOUCH) { document.body.classList.toggle("inmodal", modal); if (modal) for (const k in keys) keys[k] = false; } if (!modal) move(dt); draw(); }
+  function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; tick(dt); requestAnimationFrame(loop); }
+  // whole pixels on a desktop, half steps on an iPad so the map fills the screen
+  function fit() { const fitSc = Math.min(innerWidth / VW, innerHeight / VH), sc = Math.max(2, TOUCH ? Math.floor(fitSc * 2) / 2 : Math.floor(fitSc)); cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px"; }
+  addEventListener("resize", fit); addEventListener("orientationchange", () => setTimeout(fit, 150));
+  // ---------- touch: on-screen pad and Act button, minus-sign helper, and keeping the typing box above the iPad keyboard ----------
+  function initTouch() {
+    const tc = document.createElement("div"); tc.id = "tc";
+    tc.innerHTML = `<div id="dpad">${[["up", "▲"], ["left", "◀"], ["right", "▶"], ["down", "▼"]].map(([d, g]) => `<button type="button" data-d="${d}" aria-label="Walk ${d}">${g}</button>`).join("")}</div><button type="button" id="act" aria-label="Act">Act</button>`;
+    document.body.appendChild(tc);
+    tc.querySelectorAll("#dpad button").forEach(b => { const d = b.dataset.d;
+      b.addEventListener("pointerdown", e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) {} keys[d] = true; pl.target = null; b.classList.add("down"); });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, () => { keys[d] = false; b.classList.remove("down"); })); });
+    $("act").addEventListener("pointerdown", e => { e.preventDefault(); if (!dlgOpen() && !panelOpen()) { const f = facing(); interactTile(f.x, f.y); } });
+    document.addEventListener("focusin", e => { if (e.target.tagName === "INPUT" && $("dlg").contains(e.target)) $("dlg").classList.add("kb"); });
+    document.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  function addSignButtons(root) { // the iPad number pad has no minus key, and a forecast can go negative
+    if (!TOUCH) return; root.querySelectorAll('input[inputmode="decimal"]').forEach(inp => { if (inp.dataset.sign) return; inp.dataset.sign = 1;
+      const b = document.createElement("button"); b.type = "button"; b.className = "sgn"; b.textContent = "±"; b.setAttribute("aria-label", "Make negative or positive"); b.tabIndex = -1;
+      b.addEventListener("pointerdown", e => e.preventDefault()); // don't steal focus from the box, so the keyboard stays up
+      b.addEventListener("click", () => { inp.value = inp.value.startsWith("-") ? inp.value.slice(1) : "-" + inp.value; inp.focus(); }); inp.after(b); });
+  }
+  if (TOUCH) initTouch();
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
-    interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; }, hidePanel,
-    set fast(v) { fast = v; }, pl, keys, step: dt => move(dt),
+    interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
     const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
