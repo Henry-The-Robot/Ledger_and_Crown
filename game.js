@@ -525,6 +525,8 @@
     if (cmp || p.choices) { window.__want = p.answer; const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
     else { await ask(T, p.text, p.answer, p.hints, null, p.tol, (p.docs || []).map(d => d === "ledger" ? { label: "Open the Ledger", open: ledger } : { label: "Open the cash forecast", open: () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }) }), p.work); right = !window.__walked; tries = window.__tries; }
     if (stake) { if (right && tries === 0) { act(() => S.wagerWin(s, stake, "Practice wager")); FX.sfx("coin"); toast(`First answer right: you win ${stake}.`); } else toast(`Maud keeps your ${stake}.`); }
+    // self-explanation: after a first-try right answer, one "why" (a choice), so the idea is said as well as done
+    if (right && tries === 0 && p.why) { const k = s.day % p.why.opts.length, ord = p.why.opts.map((_, i) => (i + k) % p.why.opts.length), w = await dlg({ who: T, text: `Right. ${p.why.q}`, choices: ord.map(i => p.why.opts[i]) }); if (ord[w.i] === p.why.right) { TR.master(p.concept, s.day); toast("That's the reason."); } else await sayP(T, `Close, but no: ${p.why.opts[p.why.right]}.`, ["I see"]); }
     const q = Practice.record(s, p, right, !right);
     if (right) { TR.master(p.concept, s.day); FX.sfx("good"); if (s.trust[T] != null && q.favour % 2 === 0 && s.trust[T] < 10) s.trust[T]++; toast(q.streak > 1 ? `${q.streak} days running ★` : T === "ezra" ? "Ezra inclines his head." : "Maud nods."); }
     else toast("We'll come back to this one.");

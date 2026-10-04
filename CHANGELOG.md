@@ -6,6 +6,8 @@ From `docs/SEASON-1-CURRICULUM-AUDIT.md`: eight core ideas the season must prove
 - **Present value (new lesson, week 3, on a real invoice).** Ezra's two prices for cash today: sell the invoice (about 8% a week) or borrow against it (the loan rate). Then what the promise is worth today.
 - **The Reeve's Court now has 10 claims (pass 7).** New claims test break-even, the opportunity-cost floor, the price of waiting, and expected value against ruin. All four are always asked. The close screen lists the eight core ideas and how far you took each.
 - **Transcript:** `Transcript.CORE` marks the eight core ideas; everything else is a preview Summer teaches.
+- **Practice ramps with mastery.** Break-even, expected value, opportunity cost, time value and the working-capital gap each have tiers 1 to 3, picked by how well you know the idea. Tier 3 adds a twist (a dearer seed, a bet whose average is a loss, a haul cost, a fee, slower customers).
+- **"Why?" after a first-try right answer** on break-even, expected value, opportunity cost and time value: pick the reason. Right earns more evidence; wrong gets the reason.
 - Tests: `lessons-s1.html`; `test-court.js`/`court.html` updated for 10 claims; `week4.html` handles decision problems.
 
 ## v0.4.4: playtest 2

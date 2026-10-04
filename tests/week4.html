@@ -17,7 +17,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   w.Story.testScene("none"); G.talk("ezra"); await sleep(80); out.push(`week 4: Ezra offers "A problem on your books": ${btns().some(b => /A problem on your books/.test(b.textContent))}`);
   click(/A problem on your books/); await sleep(100); if (btns().some(b => /No stake/.test(b.textContent))) { click(/No stake/); await sleep(100); } // (T5's optional wager comes first)
   out.push(`the question is asked by Ezra, with no Explain-how button: ${/Ezra/.test(d.getElementById("dlg").textContent) && !btns().some(b => /Explain how/.test(b.textContent))} (answer ${w.__want})`);
-  if (d.getElementById("num")) { d.getElementById("num").value = String(w.__want); click(/Check/); } else { d.querySelectorAll("#dlg .ch button")[w.__want].click(); } await sleep(150); // a choice problem (a decision) or a number problem
+  if (d.getElementById("num")) { d.getElementById("num").value = String(w.__want); click(/Check/); } else { d.querySelectorAll("#dlg .ch button")[w.__want].click(); await sleep(100); if (/^Right\./.test(d.querySelector("#dlg .tx").textContent.trim())) d.querySelectorAll("#dlg .ch button")[0].click(); } await sleep(150); // a choice problem (a decision) or a number problem
   out.push(`a right answer counts: ${s.practice.done[s.day] === 2} and earns Ezra's regard (trust ${s.trust.ezra})`); G.closeDlg();
   // letters: in the order found, the Court's letter last
   st.pages = [8, 3, 5, 9]; st.pageDays = { 3: 12, 5: 1, 9: 12, 8: 28 }; G.desk(); await sleep(60); click(/Edric's letters/); await sleep(100);

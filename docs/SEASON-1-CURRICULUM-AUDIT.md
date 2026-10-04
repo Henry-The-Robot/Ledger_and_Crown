@@ -142,4 +142,6 @@ Built from this audit: the fixed-vs-variable lesson (wages day), the present-val
 
 Inside Spring the ramp is already visible in the weeks (shows, asks, bets, silent). The practice tiers add the same ramp per idea: a player who masters break-even meets a tier-3 version (a price cut and a dearer seed) while a slower player stays at tier 1 with hints.
 
-**Still to build for the ramp:** tiers for the other practice problems (time value, opportunity cost, working capital), a Summer entry check that picks the player's starting tier per core idea from the transcript, and the self-explanation question.
+**Built (v0.4.5):** tiers for break-even, expected value, opportunity cost, time value and the working-capital gap; a "why" question after a first-try right answer.
+
+**Still to build for the ramp:** a Summer entry check that picks the player's starting tier per core idea from the transcript; Market Day already has a bet and a break-even cell, so a separate prediction step is dropped.
