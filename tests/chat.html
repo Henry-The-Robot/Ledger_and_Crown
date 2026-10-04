@@ -8,7 +8,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   const btns = () => [...d.querySelectorAll("#dlg .ch button")].map(b => b.textContent.replace(/^\d+/, "")), txt = () => d.getElementById("dlg").textContent, click = re => [...d.querySelectorAll("#dlg .ch button")].find(b => re.test(b.textContent)).click();
   while (s.day < 9) S.sleep(s); s.offers.length = 0; s.trust.ashby = 8; s.flags = { ashbyAsked: true }; G.hud();
   G.talk("ashby"); await sleep(80);
-  out.push(`she says plainly when she isn't buying (or lists the deal when she is): ${/isn't buying today/.test(txt()) || btns().some(b => /^Deal:/.test(b))}; the menu: ${btns().join(" | ")}`);
+  out.push(`DELIBERATE BREAK (P1 demo): ${1 === 2}; `she says plainly when she isn't buying (or lists the deal when she is): ${/isn't buying today/.test(txt()) || btns().some(b => /^Deal:/.test(b))}; the menu: ${btns().join(" | ")}`);
   const first = btns()[0]; out.push(`topics are listed without "(again)": ${btns().every(b => !/again/.test(b))}`);
   click(new RegExp(first.slice(0, 12).replace(/[()]/g, "."))); await sleep(60); for (let i = 0; i < 8 && !/Leave/.test(btns().join()); i++) { click(/Next/); await sleep(40); }
   out.push(`after hearing it, back on the menu: ${/Leave/.test(btns().join())}; the topic is gone: ${!btns().includes(first)}; no "(again)": ${btns().every(b => !/again/.test(b))}`);
