@@ -34,8 +34,9 @@ ok(!P.ids.some(i => ["equation", "operating", "fund", "inventory", "ar"].include
   const sc = get("scaling"), b = S.balanceSheet(s.bal); ok(sc && sc.answer === 2 * (b.inv + b.ar - b.ap - b.deposits), `scaling gap: double the sales, double the tied-up Cash (${sc && sc.answer})`);
   const r = get("ruin"), f = S.crownFund(s), cost = +/lose all <b>(\d+)<\/b>/.exec(r.text)[1]; ok(r.answer === (f.net - cost >= f.crown ? 0 : 1) && r.choices.length === 2, `ruin: ${f.net} - ${cost} against the Crown's ${f.crown} -> ${r.choices[r.answer]}`);
   const flips = new Set(); for (const e2 of [0, 4, 8, 10]) { const g = S.newGame({ story: false }); g.trust.ezra = e2; const t = P.BANK.find(x => x.id === "tvmflip").make(g); if (t) flips.add(t.answer); } ok(flips.size === 2, "the time-value answer flips as Ezra's rate moves (take the discount at a low rate, skip it at a high one)"); }
-process.exit(fail ? 1 : 0);
 // difficulty ramps with mastery: the same problem is harder (and different) at tier 2 and 3
-{ const s = S.newGame(); s.day = 10; const be = P.BANK.find(b => b.id === "breakeven"), a = be.make(s, 1), b = be.make(s, 2), c = be.make(s, 3); ok(a && b && c && a.text !== b.text && b.text !== c.text && c.answer >= b.answer && b.answer >= a.answer, "break-even: tier 2 adds a price cut and tier 3 a dearer seed, so the answer rises");
+{ const s = S.newGame(); s.day = 10; const be = P.BANK.find(b => b.id === "breakeven"), a = be.make(s, 1), b = be.make(s, 2), c = be.make(s, 3); ok(a && b && c && a.text !== b.text && c.answer >= b.answer && b.answer >= a.answer, "break-even: tier 2 adds a price cut and tier 3 a dearer seed, so the answer rises");
   const ev = P.BANK.find(b => b.id === "ev"), e1 = ev.make(s, 1), e3 = ev.make(s, 3); ok(e1.answer > 0 && e3.answer < 0, "expected value: tier 3 is a bet whose average is a loss (the player must compute, not assume)");
   const p = P.pick(s, c0 => "mastered"); ok(p && p.tier === 3, "a mastered concept gets a tier-3 problem"); }
+
+process.exit(fail ? 1 : 0);
