@@ -11,12 +11,12 @@ const STR = "(`(?:[^`\\\\]|\\\\.)*`|\"(?:[^\"\\\\]|\\\\.)*\")";
   for (const f of ["../story.js", "../scenes.js"]) grab(__dirname + "/" + f, re).forEach(([w, t]) => { if (sent(t).length > 2) long.push(w + " " + sent(t).length); });
   ok(long.length === 0, "every Maud box in story.js and scenes.js is at most two sentences" + (long.length ? " :: " + long.join(", ") : "")); }
 // Crane: formal and pedantic; "Item:" is a tic used now and then, never on every sentence (about one sentence in five at most, two to a box)
-{ const bad = [], re1 = new RegExp("G\\.say\\(\"crane\",\\s*" + STR, "g"), pieces = [];
+{ const bad = [], re1 = new RegExp("GL?\\.say\\(\"crane\",\\s*" + STR, "g"), pieces = [];
   grab(__dirname + "/../story.js", re1).forEach(x => pieces.push(x)); const sc = fs.readFileSync(__dirname + "/../scenes.js", "utf8").split("\n");
   sc.forEach((ln, i) => { const m = /c\.lines\("crane",\s*\[(.*)\]\)/.exec(ln); if (m) (m[1].match(/"(?:[^"\\]|\\.)*"/g) || []).forEach(t => pieces.push([`scenes.js:${i + 1}`, t.slice(1, -1)])); });
   const C = window.Cast.WHO.crane; [].concat(C.greet, C.low, C.rich, C.rain || []).forEach(t => pieces.push(["cast greet", t])); C.topics.forEach(tp => tp.lines.forEach(t => pieces.push(["cast " + tp.id, t])));
-  let all = 0, tic = 0; pieces.forEach(([w, t]) => { const ss = sent(t), k = ss.filter(x => /^Item:/.test(x.trim())).length; all += ss.length; tic += k; if (k > 2 || (ss.length >= 3 && k === ss.length)) bad.push(w + " " + t.slice(0, 40)); });
-  ok(bad.length === 0 && tic > 0 && tic / all <= .2, `Crane keeps his "Item:" tic to ${tic} of ${all} sentences (${Math.round(tic / all * 100)}%), at most two to a box, never every sentence` + (bad.length ? " :: " + bad.slice(0, 5).join(" | ") : "")); }
+  let all = 0, tic = 0; pieces.forEach(([w, t]) => { const ss = sent(t), k = ss.filter(x => /^Item:/.test(x.trim())).length; all += ss.length; tic += k; if (k > 2 || (ss.length >= 1 && k === ss.length)) bad.push(w + " " + t.slice(0, 40)); });
+  ok(bad.length === 0 && tic > 0 && tic / all <= .15, `Crane keeps his "Item:" tic to ${tic} of ${all} sentences (${Math.round(tic / all * 100)}%, at most 15%), at most two to a box, no box where every sentence starts with "Item:"` + (bad.length ? " :: " + bad.slice(0, 5).join(" | ") : "")); }
 // no "(coming)" in anything a player reads
 { const bad = ["../story.js", "../game.js", "../endings.js", "../scenes.js", "../cast.js", "../court.js"].filter(f => fs.existsSync(__dirname + "/" + f)).filter(f => /\(coming\)/.test(fs.readFileSync(__dirname + "/" + f, "utf8").replace(/\/\/.*$/gm, ""))); ok(bad.length === 0, "no '(coming)' text in player-facing strings" + (bad.length ? " :: " + bad : "")); }
 // the time-value verdict: whole coins, the discount is the one the engine books, and it can flip when the rate moves

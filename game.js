@@ -163,7 +163,10 @@
     });
   }
   // On touch the page never scrolls: if iOS moves it anyway (a focused field, the keyboard, a rotation), put it back so taps land where the map is drawn.
-  if (TOUCH) { const home = () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); }; window.addEventListener("scroll", home, { passive: true }); if (window.visualViewport) visualViewport.addEventListener("scroll", home); document.addEventListener("focusout", () => setTimeout(home, 50)); }
+  // Pin only for the number pad's own box (#num): it is the active element, or it is on screen and no other field has focus (it blurs itself on touch). The farm-name box, the forecast
+  // cells and the break-even box are real inputs: while one has focus the page must be free to scroll above the iOS keyboard.
+  const pinPage = () => { const a = document.activeElement, other = a && a.id !== "num" && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); return !other && (!!(a && a.id === "num") || !!$("num")); };
+  if (TOUCH) { const home = () => { if ((window.scrollY || window.scrollX) && pinPage()) window.scrollTo(0, 0); }; window.addEventListener("scroll", home, { passive: true }); if (window.visualViewport) visualViewport.addEventListener("scroll", home); document.addEventListener("focusout", () => setTimeout(home, 50)); }
   // On-screen number pad (0-9, minus, backspace, Check) for the ask and haggle boxes: mouse and touch alike (WS2).
   // On touch the input is inputmode=none, so the iOS keyboard never opens over the dialog. Pad keys sit after the choices in the DOM.
   function numberPad(d, first) {
@@ -279,7 +282,7 @@
   }
   // Stall detector: the story is waiting but nothing is on screen for 4 s -> point the player to the menu.
   setInterval(() => {
-    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court"); // the ending card, the week card and the Court are screens too
+    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court, #mkt, #intro"); // the ending card, the week card, the Court, Market Day and the intro are screens too
     stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Freeing the map in a moment; the menu (☰) can also restart the day."); if (stall.t === 7 && Story.unstick()) toast("Freed. You can play on.");
   }, 1000);
   const stall = {};

@@ -19,7 +19,14 @@ function stub(x, pick) { const seen = []; x.G.say = async (who, text, choices) =
   const played = await x.w.Story.pvScene(); all = seen.map(y => y.text).join(" ");
   out.push(`present value scene plays on a real invoice: ${played === true}; names the price of waiting and present value: ${/price of waiting/.test(all) && /present value/.test(all)}; borrowing is the praised answer: ${/Yes\./.test(all)}; notebook: ${x.w.Story.state.notebook.some(n => n.id === "tvm" && /Present value/.test(n.term))}`);
   const w = x.S.terms(x.s), got = Math.round(120 * x.S.R.factorRate), wk = (31 - 17) / 7; out.push(`the numbers match the engine: fee ${120 - got} stated: ${all.includes(String(120 - got))}`); x.f.remove();
-  // no invoice -> the scene does not play (and does not mark itself played)
-  x = await boot(); x.s.day = 17; x.s.invoices = []; stub(x, () => 0); out.push(`no invoice: scene skipped: ${(await x.w.Story.pvScene()) === false}`); x.f.remove();
+  // the Duke's 1,320 invoice is open and Ezra cannot fund it: the lesson still plays, on a small illustrative invoice (it used to be skipped silently while the Court tested the idea)
+  x = await boot(); x.s.day = 17; x.s.invoices = [{ id: 98, who: "duke", amount: 1320, due: 31, terms: 28 }]; const room = x.S.terms(x.s).loanLimit + x.s.bal.loan; seen = stub(x, l => l.findIndex(t => /^Borrow/.test(t)));
+  const dukePlayed = await x.w.Story.pvScene(); all = seen.map(y => y.text).join(" ");
+  out.push(`Duke's 1,320 open, Ezra's room ${room} (below ${Math.round(1320 * x.S.R.factorRate)}): the scene still plays: ${dukePlayed === true}; it uses the illustrative 100, not the Duke: ${/Suppose a neighbour owed you <b>100<\/b>/.test(all) && !/1320|1,320/.test(all)}; marks itself played: ${x.w.Story.state.pv === true}; teaches present value: ${/present value/.test(all) && /Yes\./.test(all)}`); x.f.remove();
+  // the Duke's invoice AND a small one Ezra can fund: the small real invoice is chosen
+  x = await boot(); x.s.day = 17; x.s.invoices = [{ id: 98, who: "duke", amount: 1320, due: 31, terms: 28 }, { id: 99, who: "hobb", amount: 120, due: 31, terms: 14 }]; seen = stub(x, l => l.findIndex(t => /^Borrow/.test(t)));
+  await x.w.Story.pvScene(); all = seen.map(y => y.text).join(" "); out.push(`with the Duke's invoice and Hobb's 120 open, the scene uses Hobb's real invoice: ${/Hobb owes you <b>120<\/b>/.test(all)}`); x.f.remove();
+  // no invoice at all: the illustrative one plays, once (the week-3 trigger stops on st.pv)
+  x = await boot(); x.s.day = 17; x.s.invoices = []; seen = stub(x, () => 0); out.push(`no invoice: the scene still plays on the illustrative one: ${(await x.w.Story.pvScene()) === true && /Suppose a neighbour/.test(seen.map(y => y.text).join(" "))}`); x.f.remove();
 } catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); } document.getElementById("out").textContent = out.join("\n"); })();
 </script></body></html>

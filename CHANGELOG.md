@@ -1,9 +1,22 @@
 # Changelog
 
+## v0.4.6: review fixes
+- **The Reeve's Court has 9 claims now, and you pass with 6** (creative call 6). Each sitting asks one claim for each of the eight core ideas, plus the guarantee claim. If the guarantee flag is not set, the "on demand" claim stands in.
+- **A retake is not a repeat.** Each idea has a pool of claims, and a retake draws a different one. The numbers in the break-even, floor-offer, waiting and caravan claims change every sitting.
+- **Break-even in the Court uses your real weekly bill.** That is your wages after sprinklers, plus interest. It used to quote the plain wage of 45.
+- **Repay Ezra or pay Tomas early** now compares one week of Ezra's interest with the 2% discount. It flips at about 2% a week, like the time-value problem. It used to count interest over every pay-day left.
+- **Practice "Why?" questions fit the tier.** Break-even tier 1 asks why wages set the count. Expected value tier 3 asks about a losing average. Expected-value hints quote the tier's real odds (70/30, then 60/40).
+- **The present-value lesson always plays once in week 3.** It uses the biggest invoice Ezra can fund. The Duke's 1,320 is too big for him, so it used to skip the lesson. If no invoice fits, Maud uses a small made-up one (100, due in two weeks).
+- **iPad:** the page is pinned to the top only for the number pad. The farm-name box, the forecast cells and the break-even box can scroll above the keyboard.
+- **Stuck-scene valve:** a scene dropped by the valve can no longer wake up later and race a new scene. Market Day and the intro now count as screens for the stall detector.
+- Wording: Corvin's bet no longer says "buy the seed today" when you hold the seed. The break-even lesson no longer says Grisby undercuts on day 7. He has no stall until day 14.
+- The v0.4.5 note on selling an invoice said "about 8% a week". Ezra keeps a flat 15%, so the weekly rate depends on the days left: 17.6% with one week to run, 8.5% with two, 5.6% with three.
+- Tests: `test-court.js` (9 claims, pass 6, one per idea, retakes differ, real bill), `test-practice.js` (tiers 1 to 3 swept; repay checked by hand at 7 rates), `lessons-s1.html` (the Duke's invoice), `stale-scene.html` (new), `test-t3b.js` (Crane's "Item:" tic at most 15%).
+
 ## v0.4.5: the Season 1 core
 From `docs/SEASON-1-CURRICULUM-AUDIT.md`: eight core ideas the season must prove, with the Court as the test.
 - **Fixed vs variable cost (new lesson, wages day).** Maud names the two kinds of cost and contribution. A rival's price cut is a choice: how many sacks to break even now. The answer shows a small price cut roughly doubling break-even.
-- **Present value (new lesson, week 3, on a real invoice).** Ezra's two prices for cash today: sell the invoice (about 8% a week) or borrow against it (the loan rate). Then what the promise is worth today.
+- **Present value (new lesson, week 3, on a real invoice).** Ezra's two prices for cash today: sell the invoice (a flat 15% fee, so the weekly rate depends on the days left: 17.6% with one week to run, 8.5% with two, 5.6% with three) or borrow against it (the loan rate). Then what the promise is worth today.
 - **The Reeve's Court now has 10 claims (pass 7).** New claims test break-even, the opportunity-cost floor, the price of waiting, and expected value against ruin. All four are always asked. The close screen lists the eight core ideas and how far you took each.
 - **Transcript:** `Transcript.CORE` marks the eight core ideas; everything else is a preview Summer teaches.
 - **Practice ramps with mastery.** Break-even, expected value, opportunity cost, time value and the working-capital gap each have tiers 1 to 3, picked by how well you know the idea. Tier 3 adds a twist (a dearer seed, a bet whose average is a loss, a haul cost, a fee, slower customers).

@@ -83,7 +83,7 @@ window.Story = (function () {
     st.clues.push({ id, term, num, from, day: G.s.day, kind: kind || "lesson" });
     G.toast(`Pinned to the case board: ${term}`);
   }
-  async function page(i) { if (st.pages.indexOf(i) < 0) { st.pages.push(i); (st.pageDays = st.pageDays || {})[i] = G.s.day; } await G.page(PAGES[i], LETTERS[i]); pin("page" + i, LETTERS[i], "Edric's letter", `Day ${G.s.day} · journal`, "page"); }
+  async function page(i) { if (st.pages.indexOf(i) < 0) { st.pages.push(i); (st.pageDays = st.pageDays || {})[i] = G.s.day; } await GL.page(PAGES[i], LETTERS[i]); pin("page" + i, LETTERS[i], "Edric's letter", `Day ${G.s.day} · journal`, "page"); }
   // ---------- week title cards: one line, tap to dismiss (never blocks the story; fades by itself) ----------
   function weekCard(w, hold) {
     document.querySelectorAll(".wkcard").forEach(e => e.remove());
@@ -100,8 +100,14 @@ window.Story = (function () {
     if (!st.notebook.some(n => n.id === id)) st.notebook.push({ id, term, line, example }); G.toast(`Maud's notebook: ${term} (N)`);
     pin(id, term, num || example.split(".")[0], from);
   }
-  const tell = (t, spot) => G.say("maud", t, null, spot);
-  const ask = (t, answer, hints, spot, tol, docs, work, how) => G.ask("maud", t, answer, hints, spot, tol, docs, work, how);
+  // Epoch guard for the stuck-scene valve (unstick). Every dialog a scene waits on remembers the epoch it was asked in; unstick() bumps the epoch, so a scene that was dropped
+  // throws STALE at its next await instead of resuming and racing a new scene. run() swallows STALE and leaves `busy` alone for a stale chain.
+  let epoch = 0; const STALE = { stale: true }, guarded = p => { const e = epoch; return Promise.resolve(p).then(v => { if (e !== epoch) throw STALE; return v; }); };
+  const GASYNC = new Set(["say", "ask", "page", "haggle", "reveal", "pickLine"]), VASYNC = new Set(["bet", "timeline", "wait", "countTotal", "stamp", "revealBet", "parchClose"]);
+  const GL = new Proxy({}, { get: (_, k) => GASYNC.has(k) && typeof G[k] === "function" ? (...a) => guarded(G[k](...a)) : G[k] });
+  const LV = new Proxy({}, { get: (_, k) => VASYNC.has(k) && typeof Verbs[k] === "function" ? (...a) => guarded(Verbs[k](...a)) : Verbs[k] });
+  const tell = (t, spot) => GL.say("maud", t, null, spot);
+  const ask = (t, answer, hints, spot, tol, docs, work, how) => GL.ask("maud", t, answer, hints, spot, tol, docs, work, how);
   // Only answers the player got on their own count as evidence: a walk-through or a reported skip adds nothing.
   const mastered = id => { if (!window.__walked) TR.master(id, G.s.day); }; // evidence of skill, not instant mastery (transcript.js)
   // Document buttons for Try beats: the player finds the numbers in their own books (hints say where, never the sum).
@@ -114,9 +120,9 @@ window.Story = (function () {
   // ---------- chapter 1: the bailiff (C1.01) — WS3 cold open: the `tag` verb builds the balance sheet, then one More/Less choice ----------
   // Replaces the two typed sums (liabilities, equity). Every number comes from the opening balances (Spring.balanceSheet), never a literal.
   async function ch1() {
-    const V = Verbs, W = G.world, b = S.balanceSheet(G.s.bal), s0 = G.s, cost = S.R.unitCost;
+    const V = LV, W = G.world, b = S.balanceSheet(G.s.bal), s0 = G.s, cost = S.R.unitCost;
     V.parchReset(); V.craneOn = true;
-    await G.say("crane", "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me.", ["Walk with you"]);
+    await GL.say("crane", "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me.", ["Walk with you"]);
     const sackVal = s0.sacks * cost, cropPlots = () => s0.plots.filter(p => p.crop), cropVal = cropPlots().reduce((a, p) => a + p.crop.cost, 0);
     G.toast("Crane taps the chest: Cash.");
     const tagging = V.tag({
@@ -136,20 +142,20 @@ window.Story = (function () {
     V.remark("Find the rest. Everything this farm owns.");
     await tagging;
     await V.countTotal("aTot", s0.bal.cash + sackVal + cropVal);
-    await G.say("crane", "Now the other column, the one people prefer not to read. I brought the papers myself.", ["Show me"]);
+    await GL.say("crane", "Now the other column, the one people prefer not to read. I brought the papers myself.", ["Show me"]);
     V.pinRow("liab", "Ezra's note (the loan)", b.loan); await V.wait(window.__fastVerbs ? 0 : 700);
     V.pinRow("liab", "The Crown's writ, due at Midwinter", b.crown); await V.wait(window.__fastVerbs ? 0 : 500);
     await V.countTotal("lTot", b.liab);
-    const c = await G.say("crane", "Before I stamp it, heir: do you own more than you owe, or less?", ["More", "Less"]);
+    const c = await GL.say("crane", "Before I stamp it, heir: do you own more than you owe, or less?", ["More", "Less"]);
     V.P.eq = b.equity; V.parch();
     await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
     const right = (c === 1) === (b.equity < 0);
-    await G.say("crane", right ? "You have a head for it. That is not a compliment, heir; it is a diagnosis." : "Less. Much less, and I am required to say it plainly.", ["Next"]); // #28's voice
+    await GL.say("crane", right ? "You have a head for it. That is not a compliment, heir; it is a diagnosis." : "Less. Much less, and I am required to say it plainly.", ["Next"]); // #28's voice
     document.querySelectorAll(".vstamp").forEach(x => x.remove());
     // WS6: the writ needs a name (item 10), and Crane makes his standing offer (M3, item 3), both while he's still standing in the yard
-    await G.say("crane", "The writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
+    await GL.say("crane", "The writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
     await nameFarm(); V.P.title = farmName(); V.parch();
-    await G.say("crane", `Item: ${farmName()}. Entered on the writ, and not to be changed without a form.`, ["Next"]);
+    await GL.say("crane", `Item: ${farmName()}. Entered on the writ, and not to be changed without a form.`, ["Next"]);
     await craneOffer({ first: true });
     if (G.s.over) return; // sold on day 1: the ending has been shown
     V.craneOn = false;
@@ -165,12 +171,12 @@ window.Story = (function () {
   // ---------- chapter 3: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
   async function ch2() {
     const sc = S.R.seedCost, per = S.R.sacksPerPlot;
-    await G.say("tomas", `My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is ${sc} a packet. One packet plants one plot; a plot gives ${per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman.`);
+    await GL.say("tomas", `My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is ${sc} a packet. One packet plants one plot; a plot gives ${per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman.`);
     await tell("Let me buy the first three, so you can see where the coin goes.");
     G.act(() => S.buySeeds(G.s, 3, false));
     await tell(`Cash went down ${3 * sc} and Inventory went up ${3 * sc}: changed shape, not spent.<br>Seed only becomes a cost when the grain is sold.`, ["h-cash", "h-inv"]);
     const inv0 = G.s.bal.inv;
-    await G.say("tomas", "Six more?", [`Buy 6 packets for Cash (${6 * sc})`]);
+    await GL.say("tomas", "Six more?", [`Buy 6 packets for Cash (${6 * sc})`]);
     G.act(() => S.buySeeds(G.s, 6, false));
     keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −${6 * sc}, Inventory +${6 * sc} (${inv0} → ${G.s.bal.inv}).`);
     st.planted0 = G.s.plots.filter(p => p.crop).length; to(3, "plant2");
@@ -179,20 +185,20 @@ window.Story = (function () {
   async function ch3() {
     const cost = S.R.unitCost, pct = p => Math.round((p - cost) / p * 100);
     const o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
-    await G.say("ashby", "So you're Edric's heir. You've his chin and none of his luck, dear. I need six sacks for the ovens. Seven a sack, Cash on the nail.");
+    await GL.say("ashby", "So you're Edric's heir. You've his chin and none of his luck, dear. I need six sacks for the ovens. Seven a sack, Cash on the nail.");
     await tell(`Each sack cost you ${cost}: ${S.R.seedCost} of seed for ${S.R.sacksPerPlot} sacks, so at 7 you keep ${7 - cost} a sack. That's gross profit: ${7 - cost} out of every 7 is ${pct(7)}%, your margin.`, ["h-inv"]);
     // The worked example goes in the notebook as it's shown, so the Try that follows can point to it.
     keep("margin", "Gross profit & margin", "Price minus cost per sack is gross profit. Divide by the price: margin. Your cost floor is your cost per sack: below it you lose money (a sale you give up can raise the real floor later).",`Maud at 7: 7 − ${cost} = ${7 - cost} profit a sack; ${7 - cost} ÷ 7 = ${pct(7)}% margin.`);
     // The floor is asked first, and it is used: it becomes the red walk-away line on the price track in the haggle.
     await ask("Before you name a price: what's your cost floor? The lowest you'd take for a sack before it loses money.", cost, ["What did each sack cost you? Seed for a plot, divided by the sacks it gives."], null, 0, null, `A packet of seed is ${S.R.seedCost} and gives ${S.R.sacksPerPlot} sacks, so each sack cost ${cost}. Sell below ${cost} and you lose money.`, `Your cost floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.`);
-    await G.say("ashby", "Times are hard, dear. Would you take 6?");
+    await GL.say("ashby", "Times are hard, dear. Would you take 6?");
     await ask("Work it out before you answer. Your margin at 6, in %?", pct(6), ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], null, 1, [DOC.notebook], `At 6 you keep 6 − ${cost} = ${6 - cost} a sack. ${6 - cost} ÷ 6 = 0.33, so ${pct(6)}%.`, "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%.");
     mastered("gross"); mastered("margin");
     await tell(`Your cost floor, ${cost}, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away.`);
-    const deal = await G.haggle(o, { open: 6, walk: 7, floor: cost, line: "Well, dear? 6 sacks. What do you want for them?" });
-    if (!deal) { await G.say("ashby", "Come back when you've thought it over."); return; }
+    const deal = await GL.haggle(o, { open: 6, walk: 7, floor: cost, line: "Well, dear? 6 sacks. What do you want for them?" });
+    if (!deal) { await GL.say("ashby", "Come back when you've thought it over."); return; }
     const price = deal.price;
-    await G.say("ashby", `${price} it is. Ship them from your crate and I'll pay on the spot.`);
+    await GL.say("ashby", `${price} it is. Ship them from your crate and I'll pay on the spot.`);
     addEx("margin", `Your deal: Ashby, 6 sacks at ${price}: ${price - cost} a sack, ${pct(price)}% margin.`);
     to(2, "ship3");
   }
@@ -200,16 +206,16 @@ window.Story = (function () {
   async function ch4() {
     const o = G.s.offers.find(x => x.who === "hobb") || S.addOffer(G.s, "hobb", 9, 9, 14, 5, 4); S.setPrice(G.s, o.id, 9);
     await tell("Before you go in: know your cost floor. And listen for when he pays.");
-    await G.say("hobb", `...Edric's heir. Hm. Nine sacks. I pay... fourteen days after delivery. Same as always. Same as your uncle.`);
+    await GL.say("hobb", `...Edric's heir. Hm. Nine sacks. I pay... fourteen days after delivery. Same as always. Same as your uncle.`);
     await tell("Your uncle loved Hobb, and Hobb always paid. Eventually.");
-    const deal = await G.haggle(o, { open: 8, walk: 9, floor: S.R.unitCost, line: "Nine sacks. Name your price; I'm not a charity." });
-    if (!deal) { await G.say("hobb", "Suit yourself. The offer stands till tomorrow."); return; }
+    const deal = await GL.haggle(o, { open: 8, walk: 9, floor: S.R.unitCost, line: "Nine sacks. Name your price; I'm not a charity." });
+    if (!deal) { await GL.say("hobb", "Suit yourself. The offer stands till tomorrow."); return; }
     to(4, "ship4");
   }
   // WS3: the four typed sums become one bet with a delayed reveal. The player predicts the chest from the timeline (cards, no Cash line),
   // stakes real coin, and is told the answer on the morning after Hobb pays: predicted vs actual, each difference named (Verbs.revealBet).
   async function ch4b(order) {
-    const V = Verbs, v = order.value, inv = G.s.invoices.find(x => x.who === "hobb");
+    const V = LV, v = order.value, inv = G.s.invoices.find(x => x.who === "hobb");
     await tell(`The Ledger says you earned ${v} today: Revenue. Look at the chest: it didn't move.`, ["h-ni", "h-cash"]);
     const arNow = S.balanceSheet(G.s.bal).ar;
     await tell(arNow > v
@@ -224,17 +230,17 @@ window.Story = (function () {
     await page(1); to(5, "sleep5");
   }
   // the bet's morning: runs whenever the story is free on or after the reveal day
-  async function revealIfDue() { if (!G.s.bet || G.s.day < G.s.bet.revealDay) return; const r = await Verbs.revealBet(); if (r && r.win) { mastered("accrual"); mastered("ar"); } }
+  async function revealIfDue() { if (!G.s.bet || G.s.day < G.s.bet.revealDay) return; const r = await LV.revealBet(); if (r && r.win) { mastered("accrual"); mastered("ar"); } }
   // ---------- chapter 5: wages day (C2.09: working capital, the cash forecast) ----------
   // WS3: no warning beforehand (Kapur: struggle first). The engine decides at the day-7 sleep: if Cash can't cover wages a farmhand walks off.
   async function ch5() {
-    const V = Verbs, walked = !!G.s.walkedOff;
+    const V = LV, walked = !!G.s.walkedOff;
     await tell(walked ? `Jory walked off last night: ${G.s.walkedWages} in wages and the chest couldn't find them. The crops went unwatered. The Ledger said profit. The chest said no.`
       : "Wages went out last night. Closer than the Ledger makes it look.", ["h-cash"]);
     const f = S.forecast(G.s, 14), low = f.reduce((a, x) => x.close < a.close ? x : a);
     await V.timeline({ mode: "show", n: 14, title: "Your next two weeks", maud: `Every coin coming and going, with Cash under it. The low point is day ${low.day}, Cash ${low.close}. ${low.close < 60 ? "That's where Edric lived." : "Watch that dip."}` });
     // (the timeline above is something to read, not an answer, so it earns no mastery; the forecast Ezra asks for in chapter 7 does)
-    await G.say("tomas", "I only mark up my seed 50%. Honest trade.");
+    await GL.say("tomas", "I only mark up my seed 50%. Honest trade.");
     const m = Math.round(50 / 150 * 100);
     const r = await V.bet({ prompt: "Two coin says you can't tell me Tomas's margin on his seed. He marks it up 50%.", docs: [DOC.notebook], how: "Markup divides the profit by what the seed cost him. Margin divides the same profit by the price he sells at. If it cost him 100 and he sells at 150, the profit is 50.", stake: { min: 0, max: 2 }, tol: 1, answer: () => m, reveal: "now", kind: "markup",
       explain: () => "Markup is profit ÷ cost, 50%. Margin is profit ÷ price, 50 ÷ 150 = 33%. Same sale, two numbers." });
@@ -249,7 +255,7 @@ window.Story = (function () {
     await tell(`Two kinds of cost: <b>variable</b> (seed and grain, rising with every sack) and <b>fixed</b> (wages and interest, due every week whatever you sold). This week's fixed bill is <b>${F}</b>.`);
     await tell(`A sack at ${p} leaves ${m} after its ${cost} of grain: its <b>contribution</b>. Break-even is the sacks whose contribution covers the fixed bill: ${F} ÷ ${m} = <b>${n0} sacks a week</b>.`);
     const opts = [[`About ${n0} (a small cut changes little)`, false], [`About ${Math.round(n0 * 1.25)}`, false], [`About ${n1}`, true]], k = (s.day + F) % 3, order = opts.map((_, i) => opts[(i + k) % 3]);
-    const c = await G.say("maud", `Grisby undercuts and the going price falls to <b>${p1}</b>, a cut of ${Math.round(2 / p * 100)}%. How many sacks a week do you need to break even now?`, order.map(o => o[0]));
+    const c = await GL.say("maud", `Suppose a rival like Grisby sets up and undercuts you: the going price falls to <b>${p1}</b>, a cut of ${Math.round(2 / p * 100)}%. How many sacks a week do you need to break even now?`, order.map(o => o[0]));
     const right = order[c][1]; if (right) mastered("breakeven");
     await tell(`${right ? "Yes." : "Not quite."} The contribution fell from ${m} to ${m1}, down ${Math.round((1 - m1 / m) * 100)}%, but the fixed bill did not move.`);
     await tell(`So break-even rose from ${n0} to <b>${n1} sacks</b>, up ${up}%. A small price cut is a big cut in contribution, which is why a rival's undercut hurts more than it looks.`);
@@ -257,18 +263,19 @@ window.Story = (function () {
   }
   // ---------- the price of waiting (C0.01, C5.01): a promise due later is worth less today. Ezra's factoring price against his loan rate, on a real invoice (audit 2026-10-04, foundation 1) ----------
   async function pvScene() {
-    const s = G.s, t = S.terms(s), inv = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60).sort((a, b) => b.amount - a.amount)[0]; if (!inv) return false;
-    const got = Math.round(inv.amount * S.R.factorRate), fee = inv.amount - got, days = inv.due - s.day, wk = days / 7, room = t.loanLimit + s.bal.loan; if (room < got) return false;
+    // the largest invoice Ezra could actually fund (the Duke's 1,320 is too big for his loan limit, which used to skip the lesson); with none, a small illustrative invoice, so the lesson always plays once
+    const s = G.s, t = S.terms(s), room = t.loanLimit + s.bal.loan, real = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60 && Math.round(v.amount * S.R.factorRate) <= room).sort((a, b) => b.amount - a.amount)[0], inv = real || { who: null, amount: 100, due: s.day + 14 };
+    const got = Math.round(inv.amount * S.R.factorRate), fee = inv.amount - got, days = inv.due - s.day, wk = days / 7;
     const weekly = Math.round(got * t.rateBp / 10000), interest = Math.round(weekly * wk), r = t.rateBp / 10000, implied = Math.round((Math.pow(inv.amount / got, 1 / wk) - 1) * 1000) / 10, worth = Math.round(inv.amount / Math.pow(1 + r, wk));
-    const who = S.NAMES[inv.who].split(" ")[0]; st.pv = true;
-    await tell(`${who} owes you <b>${inv.amount}</b>, due day ${inv.due}, ${days} days away. A promise due later is worth less than coin in hand, and Ezra has two prices for how much less.`);
+    const who = real ? S.NAMES[inv.who].split(" ")[0] : "the neighbour"; st.pv = true;
+    await tell(`${real ? `${who} owes you <b>${inv.amount}</b>, due day ${inv.due}, ${days} days away.` : `Suppose a neighbour owed you <b>${inv.amount}</b>, due ${days} days from now.`} A promise due later is worth less than coin in hand, and Ezra has two prices for how much less.`);
     const opts = [[`Sell the invoice to Ezra: ${got} today, ${fee} fee`, false], [`Borrow ${got} from Ezra and repay it when ${who} pays`, true]], k = (s.day + inv.amount) % 2, order = k ? opts.slice().reverse() : opts;
-    const c = await G.say("maud", `Suppose you need ${got} in Cash today for wages. Which costs you less?`, order.map(o => o[0]));
+    const c = await GL.say("maud", `Suppose you need ${got} in Cash today for wages. Which costs you less?`, order.map(o => o[0]));
     const right = order[c][1]; if (right) mastered("tvm");
     await tell(`${right ? "Yes." : "No."} Selling gives up <b>${fee}</b> to get the Cash ${days} days early, about <b>${implied}% a week</b>.`);
     await tell(`Borrowing the same ${got} at ${t.rateBp / 100}% a week costs about <b>${interest}</b> over ${days} days. Same Cash, same wait, a much lower price of waiting.`);
     await tell(`At Ezra's loan rate, ${inv.amount} due in ${days} days is worth about <b>${worth}</b> today. That is its <b>present value</b>: what the promise is worth in Cash now.`);
-    keep("tvm", "Present value", "A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${who}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
+    keep("tvm", "Present value", "A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${real ? who : "a neighbour"}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
     return true;
   }
   // ---------- chapter 6: Tomas's terms (week 2). Time value (C0.01, C5.01) beside payables (C1.01) — SEASON-1-REDESIGN.md §7 item 1 ----------
@@ -280,16 +287,16 @@ window.Story = (function () {
   const tvmFacts = bill => { const rate = S.terms(G.s).rateBp, discX = bill.disc, carryX = Math.round(bill.amount * (1 - S.R.discPct) * rate / 10000);
     return { rate, discX, carryX, cheaper: discX > carryX ? "early" : discX < carryX ? "wait" : "even" }; };
   async function tvmScene(again) {
-    const V = Verbs, t = S.terms(G.s), sc = S.R.seedCost, rate = t.rateBp / 100, left = Math.floor((t.apLimit + G.s.bal.ap) / sc), disc = Math.round(S.R.discPct * 100);
-    if (!t.apDays || left < 3) { await G.say("tomas", "I can't put more on your account while you owe me this much. Pay what I'm owed first.", ["Next"]); return false; }
-    if (again) await G.say("tomas", `Seed again? Same terms: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
-    else await G.say("tomas", `On account: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
+    const V = LV, t = S.terms(G.s), sc = S.R.seedCost, rate = t.rateBp / 100, left = Math.floor((t.apLimit + G.s.bal.ap) / sc), disc = Math.round(S.R.discPct * 100);
+    if (!t.apDays || left < 3) { await GL.say("tomas", "I can't put more on your account while you owe me this much. Pay what I'm owed first.", ["Next"]); return false; }
+    if (again) await GL.say("tomas", `Seed again? Same terms: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
+    else await GL.say("tomas", `On account: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
     await tell(again ? `Ezra's rate was ${st.tvmRate}% a week when you last bought. Today it is ${rate}%. Same discount, different Cash. I won't say whether that changes the answer.`
       : `A discount for paying early is an interest rate in disguise. Ezra charges ${rate}% a week for Cash. I won't say which is cheaper: buy, then move the bill and see.`, ["h-ap"]);
     const small = Math.min(6, left), big = Math.min(9, left);
-    const c = await G.say("tomas", "How many on account?", [`${small} packets (${small * sc})`, { label: `${big} packets (${big * sc})`, disabled: big <= small }]);
+    const c = await GL.say("tomas", "How many on account?", [`${small} packets (${small * sc})`, { label: `${big} packets (${big * sc})`, disabled: big <= small }]);
     const r = G.act(() => S.buySeeds(G.s, c ? big : small, true));
-    if (!r.ok) { await G.say("tomas", r.msg); return false; }
+    if (!r.ok) { await GL.say("tomas", r.msg); return false; }
     const bill = G.s.bills[G.s.bills.length - 1], day0 = G.s.day;
     const note = day => day <= bill.discBy ? `Paying by day ${bill.discBy}: Tomas takes <b>${disc}% off</b> (${bill.disc}) for the Cash you hand over ${bill.due - day} days early. <b>Ezra's rate: ${rate}% a week.</b>` : `Paying on day ${day}: no discount, and the Cash stays with you. <b>Ezra's rate: ${rate}% a week.</b>`;
     const r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", footNote: note,
@@ -311,15 +318,15 @@ window.Story = (function () {
   // ---------- chapter 7: Ezra (week 2; C1.06, C5.01: debt, interest, what lenders read) — the forecast scene is tagged `interest` ----------
   async function ch7() {
     const t0 = S.terms(G.s);
-    await G.say("ezra", `Come in. Sit. You want coin; everyone does, eventually. My rate is ${t0.rateBp / 100}% a week. It is not a judgement, only a price. Show me your forecast first, and I shall see how much I believe it.`);
-    const r = await Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
+    await GL.say("ezra", `Come in. Sit. You want coin; everyone does, eventually. My rate is ${t0.rateBp / 100}% a week. It is not a judgement, only a price. Show me your forecast first, and I shall see how much I believe it.`);
+    const r = await LV.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
     G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
     if (r.okLow && r.okDay) { mastered("interest"); mastered("wc"); } // right = the lowest coin (within 5) and the day (time value is earned in Tomas's scene, not here)
     // The loan must actually arrive: Ezra's limit counts what you already owe, so only offer what he will lend, and if the engine refuses, say why and ask again (it used to fail silently).
     let borrowed = 0, intro = `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`;
     for (;;) {
       const room = S.terms(G.s).loanLimit + G.s.bal.loan;
-      const c = await G.say("ezra", room < 200 ? `${intro} I will lend you up to ${Math.max(0, room)} more: you owe me ${-G.s.bal.loan}.` : intro, [{ label: "Borrow 100", disabled: room < 100 }, { label: "Borrow 200", disabled: room < 200 }, "Nothing today"]);
+      const c = await GL.say("ezra", room < 200 ? `${intro} I will lend you up to ${Math.max(0, room)} more: you owe me ${-G.s.bal.loan}.` : intro, [{ label: "Borrow 100", disabled: room < 100 }, { label: "Borrow 200", disabled: room < 200 }, "Nothing today"]);
       if (c === 2) break; const amt = c ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
       if (got.ok) { borrowed = amt; break; }
       intro = `${got.msg} How much, then?`;
@@ -336,9 +343,9 @@ window.Story = (function () {
     to(8, n === 1 ? "duke8" : "duke9");
   }
   async function dukeScene(n) {
-    const V = Verbs, o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(8, n === 1 ? "page8" : "tomas9"); return; }
+    const V = LV, o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(8, n === 1 ? "page8" : "tomas9"); return; }
     const D = S.R.duke, sacks = o.sacks, half = Math.round(sacks / 6) * 3, value = sacks * o.price;
-    await G.say("duke", n === 1 ? `You must be the heir! Corvin Vane, steward to His Grace, at the Duke's service, and yours. I bring the kind of opportunity that does not knock twice. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery. Think what it could do for Thornfield.`
+    await GL.say("duke", n === 1 ? `You must be the heir! Corvin Vane, steward to His Grace, at the Duke's service, and yours. I bring the kind of opportunity that does not knock twice. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery. Think what it could do for Thornfield.`
       : `Corvin Vane again, heir. ${G.s.orders.some(x => x.who === "duke") ? "His Grace was delighted with the first." : "His Grace remembers the first, and that it went unanswered."} Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
     if (n === 1) { await page(3); await tell("This is the order that killed your uncle; the steward calls it an opportunity. I call it a loan you make him, at no interest, in your own seed."); await tell("I won't tell you what to do. I'll ask."); }
     const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / S.R.sacksPerPlot) - G.s.seeds), extra = need * S.R.seedCost;
@@ -350,9 +357,9 @@ window.Story = (function () {
     let ans;
     if (n === 1) ans = await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the Cash line for the smallest number.", "A minus sign means the chest is empty before then."], null, 0,
       [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }], `Reading the Cash line, the smallest number is ${low.close}, on day ${low.day}.`, "Open the timeline and read the Cash number under each day. The smallest is your lowest point; a minus number is smaller than any plus.");
-    else ans = await V.bet({ prompt: `Three coin says you can't tell me your lowest Cash in the next two weeks if you take all ${sacks} and buy the seed today.`, docs: [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }],
+    else ans = await V.bet({ prompt: `Three coin says you can't tell me your lowest Cash in the next two weeks if you take all ${sacks}${need ? " and buy the seed today" : ""}.`, docs: [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }],
       how: "Read the Cash number under each day of the what-if timeline. The smallest is the lowest point; a minus is below zero.", stake: { min: 0, max: 3 }, tol: 0, answer: () => low.close, reveal: "now", kind: "duke2", explain: () => `Cash bottoms at ${low.close} on day ${low.day}. The order ties up ${money(delta)} in sacks and invoices.` });
-    const c = await G.say("duke", n === 1 ? "Well? Opportunities are like bread, heir. Best taken warm." : "Well? His Grace doesn't wait.", [`Take all ${sacks}`, `Offer ${half} (half)`, "Decline"]);
+    const c = await GL.say("duke", n === 1 ? "Well? Opportunities are like bread, heir. Best taken warm." : "Well? His Grace doesn't wait.", [`Take all ${sacks}`, `Offer ${half} (half)`, "Decline"]);
     if (c === 1) { S.addOffer(G.s, "duke", half, o.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
     else if (c === 0) G.act(() => S.accept(G.s, o.id)); else S.decline(G.s, o.id);
     const wise = low.close >= 0 ? c === 0 : c > 0; // matched the player's own board: Cash stays >= 0 -> taking it is right; below 0 -> half, decline (or factoring) is right
@@ -388,7 +395,7 @@ window.Story = (function () {
     return rows;
   }
   async function cashBook() {
-    const V = Verbs, s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1];
+    const V = LV, s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1];
     await tell("Edric kept a second book, a cash book of what the chest held week by week, and I never gave it to you until you could read it. He never read it beside the Ledger.");
     await new Promise(res => {
       G.showPanel("page", `<div class="journal"><div class="hint">Edric's cash book, the second ledger</div><table class="stm" style="font-style:normal"><tr><th>End of</th><th>Ledger: profit</th><th>Chest: Cash cleared</th><th>Tied up in grain and unpaid invoices</th></tr>` +
@@ -402,16 +409,16 @@ window.Story = (function () {
   }
   // ---------- chapter 9: closing the books (C1.08), guided ----------
   async function close(stm, h) { // the game shows the statements one at a time; the player finds where the cash went
-    await G.reveal("is", `Your income statement: Revenue, minus the cost of what you sold, minus running costs. Net income ${stm.is.net}. Edric's always looked like this.`);
-    await G.reveal("bs", `Your balance sheet, start and end: what you own and what you owe. Owner's equity moved by exactly your net income.`);
-    await G.reveal("cf", `And the cash-flow statement: net income, then every place the Cash actually went. It ends at the change in Cash: ${stm.cf.change}.`);
+    await GL.reveal("is", `Your income statement: Revenue, minus the cost of what you sold, minus running costs. Net income ${stm.is.net}. Edric's always looked like this.`);
+    await GL.reveal("bs", `Your balance sheet, start and end: what you own and what you owe. Owner's equity moved by exactly your net income.`);
+    await GL.reveal("cf", `And the cash-flow statement: net income, then every place the Cash actually went. It ends at the change in Cash: ${stm.cf.change}.`);
     const target = (h.lines.find(l => l.startsWith("cf:")) || "cf:cfo");
-    const misses = await G.pickLine("Net income " + stm.is.net + ", Cash " + (stm.cf.change >= 0 ? "+" : "") + stm.cf.change + ". Click the line in the cash-flow statement where most of the difference went.", target,
+    const misses = await GL.pickLine("Net income " + stm.is.net + ", Cash " + (stm.cf.change >= 0 ? "+" : "") + stm.cf.change + ". Click the line in the cash-flow statement where most of the difference went.", target,
       ["Look at the brackets: they're Cash that left, or never came.", "The biggest bracketed number between Net income and Cash from operations."]);
     if (misses === 0) { mastered("cfs"); mastered("statements"); } // right on the first tap
-    await G.reveal("none", `${h.text}<br>That's what killed Edric: profit in the Ledger, the coin in other people's purses.`);
+    await GL.reveal("none", `${h.text}<br>That's what killed Edric: profit in the Ledger, the coin in other people's purses.`);
     if (st.pages.indexOf(4) < 0) { st.pages.push(4); (st.pageDays = st.pageDays || {})[4] = G.s.day; }
-    await G.reveal("none", `<span class="journal small">Edric's last page: “${PAGES[4]}”</span>`);
+    await GL.reveal("none", `<span class="journal small">Edric's last page: “${PAGES[4]}”</span>`);
     keep("statements", "The three statements", "Income statement: did you make a profit? Balance sheet: what you own and owe. Cash-flow statement: where the Cash went.", `Spring: net income ${stm.is.net}, Cash ${stm.cf.change >= 0 ? "up" : "down"} ${Math.abs(stm.cf.change)}. ${h.text.split(": ").pop()}`);
     to(9, "done");
   }
@@ -462,9 +469,9 @@ window.Story = (function () {
     const intro = opts.first ? `I am instructed to convey an offer from Corvin Vane for ${farm}. Item: ${money(o.price)}, in coin, today. I do not recommend it.`
       : o.mercy ? `Cash is ${money(o.cash)}, and ${money(o.wages)} of wages fall due. I am instructed to repeat the offer for ${farm} at a reduced ${money(o.price)}, and I still do not recommend it.`
       : `Item: Corvin Vane's offer for ${farm} stands at ${money(o.price)}. I am obliged to say so.`;
-    const c = await G.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
+    const c = await GL.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
     if (c === 0) { pin("offer", "Crane's offer", `${money(o.price)} now`, `Day ${G.s.day} · money now, farm later`); return false; }
-    const sure = await G.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
+    const sure = await GL.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
     if (sure === 0) return false;
     await sell(o); return true;
   }
@@ -503,10 +510,10 @@ window.Story = (function () {
   }
 
   // Safety valve (playtest day 22/23: nothing responded until the day was saved and reset): if a scene is waiting on nothing visible, drop it so the map takes clicks again. The day's own prompts come back at the next morning or talk.
-  function unstick() { if (!busy) return false; busy = false; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); G.hud(); return true; }
+  function unstick() { if (!busy) return false; busy = false; epoch++; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); G.hud(); return true; }
   // screenshots and tests only (_build-shots/ws6-shots.html): force-start one scene on the current game, whatever the story was doing
   function testScene(kind) {
-    busy = false; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); const s = G.s;
+    busy = false; epoch++; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); const s = G.s;
     if (kind === "corvin" || kind === "tied") { s.day = Math.max(s.day, 12); st.ch = 8; arrive(1); G.hud(); run(() => dukeScene(1)); }
     else if (kind === "page") { st.ch = 8; run(() => page(9)); }
     else if (kind === "cashbook") { s.day = Math.max(s.day, 22); to(9, "run9"); run(cashBook); }
@@ -515,7 +522,7 @@ window.Story = (function () {
   }
   // ---------- hooks from the game ----------
   let busy = false;
-  async function run(fn, ...a) { if (busy) return; busy = true; window.__walked = false; try { await fn(...a); } finally { busy = false; G.hud(); } }
+  async function run(fn, ...a) { if (busy) return; busy = true; const my = epoch; window.__walked = false; try { await fn(...a); } catch (e) { if (e !== STALE) throw e; } finally { if (my === epoch) { busy = false; G.hud(); } } } // a chain dropped by unstick() leaves `busy` to the scene that replaced it
   function start() { goal(); if (st.stage === "intro") { const w = dueCard(); if (w) weekCard(w); run(ch1); } }
   function onTalk(who) { // returns true when the story takes the conversation
     if (busy) return true;
@@ -539,15 +546,17 @@ window.Story = (function () {
       run(async () => { const cg = info.sacks * S.R.unitCost; await tell(`Revenue ${info.value}, Cost of goods sold ${cg}: gross profit ${info.value - cg}, and it came in as Cash today.<br>Now seed: Tomas has the next packets (east along the path, green roof).`, ["h-cash", "h-ni"]); to(3, "tomas2"); });
     if (evt === "deliver" && st.stage === "ship4" && info.who === "hobb") run(ch4b, info);
     if (evt === "morning") run(async () => { // one ordered chain per morning, so two scenes never race for the same dialog
-      const d = G.s.day;
+      const d = G.s.day, e0 = epoch;
       if (window.Scenes && Scenes.morning) await Scenes.morning({ G, st, S, day: d }); // HOOK: village scenes from another PR (cast.js / scenes.js); nothing is built here
+      if (e0 !== epoch) throw STALE; // the valve fired while a village scene waited
       if (st.stage === "sleep5" && d >= 8) await ch5();
-      if (G.s.bet && d >= G.s.bet.revealDay) await revealIfDue();
+      const revealed = !!(G.s.bet && d >= G.s.bet.revealDay); // the bet's reveal is already a run of four boxes: the present-value lesson waits for the next morning
+      if (revealed) await revealIfDue();
       if (st.stage === "sleep8" && d >= 12) { arrive(1); await tell("Corvin Vane is in the square, in a grey cloak and gloves on a warm day, asking for you by name. Mind his smile: it is paid for by someone."); } // the midpoint: day 12 (#28's description of Vane)
       else if (st.stage === "page8") await chPage();
       else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
       else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
-      else if (st.stage === "run9" && d >= 16 && d < 22 && !st.pv && await pvScene()) { /* played once, in week 3 */ }
+      else if (st.stage === "run9" && d >= 16 && d < 22 && !st.pv && !revealed && await pvScene()) { /* played once, in week 3 */ }
       else if (st.stage === "run9" && d >= 22 && !st.book) await cashBook(); // week 4: the cash book, Maud's last word
     });
   }
