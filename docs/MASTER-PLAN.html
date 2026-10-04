@@ -111,7 +111,7 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
 <header class="top">
   <div class="eyebrow">Master plan · v1.0 · 4 October 2026 · creative lead · for Kyle's review · no build starts before your yes</div>
   <h1>Ledger &amp; Crown Master Plan</h1>
-  <p class="lede">You inherit a broke farm and a patient villain. Over four in-game years you grow it into the realm's treasury. You learn a full MBA core by running the business, not by reading about it.</p>
+  <p class="lede">You inherit a broke farm and a patient villain. Over four chapters you grow it into the realm's treasury. You learn a full MBA core by running the business, not by reading about it.</p>
   <ol class="toc">
     <li><a href="#decide">Decide first</a></li>
     <li><a href="#vision">The vision and the four chapters</a></li>
@@ -133,14 +133,14 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
 
 <section id="decide">
   <span class="folio">§0</span>
-  <h2>Decide first</h2>
+  <h2>Decided (Kyle, 4 October)</h2>
   <ol class="asks">
-    <li><div><b>Shape: 4 chapters, 4 seasons each.</b> A chapter is one in-game year at a bigger scale: Farm, Town, Province, Kingdom. Each year ends at Midwinter. Approve, or say 2 seasons for later chapters. <a href="#length">Why 4</a>.</div></li>
-    <li><div><b>Season lengths for Chapter 1:</b> Spring 28 days, Summer 28, Autumn 42, Winter 56. That is about 16 to 20 hours of play for the chapter. Approve or change.</div></li>
-    <li><div><b>The Chapter 1 map</b> (<a href="#ch1">§4</a>): what each season teaches, its finale, and where your ideas landed (<a href="#ideas">§5</a>). Mark anything you want moved.</div></li>
-    <li><div><b>Season 1 changes</b> (<a href="#s1">§7</a>): 9 items in order. The builder starts item 2 after your yes.</div></li>
-    <li><div><b>Curriculum asks</b> (<a href="#coverage">§12</a>). Every Chapter 1 session is now written. Before Summer, the MBA teacher should: review the 4 generic drafts Summer leans on (C7.01, C8.01–03); write a contract-law session (none exists, although the primer lists it); restore the EV-to-equity waterfall session that the C6 rebuild dropped (your own 3/10 gap); and merge the curriculum branch into main. OK?</div></li>
-    <li><div><b>Fix the foundation before Summer</b> (<a href="#tech">§11</a>). Saves have no version and are deleted at the end of a season. Safari can wipe them after 7 days away. No tests run automatically. Content, map and seasons are all hard-coded. The "season engine" phase grows to about 2 weeks to cover this. Approve?</div></li>
+    <li><div><b>Four chapters is fixed. The number of seasons is not.</b> Each chapter has as many seasons as its material needs. Chapter 1 keeps its four as designed; Chapters 2 to 4 set their count in their outlines.</div></li>
+    <li><div><b>No fixed length for a chapter or a season.</b> A season can cover weeks or months of game time, whatever teaches its ideas best. Real play time per season grows in later chapters, because the ideas are harder to master, even when a season covers less game time.</div></li>
+    <li><div><b>The Chapter 1 map is right in direction.</b> It is refined in each season's design.</div></li>
+    <li><div><b>Season 1 changes: yes.</b> Built after the foundation work, on the new engine.</div></li>
+    <li><div><b>Curriculum asks: yes.</b> Sent to the MBA teacher. The curriculum branch is merged into main.</div></li>
+    <li><div><b>Foundation before Summer: yes.</b> The builder starts the foundation work now.</div></li>
   </ol>
   <div class="status">
     <div><span class="k">Live game</span><br><span id="st-live">v0.4.6 on master (PR #41, tag v0.4.6-beta). All 25 node tests pass.</span></div>
@@ -178,6 +178,7 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
     <div class="cell c-later"><b>The Grand Audit</b>capstone, all courses</div>
   </div>
   <div class="legend"><span class="l1">Built</span><span class="l3">Design next</span><span class="l4">Planned (titles are working names)</span></div>
+  <p class="tag">Chapters 2 to 4 show four seasons as working titles only. Each chapter's outline sets its own number of seasons and their spans.</p>
 
   <h3>Corvin Vane grows with you</h3>
   <div class="vane">
@@ -214,7 +215,8 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
     <li><b>The idea is the mechanic.</b> If a player can win while ignoring the idea, cut the scene. This rule stands from the game design.</li>
     <li><b>The villain's weapon is the lesson.</b> Vane always uses the next idea against you.</li>
     <li><b>The forced yes</b> (your idea). Each season removes one easy answer that an earlier season taught. The player must now handle the hard case with real numbers.</li>
-    <li><b>One ramp per year</b> (your idea). Spring: learn with help. Summer: combine two ideas in one decision. Autumn: hold the ideas under regular checkpoints. Winter: prove it, with real consequences for a wrong number.</li>
+    <li><b>One ramp per chapter</b> (your idea). First: learn with help. Then: combine two ideas in one decision. Then: hold the ideas under regular checkpoints. Last: prove it, with real consequences for a wrong number. In Chapter 1 these are Spring, Summer, Autumn and Winter; other chapters fit the ramp to their own seasons.</li>
+    <li><b>The material sets the shape</b> (decided 4 October). Four chapters, always. The number of seasons and each season's span of game time follow what must be taught. Real play time per season grows in later chapters.</li>
     <li><b>Load cap.</b> At most 8 new core ideas per season and 6 named previews. Spring today has about 30 ideas; that is the main cause of the "too much talk" problem.</li>
     <li><b>Test only what was taught.</b> A season may preview any idea. A check may only use ideas taught in an earlier season or earlier in the same season.</li>
     <li><b>Every earlier core idea comes back at least twice a season</b>, inside play, not as a quiz.</li>
@@ -253,10 +255,10 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
       <tr><td>Sessions per chapter (§12)</td><td class="r num">59 · 41 · 50 · 27</td><td><span class="tag">[Certain] the coverage map; Chapter 4 also holds 16 unwritten</span></td></tr>
     </tbody>
   </table></div>
-  <p><b>Recommendation: 4 seasons per chapter.</b> Chapter 1 carries 59 sessions, the foundations, at 12 to 16 per season. Later chapters hold 27 to 50. Two seasons would need 20 or more ideas each, which is Spring's overload problem again. Retention also needs spacing across real days, and 4 seasons means at least 4 sittings per chapter. A farm year has 4 seasons, and the story's Midwinter deadline already ends the year.</p>
+  <p><b>Rule (decided 4 October): the material sets the shape.</b> Four chapters, always. Inside a chapter, the number of seasons and each season's span of game time come from what it must teach: at most 8 new core ideas a season, and enough play for each idea to be used, tested and recalled. Real play time per season rises chapter by chapter, because later ideas take longer to master. Chapter 1 keeps four seasons (59 sessions at 12 to 16 a season), ending at Midwinter as the story requires.</p>
 
   <div class="tbl"><table>
-    <thead><tr><th>Chapter 1 season</th><th class="r">Days</th><th class="r">Play</th><th class="r">New core ideas</th><th>Help</th><th>Checks</th></tr></thead>
+    <thead><tr><th>Chapter 1 season</th><th class="r">Game days (proposal)</th><th class="r">Play</th><th class="r">New core ideas</th><th>Help</th><th>Checks</th></tr></thead>
     <tbody>
       <tr><td>Spring</td><td class="r num">28</td><td class="r num">2–3 h</td><td class="r num">8</td><td>Maud shows, asks, bets, then goes quiet</td><td>The Reeve's Court</td></tr>
       <tr><td>Summer</td><td class="r num">28</td><td class="r num">3–4 h</td><td class="r num">8</td><td>Hints on request only</td><td>The Purveyor's Tender</td></tr>
@@ -264,7 +266,7 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
       <tr><td>Winter</td><td class="r num">56</td><td class="r num">6–8 h</td><td class="r num">6 + all</td><td>None. You keep the books.</td><td>Midwinter: the crisis week and the Midwinter Assize</td></tr>
     </tbody>
   </table></div>
-  <p>Decide the lengths of Chapters 2 to 4 after we measure retention in Chapter 1. If players keep Spring's ideas a week later with no review, later chapters can be shorter.</p>
+  <p>The game-day spans above are proposals; each season's design sets its own. Chapters 2 to 4 set their season count and spans in their outlines, using Chapter 1's retention data. Expected real play time: Chapter 1 about 16 to 20 hours; each later chapter more.</p>
 </section>
 
 <section id="ch1">
@@ -426,8 +428,8 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
     <thead><tr><th>Phase</th><th>What</th><th>Gate before the next phase</th><th>Size</th></tr></thead>
     <tbody>
       <tr><td><b>0 · Now</b></td><td>Merge v0.4.6. Close stale PRs. <b>Done.</b></td><td>All tests pass on master</td><td class="num">done</td></tr>
-      <tr><td><b>1 · Spring final</b></td><td>§7 items 2 to 9</td><td>3 new players pass the Court. 6 of 8 core ideas held after 3 days.</td><td class="num">~1–2 weeks</td></tr>
-      <tr><td><b>2 · Foundation and season engine</b></td><td>The technical fixes in <a href="#tech">§11</a>: versioned saves that carry into the next season, save export and import, automatic tests on every PR, one version stamp, season settings as data, lessons and scenes as data, one cutscene engine, a map layer that changes by day and by choice, a starting difficulty per idea read from the transcript.</td><td>Spring runs on the engine with no change in behaviour; all tests pass in CI</td><td class="num">~2 weeks</td></tr>
+      <tr><td><b>1 · Foundation, season engine, code wiki</b></td><td>The technical fixes in <a href="#tech">§11</a>: automatic tests on every PR, one version stamp, a code wiki (one page per system, checked in CI), versioned saves that carry into the next season, save export and import, season settings as data, lessons and scenes as data, one cutscene engine, a map layer that changes by day and by choice, a starting difficulty per idea read from the transcript. Builder pack: <span class="cid">docs/builders/platform/</span>.</td><td>Spring runs on the engine with no change in behaviour; all tests pass in CI</td><td class="num">~2 weeks</td></tr>
+      <tr><td><b>2 · Spring final</b></td><td>§7 items 2 to 9, built once on the new engine. Builder pack: <span class="cid">docs/builders/chapter-1/</span>.</td><td>3 new players pass the Court. 6 of 8 core ideas held after 3 days.</td><td class="num">~1–2 weeks</td></tr>
       <tr><td><b>3 · Summer</b></td><td>Curriculum first: review C4.01–03, C16.11–12; re-ground C7.01, C8.01–03; write a contracts session. Then a season design for your review, then the build.</td><td>Spring's gate, plus: Spring ideas used in Summer play with no help</td><td class="num">~2–3 weeks</td></tr>
       <tr><td><b>4 · Autumn</b></td><td>Curriculum first: review C4.09, C7.02, C7.05, C7.09, C9.01, C9.03, C9.04, C10.01, C14.08.</td><td>The Inquest is solvable from the numbers alone</td><td class="num">~3 weeks</td></tr>
       <tr><td><b>5 · Winter</b></td><td>Curriculum first: a waterfall session (claims order, EV to equity); review C3.06, C6.03, C16.03; re-ground C13.01. The kept-books system and Midwinter.</td><td>A full-year player passes the Midwinter Assize with books they kept</td><td class="num">~3–4 weeks</td></tr>

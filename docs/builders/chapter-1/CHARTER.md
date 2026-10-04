@@ -13,7 +13,7 @@ finishes it holds the MBA's foundations (59 curriculum sessions) and wants to pl
 5. `CHANGELOG.md` top entries — what the game does today.
 
 ## What Chapter 1 is (from the master plan; the creative lead owns changes)
-| Season | Days | Question | Finale | Core ideas (≤ 8) |
+| Season | Game days (proposal; each season design sets its own) | Question | Finale | Core ideas (≤ 8) |
 |---|---|---|---|---|
 | **Spring** (built, v0.4.6) | 28 | How does a profitable farm go broke? | The Reeve's Court | SP1 claims · SP2 profit ≠ cash · SP3 margin vs markup · SP4 fixed/variable, break-even · SP5 opportunity cost · SP6 time value · SP7 working capital + cash-cycle days · SP8 expected value & ruin |
 | **Summer** | 28 | Why does every buyer suddenly want 14 days? | The Purveyor's Tender (negotiation) | SU1 finance the gap · SU2 price for terms (C16.11–12) · SU3 the hidden water bill · SU4 contribution per scarce resource · SU5 demand & elasticity · SU6 jobs, segments, positioning · SU7 focus, sunk cost, a test plot with a pass line · SU8 legal / ethical / smart, the bribe |

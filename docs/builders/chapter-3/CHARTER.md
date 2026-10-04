@@ -1,7 +1,7 @@
 # CHARTER — Chapter 3 builder: The Province (v1.0, 2026-10-04, creative lead)
 
 ## Mission
-Design, then build, Chapter 3 of Ledger & Crown: the third year, when the player's group becomes a trading house across
+Design, then build, Chapter 3 of Ledger & Crown: the stage when the player's group becomes a trading house across
 the province. A player who finishes it can open a new market with sound unit economics, run a supply chain over real
 distances, raise capital without losing control, and survive a leveraged rival. It teaches 50 curriculum sessions
 (`docs/curriculum-coverage.json`, `home` = `3`), the largest chapter.
@@ -19,7 +19,7 @@ distances, raise capital without losing control, and survive a leveraged rival. 
   leverage (he buys the Duke's estates with borrowed money), trading on what only he knows, control of transport.
 - **Mentors:** Ezra becomes a banker and founds a bank against Vane's; Crane becomes your auditor; Maud oversees your board.
 - **Cast arcs:** Jory becomes your factor in a far town; the Traveller's tales turn to far-off ventures and investors.
-- **Seasons (working titles):** Spring "New markets" · Summer "The river road" · Autumn "Raising capital" · Winter "The
+- **Seasons (working titles; your outline sets how many and how long — the material decides):** Spring "New markets" · Summer "The river road" · Autumn "Raising capital" · Winter "The
   Duke's debts".
 - **Forced yes candidates:** Chapter 1 taught "avoid debt"; Chapter 2 taught "debt when it pays"; now you must choose a
   capital structure under a rival's leverage. Chapters 1–2 taught "know your customer"; now you must find customers you
