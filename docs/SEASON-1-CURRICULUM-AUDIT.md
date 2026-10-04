@@ -111,3 +111,35 @@ Ideas 1 to 3 are done and strong. Ideas 4 and 6 are the ones Summer's C4, C6 and
 ## 9. Status (v0.4.5)
 
 Built from this audit: the fixed-vs-variable lesson (wages day), the present-value lesson (week 3), four new Court claims, the core tag, and the close screen. Not built yet: the cash-cycle days bar, the claims-priority decision, the naming passes (sunk cost, anchoring, BATNA, legal/ethical/smart), and dropping `real >= 2` from in-game mastery.
+
+## 10. Learning design principle (Kyle, 2026-10-04)
+
+**The material must teach a strong MBA foundation, using every learning technique that speeds a quick learner. Season 1 can be easy. Difficulty must then rise with the player's skill.**
+
+### Techniques: what the game uses, and what it does not yet
+
+| Technique | Status |
+|---|---|
+| Worked example, then fade (Show, Try, Use, Keep; Maud fades by week) | In. |
+| Retrieval practice (one daily problem on the player's own books) | In. |
+| Spacing and interleaving (the daily problem avoids the last three concepts) | In. Mastery needs 3 game days. |
+| Hint ladder and walk-through, never stuck | In. |
+| Confidence wagers on first answers | In (optional stake). |
+| Contrast cases (same offer, the answer flips with the rate) | In: time value. Add for break-even and the floor. |
+| Difficulty that rises with mastery | **Started in v0.4.5:** practice problems have tiers 1 to 3, picked by the concept's level. Break-even and expected value have all three. |
+| Prediction before reveal (guess, then see) | Partly: the nightly Cash guess, now throttled. Add to Market Day: guess the best price before the tally. |
+| Self-explanation (say why, not only what) | Missing. Add one "why" choice after a first right answer on each core idea. |
+| Error-driven teaching (a common wrong answer gets its own explanation) | Partly. The Court has per-claim wrong-answer lines. Add to practice. |
+
+### The ramp across seasons
+
+| Season | Skill asked of the player | Help given |
+|---|---|---|
+| Spring (easy) | Name and use the eight core ideas, one at a time, with the numbers on screen | Maud shows, asks, bets, then goes quiet |
+| Summer | Combine two ideas in one decision (price and capacity; leverage and break-even) | Hints on request only; unseen numbers must be found |
+| Autumn | Choose between plans with trade-offs and risk; read a rival's books | No hints; a wrong choice has a lasting cost |
+| Midwinter | Run the whole valley; defend a plan to a hostile audience | None; Maud is a witness, not a teacher |
+
+Inside Spring the ramp is already visible in the weeks (shows, asks, bets, silent). The practice tiers add the same ramp per idea: a player who masters break-even meets a tier-3 version (a price cut and a dearer seed) while a slower player stays at tier 1 with hints.
+
+**Still to build for the ramp:** tiers for the other practice problems (time value, opportunity cost, working capital), a Summer entry check that picks the player's starting tier per core idea from the transcript, and the self-explanation question.
