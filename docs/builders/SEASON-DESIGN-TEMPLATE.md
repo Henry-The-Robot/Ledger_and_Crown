@@ -22,6 +22,12 @@ any error or generic-draft status. A session you cannot teach correctly is a blo
 ## 4. Week by week
 | Stretch (week, fortnight, month…) | Days | Set piece | Choices | Surprise | Vane's move | Cutscene (≤ 25 s, the clue it carries) | Map change |
 
+## 4b. Opening and cutscenes
+- **Season opening** (≤ 8 s; plays on season start and on entry from the main menu): what it shows, its line, its music mood.
+- **Cutscenes** (≤ 25 s each, skippable, replayable): one row per key story point or event, with the clue or fact it
+  carries and its stable id (the dev-mode jump menu lists these). Draft lists for Chapter 1 are in the master plan §13.
+- **Named beats** for testing: the ids of the moments a tester will want to jump to.
+
 ## 5. The finale
 Format (it must differ from the last season's), what it tests (every core idea once), pass rule, retake rule, what passing
 and failing change in the story, the hook into the next season.
