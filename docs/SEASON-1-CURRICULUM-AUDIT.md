@@ -107,3 +107,7 @@ Ideas 1 to 3 are done and strong. Ideas 4 and 6 are the ones Summer's C4, C6 and
 1. Is `real >= 2` (two real dates) meant to gate "mastered" for a game played in one sitting? I would drop it for in-game credit and keep it for the transcript.
 2. C13 has no sessions. The game has a haggle with no curriculum under it. Which session should it map to?
 3. C3, C4, C6, C7, C8, C12 are unreviewed drafts [Certain]. Summer should not use their numbers until they have the strict-professor pass.
+
+## 9. Status (v0.4.5)
+
+Built from this audit: the fixed-vs-variable lesson (wages day), the present-value lesson (week 3), four new Court claims, the core tag, and the close screen. Not built yet: the cash-cycle days bar, the claims-priority decision, the naming passes (sunk cost, anchoring, BATNA, legal/ethical/smart), and dropping `real >= 2` from in-game mastery.

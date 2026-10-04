@@ -522,7 +522,7 @@
     if (!p) return say(T, "Nothing worth asking today. Your books are quiet.");
     const stake = await wagerStake(TR.name(p.concept)); // optional: a few coins on your first answer, never a gate
     window.__walked = false; window.__tries = 0; let right = true, tries = 0;
-    if (cmp || p.choices) { const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
+    if (cmp || p.choices) { window.__want = p.answer; const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
     else { await ask(T, p.text, p.answer, p.hints, null, p.tol, (p.docs || []).map(d => d === "ledger" ? { label: "Open the Ledger", open: ledger } : { label: "Open the cash forecast", open: () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }) }), p.work); right = !window.__walked; tries = window.__tries; }
     if (stake) { if (right && tries === 0) { act(() => S.wagerWin(s, stake, "Practice wager")); FX.sfx("coin"); toast(`First answer right: you win ${stake}.`); } else toast(`Maud keeps your ${stake}.`); }
     const q = Practice.record(s, p, right, !right);

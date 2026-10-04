@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.5: the Season 1 core
+From `docs/SEASON-1-CURRICULUM-AUDIT.md`: eight core ideas the season must prove, with the Court as the test.
+- **Fixed vs variable cost (new lesson, wages day).** Maud names the two kinds of cost and contribution. A rival's price cut is a choice: how many sacks to break even now. The answer shows a small price cut roughly doubling break-even.
+- **Present value (new lesson, week 3, on a real invoice).** Ezra's two prices for cash today: sell the invoice (about 8% a week) or borrow against it (the loan rate). Then what the promise is worth today.
+- **The Reeve's Court now has 10 claims (pass 7).** New claims test break-even, the opportunity-cost floor, the price of waiting, and expected value against ruin. All four are always asked. The close screen lists the eight core ideas and how far you took each.
+- **Transcript:** `Transcript.CORE` marks the eight core ideas; everything else is a preview Summer teaches.
+- Tests: `lessons-s1.html`; `test-court.js`/`court.html` updated for 10 claims; `week4.html` handles decision problems.
+
 ## v0.4.4: playtest 2
 - **iPad:** tapping the answer box no longer shoves the dialog up. On touch the box is read-only (the on-screen pad types into it), never takes focus, and the page is pinned back to the top if iOS scrolls it.
 - **Stuck on day 22/23:** if a scene is waiting on nothing visible for ~7 s, the game now frees the map itself (it used to need a save-and-reset). Root cause not reproduced; this is the safety valve.

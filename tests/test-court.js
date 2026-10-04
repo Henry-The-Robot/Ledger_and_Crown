@@ -8,7 +8,7 @@ for (const bot of [Bot.careful, Bot.reckless, Bot.sprinkler, Bot.overtrader, Bot
   const s = S.newGame({ story: false }); for (let d = 1; d <= 28 && !s.outcome; d++) { bot.day(s); S.sleep(s); } const st = B.close(s); books++;
   for (const seed of [1, 2, 3, 4, 5, 6]) {
     const r = C.build({ statements: st, clues, flags, trust: { crane: 4 }, seed, facts: { ratePct: 3.5, market: 8 } });
-    if (r.claims.length !== 8) bad.push(`${bot.name} seed ${seed}: ${r.claims.length} claims`);
+    if (r.claims.length !== 10) bad.push(`${bot.name} seed ${seed}: ${r.claims.length} claims`);
     const ids = r.claims.map(c => c.id); if (new Set(ids).size !== ids.length) bad.push("duplicate claim");
     for (const c of r.claims) {
       if (/undefined|NaN|\[object|\$\{/.test(c.text + c.maud + c.crane + c.press.map(p => p.t).join())) bad.push(`${c.id}: bad text`);
@@ -22,11 +22,11 @@ for (const bot of [Bot.careful, Bot.reckless, Bot.sprinkler, Bot.overtrader, Bot
     if (seed === 1) { const o = C.build({ statements: st, clues, flags, trust: {}, seed: 99 }); fresh += o.claims.map(c => c.id).join() !== r.claims.map(c => c.id).join() ? 1 : 0; }
   }
 }
-ok(bad.length === 0, "5 bot seasons x 6 seeds: 8 distinct claims each, no undefined text, no card that refutes everything" + (bad.length ? " :: " + bad.slice(0, 4).join(" | ") : ""));
+ok(bad.length === 0, "5 bot seasons x 6 seeds: 10 distinct claims each, no undefined text, no card that refutes everything" + (bad.length ? " :: " + bad.slice(0, 4).join(" | ") : ""));
 ok(unreachable.length === 0, "every claim has at least one card that refutes it (from the statements, clues, a press reveal or Ezra)" + (unreachable.length ? " :: " + unreachable.slice(0, 4).join(", ") : ""));
 ok(fresh > 0, "a retake (different seed) brings a different set or order of claims");
 { const s = S.newGame({ story: false }); for (let d = 1; d <= 28 && !s.outcome; d++) { Bot.careful.day(s); S.sleep(s); } const st = B.close(s);
-  const none = C.build({ statements: st, clues: [], flags: {}, trust: {}, seed: 1 }); ok(none.claims.length === 8, "with no clues and no flags there are still 8 claims (the story flags only add)");
+  const none = C.build({ statements: st, clues: [], flags: {}, trust: {}, seed: 1 }); ok(none.claims.length === 10, "with no clues and no flags there are still 10 claims (the story flags only add)");
   const mg = none.claims.find(c => c.id === "margin"); if (mg) { const gm = Math.round(st.is.gross / st.is.revenue * 100); ok(mg.right(none.cards.find(k => k.id === "is:gm")) && !mg.right(none.cards.find(k => k.id === "is:net")) && none.cards.find(k => k.id === "is:gm").raw === gm, `margin claim: the right card is Gross margin (${gm}%), computed from the Income statement`); }
   const pc = none.claims.find(c => c.id === "profitCash"); if (pc) ok(pc.right(none.cards.find(k => k.id === "cf:change")) && !pc.right(none.cards.find(k => k.id === "is:net")), "profit-is-not-cash: the Cash-flow lines refute it, the Income-statement line doesn't"); }
 // Maud speaks in at most two sentences a box; Crane in formal prose with at most two "Item:" markers

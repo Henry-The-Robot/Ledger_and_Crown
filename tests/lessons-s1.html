@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Season 1 foundation lessons</title></head><body><pre id="out">running</pre>
+<!-- The two foundation lessons added by the 2026-10-04 audit: fixed vs variable cost and break-even (wages day), and present value on a real invoice (week 3).
+     Run: node tests/run-html.js tests/lessons-s1.html 60000 -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const load = q => new Promise(r => { const f = document.createElement("iframe"); f.style.cssText = "width:1194px;height:834px;border:0"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => r(f); });
+async function boot() { const f = await load("?new=1&intro=0&touch=0"), w = f.contentWindow; await sleep(500); w.Story.testScene("none"); w.G.closeDlg(); document.querySelectorAll(".wkcard").forEach(e => e.remove()); return { f, w, G: w.G, s: w.G.s, S: w.Spring }; }
+function stub(x, pick) { const seen = []; x.G.say = async (who, text, choices) => { const labels = (choices || []).map(c => typeof c === "string" ? c : c.label); seen.push({ who, text, labels }); return labels.length ? pick(labels, text) : 0; }; return seen; }
+(async () => { try {
+  // fixed vs variable: the right answer is the one that matches the engine's own break-even; a wrong pick is told why; the notebook gets the entry
+  let x = await boot(); x.s.day = 9; let seen = stub(x, (l) => { const F = x.S.weekBills(x.s), n1 = Math.ceil(F / (x.S.marketPrice(x.s.day) - 2 - x.S.R.unitCost)); return l.findIndex(t => t.includes("About " + n1)); });
+  await x.w.Story.costScene(); let all = seen.map(y => y.text).join(" ");
+  out.push(`cost lesson names fixed and variable and contribution: ${/variable/.test(all) && /fixed/.test(all) && /contribution/.test(all)}; three options: ${seen.some(y => y.labels.length === 3)}; right answer is praised: ${/Yes\./.test(all)}; notebook entry: ${x.w.Story.state.notebook.some(n => n.id === "breakeven")}; break-even rose: ${/rose from/.test(all)}`);
+  out.push(`right pick counts as evidence: ${x.w.Transcript.evidence("breakeven").some(e => e.kind === "answer")}`); x.f.remove();
+  x = await boot(); x.s.day = 9; const before = x.w.Transcript.evidence("breakeven").filter(e => e.kind === "answer").length; seen = stub(x, l => l.findIndex(t => /small cut changes little/.test(t))); await x.w.Story.costScene(); all = seen.map(y => y.text).join(" ");
+  out.push(`wrong pick is corrected, not credited: ${/Not quite/.test(all) && x.w.Transcript.evidence("breakeven").filter(e => e.kind === "answer").length === before}`); x.f.remove();
+  // present value: needs an invoice 7+ days out and loan room
+  x = await boot(); x.s.day = 17; x.S.borrow(x.s, 0); x.s.invoices.push({ id: 99, who: "hobb", amount: 120, due: 31, terms: 14 }); seen = stub(x, l => l.findIndex(t => /^Borrow/.test(t)));
+  const played = await x.w.Story.pvScene(); all = seen.map(y => y.text).join(" ");
+  out.push(`present value scene plays on a real invoice: ${played === true}; names the price of waiting and present value: ${/price of waiting/.test(all) && /present value/.test(all)}; borrowing is the praised answer: ${/Yes\./.test(all)}; notebook: ${x.w.Story.state.notebook.some(n => n.id === "tvm" && /Present value/.test(n.term))}`);
+  const w = x.S.terms(x.s), got = Math.round(120 * x.S.R.factorRate), wk = (31 - 17) / 7; out.push(`the numbers match the engine: fee ${120 - got} stated: ${all.includes(String(120 - got))}`); x.f.remove();
+  // no invoice -> the scene does not play (and does not mark itself played)
+  x = await boot(); x.s.day = 17; x.s.invoices = []; stub(x, () => 0); out.push(`no invoice: scene skipped: ${(await x.w.Story.pvScene()) === false}`); x.f.remove();
+} catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); } document.getElementById("out").textContent = out.join("\n"); })();
+</script></body></html>

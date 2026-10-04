@@ -1,7 +1,7 @@
 // Ledger & Crown: the Reeve's Court. The Spring exam and the finale in one scene.
-// Steward Vane's advocate makes eight claims, each built from the player's OWN statements (no literals: every number below comes from `statements`). The player PRESSES a
+// Steward Vane's advocate makes ten claims, each built from the player's OWN statements (no literals: every number below comes from `statements`). The player PRESSES a
 // claim (for detail; sometimes it reveals evidence) or PRESENTS a card (a statement line, a clue from the case board, or something a press or a witness turned up) to refute it.
-// Pass = refute 6 of 8. A failed hearing is never a game over: retake with a fresh set of claims (same books, new claims and wording). Whether the farm survives is the Crown
+// Pass = refute 7 of 10. A failed hearing is never a game over: retake with a fresh set of claims (same books, new claims and wording). Whether the farm survives is the Crown
 // verdict, which is separate.
 //   Court.run({ statements, clues, flags, trust, seed, farm, facts, letter }) -> Promise<{ passed, score, mistakes, certificate, attempts, flags }>
 //   Court.build(opts) -> { claims, cards }  (pure: used by the tests to prove every claim's answer derives from the statements)
@@ -13,7 +13,7 @@ window.Court = (function () {
   const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const pct = x => Math.round(x * 100), pickOf = (r, a) => a[Math.floor(r() * a.length) % a.length];
   const sh = (r, a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  const PASS = 6, TOTAL = 8;
+  const PASS = 7, TOTAL = 10;
 
   // ---------- the cards: every line of the three statements, the case-board clues, and whatever presses and witnesses add ----------
   function cardsFrom(st, clues) {
@@ -46,7 +46,7 @@ window.Court = (function () {
           reveal: { id: "found:ar", tab: "found", label: "Invoices still owed", value: E.ar, raw: E.ar, src: late ? `${late.who ? late.who + ": " : ""}due day ${late.due}` + (flags.hobbExt ? ". Hobb asked for seven more days." : "") : "Promised, not paid: nothing on them is Cash until the customer pays." },
           hint: "Compare the promise with what is in the chest.", right: c => c.id === "found:ar" || c.id === "bs:cash" || cl(/receiv|invoice|hobb|extension|due/i, c), rightLabel: "the invoices' due days, or the Cash actually in the chest",
           maud: `Receivables ${E.ar}, Cash ${E.cash}. ${flags.hobbExt ? "Hobb's extra days are a loan you never priced; a" : "A"} promise is not a coin.`, crane: `Item: receivables ${E.ar}, against Cash ${E.cash}. A debtor can be late, Your Honour. I have a column for it.` }; } },
-    { id: "ownsNothing", concept: "equation", build(x) { const { E } = x; if (E.assets <= 0) return null;
+    { id: "ownsNothing", must: true, concept: "equation", build(x) { const { E } = x; if (E.assets <= 0) return null;
         return { id: "ownsNothing", concept: "equation", text: `The farm owns nothing of worth. Edric left a debt and a field, and the heir inherits both.`,
           press: [{ w: "advocate", t: "A field. A shed. Dust. Show me one thing of value in that barn." }, { w: "maud", t: "What does the farm own that the Crown could count? There is a line for it." }],
           hint: "Assets are what the farm owns. Total them.", right: c => ["bs:assets", "bs:inv", "bs:equip"].includes(c.id), rightLabel: "Total assets (or Inventory / Equipment) on the balance sheet",
@@ -56,7 +56,7 @@ window.Court = (function () {
           press: [{ w: "advocate", t: "An empty chest is an empty chest. The man could not make money. Say otherwise." }, { w: "maud", t: "Edric's letters say otherwise, and so do your books. What did the grain earn?" }],
           hint: "Look at what the grain earned before wages.", right: c => ["is:gross", "is:gm"].includes(c.id) || (I.operating > 0 && c.id === "is:operating") || (I.net > 0 && c.id === "is:net") || cl(/edric|letter|profit/i, c), rightLabel: "Gross profit (or an Income-statement profit line, or Edric's letters)",
           maud: `Gross profit ${I.gross} on Revenue ${I.revenue}; Operating income ${I.operating}. Edric's page says profit every year: he wasn't unprofitable, he was out of Cash.`, crane: `Item: gross profit ${I.gross}, and Edric's page, "profit every year". A bad farmer does not write that, Your Honour. A clerk does.` }; } },
-    { id: "dukeGenerous", concept: "wc", build(x) { const { R, rnd } = x, d = R.duke || { sacks: 132, price: 10, terms: 28 }, mp = x.facts.market || 8, pays = Math.floor(d.terms / 7);
+    { id: "dukeGenerous", must: true, concept: "wc", build(x) { const { R, rnd } = x, d = R.duke || { sacks: 132, price: 10, terms: 28 }, mp = x.facts.market || 8, pays = Math.floor(d.terms / 7);
         return { id: "dukeGenerous", concept: "wc", text: pickOf(rnd, [`Steward Vane's order paid <b>${d.price}</b> a sack when the market paid ${mp}. Generous, by any measure.`, `The Duke's order: <b>${d.sacks}</b> sacks at <b>${d.price}</b>, above the market's ${mp}. Edric was handed a gift.`]),
           press: [{ w: "advocate", t: "Ten against eight. Count the coins. Count them!" }, { w: "maud", t: "Counting is the right idea. But count the days too: when does the Duke pay, and when are the wages due?" }],
           reveal: { id: "found:duke", tab: "found", label: "The Duke's terms", value: d.terms, raw: d.terms, src: `Paid ${d.terms} days after delivery. Wages and seed are due every week.` },
@@ -90,6 +90,31 @@ window.Court = (function () {
           press: [{ w: "advocate", t: "Equity is the owner's money. It says so in the name." }, { w: "maud", t: "What is equity made of? And where do you look for what is actually in the chest?" }],
           hint: "Equity is assets minus liabilities. Find the chest's own line.", right: c => ["bs:cash", "bs:assets", "bs:liab"].includes(c.id), rightLabel: "Cash, or Total assets minus Total liabilities, on the balance sheet",
           maud: `Equity ${E.equity} = assets ${E.assets} − liabilities ${E.liab}. It is a claim on the farm, not a coin in the chest: the chest holds ${E.cash}.`, crane: `Item: equity ${E.equity}, Cash ${E.cash}. The advocate has confused a total with a drawer, Your Honour.` }; } },
+    // ---- the foundation claims (audit 2026-10-04): the Court proves the four core ideas the statements cannot show by themselves ----
+    { id: "breakeven", must: true, concept: "breakeven", build(x) { const { R } = x, mp = x.facts.market || 8, cost = R.unitCost || 4, F = R.upkeep || 45, m = mp - cost; if (m <= 0) return null; const n = Math.ceil(F / m);
+        return { id: "breakeven", concept: "breakeven", text: `Every sack sold at <b>${mp}</b> earns more than the grain cost. A farm that profits on every sack cannot fail to cover its wages.`,
+          press: [{ w: "advocate", t: "Each sack earns. Add the sacks up. Where is the difficulty?" }, { w: "maud", t: "Wages do not care how many sacks you sold. What falls due every week, and how many sacks does it take to cover it?" }],
+          reveal: { id: "found:fixed", tab: "found", label: "Wages and interest are fixed", value: F, raw: F, src: `${F} falls due every week whatever you sold. At ${m} a sack that is ${n} sacks a week before the farm breaks even.` },
+          hint: "Look for the bill that does not change with the sacks.", right: c => c.id === "found:fixed" || ["is:opex", "is:interest", "is:operating"].includes(c.id) || cl(/wage|fixed|break/i, c), rightLabel: "the fixed weekly bill (wages and interest) against the contribution per sack",
+          maud: `A sack leaves ${m} after its grain, and the fixed bill is ${F} a week. Every sack covers its own grain, not the wages: break-even is ${n} sacks a week, and a price cut raises it fast.`, crane: `Contribution ${m} a sack, against a fixed ${F} a week. Break-even is ${n} sacks, Your Honour. I divided twice.` }; } },
+    { id: "floorOffer", must: true, concept: "opportunity", build(x) { const { R } = x, mp = x.facts.market || 8, cost = R.unitCost || 4, low = cost + 1; if (mp - low < 2) return null;
+        return { id: "floorOffer", concept: "opportunity", text: `A neighbour offers <b>${low}</b> a sack, and a sack cost <b>${cost}</b>. Any price above cost is a gain, so the farm should take it.`,
+          press: [{ w: "advocate", t: "Above cost is above cost. A gain is a gain." }, { w: "maud", t: "What else could that sack have sold for? The cost is not the only thing a sale gives up." }],
+          reveal: { id: "found:alt", tab: "found", label: "The better sale", value: mp, raw: mp, src: `The same sack sells for ${mp} at the fair. Taking ${low} gives up ${mp - low} a sack.` },
+          hint: "What is the best other sale for the same sack?", right: c => c.id === "found:alt" || c.id === "is:revenue" || cl(/fair|market|grisby|floor|trader|ashby/i, c), rightLabel: "the better sale for the same sack (the fair's price)",
+          maud: `The cost is ${cost}, but the sack fetches ${mp} elsewhere. The real floor is the best sale you give up: ${mp}, not ${cost}.`, crane: `Cost ${cost}, offer ${low}, the fair pays ${mp}. A gain on paper and a loss in fact, Your Honour.` }; } },
+    { id: "waitingFree", must: true, concept: "tvm", build(x) { const r = (x.facts.ratePct != null ? x.facts.ratePct : 3.5) / 100, worth = Math.round(100 / Math.pow(1 + r, 4)), pct1 = Math.round(r * 1000) / 10;
+        return { id: "waitingFree", concept: "tvm", text: `A coin due in a month is the same coin as one in the hand today. Waiting for payment costs the farm nothing.`,
+          press: [{ w: "advocate", t: "A coin is a coin. I do not see the price of a calendar." }, { w: "maud", t: "What would you pay Ezra to have that coin today? Ask him his price." }],
+          reveal: { id: "found:wait", tab: "found", label: "Waiting has a price", value: pct1 + "%", raw: pct1, src: `Ezra lends at ${pct1}% a week. At that rate 100 due in four weeks is worth about ${worth} today.` },
+          hint: "What does Ezra charge to bring a coin forward?", right: c => c.id === "found:wait" || c.id === "found:rate" || c.id === "is:interest" || c.id === "bs:loan" || cl(/ezra|rate|interest|wait|patience/i, c), rightLabel: "Ezra's price for waiting (his weekly rate)",
+          maud: `Ezra's ${pct1}% a week means 100 due in four weeks is worth about ${worth} today. Waiting is not free: that is the present value of a promise.`, crane: `Ezra's rate is ${pct1}% a week. A promise a month away is worth about ${worth} of every hundred, Your Honour.` }; } },
+    { id: "caravanEv", must: true, concept: "ev", build(x) { const { E } = x, stake = Math.max(60, Math.round((E.inv || 0) / 10) * 10), crown = x.crown, gain = Math.round(stake * .4);
+        return { id: "caravanEv", concept: "ev", text: `A caravan carries your grain to the coast. Seven times in ten it sells for double; three times in ten bandits take it all. The average is a gain, so send everything.`,
+          press: [{ w: "advocate", t: "The average is positive. I am not asked to care for the unlucky." }, { w: "maud", t: "Average over how many tries? And what does the farm owe on the day the bandits come?" }],
+          reveal: { id: "found:ruin", tab: "found", label: "A loss you cannot survive", value: stake, raw: stake, src: `The average gain is ${gain} on ${stake}. But one bad draw loses all ${stake}, and the Crown still wants ${crown}.` },
+          hint: "What happens to the farm on the bad draw?", right: c => c.id === "found:ruin" || c.id === "bs:crown" || c.id === "bs:cash" || cl(/crown|ruin|risk|frost|wager|bet/i, c), rightLabel: "the bad draw against what the farm owes (the Crown's debt, the Cash left)",
+          maud: `The average gain is ${gain} on ${stake}. The farm cannot repeat the bet, and one bad draw leaves it unable to pay the Crown's ${crown}: send a third, not everything.`, crane: `Seven in ten gain; three in ten lose all ${stake}. I counted the three, Your Honour. The farm cannot buy a second try.` }; } },
   ];
   // first-order wrong answers get a specific word; everything else is a polite overrule
   function wrongLine(card, claim) {
@@ -97,7 +122,7 @@ window.Court = (function () {
     return `${esc(card.label)}${card.value !== "" ? " " + esc(card.value) : ""} is true, but it doesn't contradict him. Find the line that does.`;
   }
 
-  // ---------- build: the eight claims for this hearing ----------
+  // ---------- build: the ten claims for this hearing ----------
   function build(o) {
     const st = o.statements, R = (window.Spring && window.Spring.R) || {}, rnd = rng(o.seed == null ? 1 : o.seed), x = { I: st.is, E: st.end, C: st.cf, R, flags: o.flags || {}, trust: o.trust || {}, facts: o.facts || {}, crown: R.crownDebt || 1250, rnd };
     const cards = cardsFrom(st, o.clues), all = BUILDERS.map(b => ({ b, k: b.build(x) })).filter(y => y.k), must = all.filter(y => y.b.must), rest = sh(rnd, all.filter(y => !y.b.must));
@@ -126,7 +151,7 @@ window.Court = (function () {
   function say(who, text, label, extra) { sfx("page"); return screen(hall(`<div class="ct-stage plain"><div class="ct-bubble ${who}">${portrait(who)}<div class="ct-say"><b>${esc(WHO[who][0])}</b><p>${text}</p></div></div>${extra || ""}<div class="ct-actions"><button class="ct-btn gold" data-k="next">${esc(label || "Next")}</button></div></div>`)); }
   function choose(who, text, opts) { return screen(hall(`<div class="ct-stage plain"><div class="ct-bubble ${who}">${portrait(who)}<div class="ct-say"><b>${esc(WHO[who][0])}</b><p>${text}</p></div></div><div class="ct-actions col">${opts.map((o, i) => `<button class="ct-btn ${i === 0 ? "gold" : ""}" data-k="${i}">${esc(o)}</button>`).join("")}</div></div>`)).then(Number); }
 
-  // one hearing: eight claims
+  // one hearing: ten claims
   function hearing(o, attempt) {
     const B = build(Object.assign({}, o, { seed: (o.seed == null ? 1 : o.seed) + attempt * 7919 })), cards = B.cards.slice(), claims = B.claims, trust = o.trust || {};
     const S = { i: 0, results: [], mistakes: [], crane: trust.crane >= 3, ezra: trust.ezra >= 3, tab: "is", sel: null, press: 0, wrong: 0, hint: false, feed: null, over: false, evidenceMade: 0, newTab: {} };
@@ -168,6 +193,11 @@ window.Court = (function () {
     });
   }
 
+  // the Season 1 core ideas and how far the player took each (from the transcript; the Court itself tested them)
+  function coreHtml() {
+    const T = window.Transcript; if (!T || !T.core) return ""; const L = { unseen: "not met", introduced: "met", practiced: "practised", mastered: "mastered" };
+    return `<p class="ct-corehd">The eight ideas Summer builds on</p><ul class="ct-core">${T.core().map(c => `<li class="${c.level}">${esc(c.name)}: ${L[c.level] || c.level}</li>`).join("")}</ul>`;
+  }
   // ---------- after the verdict ----------
   const LETTER9 = "I signed a paper I ought to have shown Maud. It is in the drawer with the seal I could not read. Ask Crane to read it. Ask Ezra whose name stands beneath mine. And please, whatever you do, do not let Ashby thank you for it.";
   async function letterPage(o) {
@@ -211,7 +241,7 @@ window.Court = (function () {
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
     try {
-      await say("maud", "The Crown's advocate will make eight claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and six refuted will satisfy the court.", "Begin");
+      await say("maud", "The Crown's advocate will make ten claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and seven refuted will satisfy the court.", "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);
         if (r.left) { out = { passed: false, left: true, score: r.results.filter(x => x && x.ok).length, mistakes: total.mistakes, attempts: total.attempts }; break; }
@@ -219,7 +249,7 @@ window.Court = (function () {
         const rows = r.results.map((x, i) => `<li class="${x.ok ? "ok" : "no"}">${x.ok ? "✔" : "✘"} ${esc(x.id)}</li>`).join("");
         if (!passed) { sfx("gavel"); const k = await screen(hall(`<div class="ct-stage plain"><div class="ct-sum"><h3>The court is not satisfied</h3><p class="big">${score} of ${TOTAL} refuted. ${PASS} are needed.</p><p>Nothing is lost here: the farm's fate is the Crown's verdict, not this hearing. Another sitting means a fresh set of claims about the same books.</p></div><div class="ct-actions"><button class="ct-btn gold" data-k="retry">Another sitting</button><button class="ct-btn" data-k="leave">Leave the hall</button></div></div>`)); if (k === "leave") { out = { passed: false, score, mistakes: total.mistakes, attempts: total.attempts }; break; } continue; }
         sfx("win"); sfx("gavel");
-        await screen(hall(`<div class="ct-stage plain"><div class="ct-sum"><h3>Case dismissed</h3><p class="big">${score} of ${TOTAL} refuted</p><ul class="ct-rows">${rows}</ul><p>The Reeve rises. “That is not wrong,” says Maud. It is the highest praise she has.</p></div><div class="ct-actions"><button class="ct-btn gold" data-k="x">Receive the certificate</button></div></div>`, "dim"));
+        await screen(hall(`<div class="ct-stage plain"><div class="ct-sum"><h3>Case dismissed</h3><p class="big">${score} of ${TOTAL} refuted</p><ul class="ct-rows">${rows}</ul>${coreHtml()}<p>The Reeve rises. “That is not wrong,” says Maud. It is the highest praise she has.</p></div><div class="ct-actions"><button class="ct-btn gold" data-k="x">Receive the certificate</button></div></div>`, "dim"));
         const cert = { farm: o.farm, title: "The Reeve's Examination, Spring", score, of: TOTAL, date: new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }), by: "Maud Fenwick, Reeve" };
         await screen(hall(`<div class="ct-stage plain"><div class="ct-cert" id="ctCert"><small>By the Reeve of Thornfield</small><h3>${esc(cert.title)}</h3><p>This certifies that the keeper of</p><p class="farm">${esc(cert.farm)}</p><p>refuted ${score} of ${TOTAL} claims before the Reeve's Court, using nothing but the farm's own books.</p><p class="sig">${esc(cert.by)} · ${esc(cert.date)}</p></div><div class="ct-actions"><button class="ct-btn gold" data-k="x">Fold it away</button></div></div>`, "dim"));
         await letterPage(o); const vf = await endScene(o); await teaser(o, vf);

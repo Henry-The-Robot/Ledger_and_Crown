@@ -240,7 +240,36 @@ window.Story = (function () {
       explain: () => "Markup is profit ÷ cost, 50%. Margin is profit ÷ price, 50 ÷ 150 = 33%. Same sale, two numbers." });
     if (r.win) mastered("margin");
     keep("forecast", "Cash forecast", "Cash at the start + cash in − cash out, day by day. Profit doesn't pay wages; Cash does.", `Day ${G.s.day}: lowest Cash in two weeks ${low.close}, on day ${low.day}.${walked ? " Jory walked off on wages day." : ""} Markup 50% = margin ${m}%.`);
-    await page(2); to(6, "tomas6");
+    await costScene(); await page(2); to(6, "tomas6");
+  }
+  // ---------- fixed vs variable cost, break-even (C2.01, C2.02, C0.03): the first wages day names the two kinds of cost, then a price cut shows break-even jumping (audit 2026-10-04, foundation 2) ----------
+  async function costScene() {
+    const s = G.s, p = S.marketPrice(s.day), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return;
+    const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1), up = Math.round((n1 / n0 - 1) * 100);
+    await tell(`Two kinds of cost: <b>variable</b> (seed and grain, rising with every sack) and <b>fixed</b> (wages and interest, due every week whatever you sold). This week's fixed bill is <b>${F}</b>.`);
+    await tell(`A sack at ${p} leaves ${m} after its ${cost} of grain: its <b>contribution</b>. Break-even is the sacks whose contribution covers the fixed bill: ${F} ÷ ${m} = <b>${n0} sacks a week</b>.`);
+    const opts = [[`About ${n0} (a small cut changes little)`, false], [`About ${Math.round(n0 * 1.25)}`, false], [`About ${n1}`, true]], k = (s.day + F) % 3, order = opts.map((_, i) => opts[(i + k) % 3]);
+    const c = await G.say("maud", `Grisby undercuts and the going price falls to <b>${p1}</b>, a cut of ${Math.round(2 / p * 100)}%. How many sacks a week do you need to break even now?`, order.map(o => o[0]));
+    const right = order[c][1]; if (right) mastered("breakeven");
+    await tell(`${right ? "Yes." : "Not quite."} The contribution fell from ${m} to ${m1}, down ${Math.round((1 - m1 / m) * 100)}%, but the fixed bill did not move.`);
+    await tell(`So break-even rose from ${n0} to <b>${n1} sacks</b>, up ${up}%. A small price cut is a big cut in contribution, which is why a rival's undercut hurts more than it looks.`);
+    keep("breakeven", "Fixed, variable, break-even", "Variable costs rise with each sack. Fixed costs come every week whatever you sell. Break-even = fixed bill ÷ contribution per sack. A small price cut can double it.", `Day ${s.day}: fixed bill ${F}, contribution ${m} at ${p}: ${n0} sacks. At ${p1}: ${n1} sacks.`);
+  }
+  // ---------- the price of waiting (C0.01, C5.01): a promise due later is worth less today. Ezra's factoring price against his loan rate, on a real invoice (audit 2026-10-04, foundation 1) ----------
+  async function pvScene() {
+    const s = G.s, t = S.terms(s), inv = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60).sort((a, b) => b.amount - a.amount)[0]; if (!inv) return false;
+    const got = Math.round(inv.amount * S.R.factorRate), fee = inv.amount - got, days = inv.due - s.day, wk = days / 7, room = t.loanLimit + s.bal.loan; if (room < got) return false;
+    const weekly = Math.round(got * t.rateBp / 10000), interest = Math.round(weekly * wk), r = t.rateBp / 10000, implied = Math.round((Math.pow(inv.amount / got, 1 / wk) - 1) * 1000) / 10, worth = Math.round(inv.amount / Math.pow(1 + r, wk));
+    const who = S.NAMES[inv.who].split(" ")[0]; st.pv = true;
+    await tell(`${who} owes you <b>${inv.amount}</b>, due day ${inv.due}, ${days} days away. A promise due later is worth less than coin in hand, and Ezra has two prices for how much less.`);
+    const opts = [[`Sell the invoice to Ezra: ${got} today, ${fee} fee`, false], [`Borrow ${got} from Ezra and repay it when ${who} pays`, true]], k = (s.day + inv.amount) % 2, order = k ? opts.slice().reverse() : opts;
+    const c = await G.say("maud", `Suppose you need ${got} in Cash today for wages. Which costs you less?`, order.map(o => o[0]));
+    const right = order[c][1]; if (right) mastered("tvm");
+    await tell(`${right ? "Yes." : "No."} Selling gives up <b>${fee}</b> to get the Cash ${days} days early, about <b>${implied}% a week</b>.`);
+    await tell(`Borrowing the same ${got} at ${t.rateBp / 100}% a week costs about <b>${interest}</b> over ${days} days. Same Cash, same wait, a much lower price of waiting.`);
+    await tell(`At Ezra's loan rate, ${inv.amount} due in ${days} days is worth about <b>${worth}</b> today. That is its <b>present value</b>: what the promise is worth in Cash now.`);
+    keep("tvm", "Present value", "A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${who}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
+    return true;
   }
   // ---------- chapter 6: Tomas's terms (week 2). Time value (C0.01, C5.01) beside payables (C1.01) — SEASON-1-REDESIGN.md §7 item 1 ----------
   // Tomas: "2% off if you pay within 7 days". A discount for paying early is an interest rate: paying a week early costs the Cash you would
@@ -481,7 +510,7 @@ window.Story = (function () {
     if (kind === "corvin" || kind === "tied") { s.day = Math.max(s.day, 12); st.ch = 8; arrive(1); G.hud(); run(() => dukeScene(1)); }
     else if (kind === "page") { st.ch = 8; run(() => page(9)); }
     else if (kind === "cashbook") { s.day = Math.max(s.day, 22); to(9, "run9"); run(cashBook); }
-    else if (kind === "offer") run(() => craneOffer({ first: true }));
+    else if (kind === "cost") run(costScene); else if (kind === "pv") run(pvScene); else if (kind === "offer") run(() => craneOffer({ first: true }));
     else if (kind === "tvm") { st.ch = 6; st.stage = "tomas6"; run(() => tvmScene(false)); }
   }
   // ---------- hooks from the game ----------
@@ -518,6 +547,7 @@ window.Story = (function () {
       else if (st.stage === "page8") await chPage();
       else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
       else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
+      else if (st.stage === "run9" && d >= 16 && d < 22 && !st.pv && await pvScene()) { /* played once, in week 3 */ }
       else if (st.stage === "run9" && d >= 22 && !st.book) await cashBook(); // week 4: the cash book, Maud's last word
     });
   }
@@ -525,5 +555,5 @@ window.Story = (function () {
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
   return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
+    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();
