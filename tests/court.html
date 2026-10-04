@@ -25,7 +25,7 @@ const load = src => new Promise(async r => { const f = document.createElement("i
   await present(rightCard()); out.push(`the right card refutes it (REFUTED stamp, Maud names the idea with the player's numbers): ${!!d.querySelector(".ct-verdict.ok")} ${/\d/.test(d.querySelector(".ct-feed").textContent)}`);
   click("[data-a=next]"); await sleep(20);
   out.push(`Crane (trust 4) can testify, once: ${!!d.querySelector("[data-a=crane]")}`); click("[data-a=crane]"); await sleep(20);
-  out.push(`his testimony is a free correct present, said in "Item:" sentences: ${T().S.results[1].ok && /Item:/.test(d.querySelector(".ct-feed").textContent)} and he's gone: ${(click("[data-a=next]"), await sleep(20), !d.querySelector("[data-a=crane]"))}`);
+  out.push(`his testimony is a free correct present, said formally, to the court: ${T().S.results[1].ok && /Your Honour/.test(d.querySelector(".ct-feed").textContent)} and he's gone: ${(click("[data-a=next]"), await sleep(20), !d.querySelector("[data-a=crane]"))}`);
   for (let i = 2; i < 8; i++) { if (!T().S.results[i] && i > 2 || i === 2) { /* continue */ } if (cur().reveal && !T().cards.some(k => k.id === cur().reveal.id)) { click("[data-a=press]"); await sleep(5); } await present(rightCard()); click("[data-a=next]"); await sleep(20); }
   out.push(`pass: ${/Case dismissed/.test(d.getElementById("court").textContent)} (${d.querySelector(".ct-sum .big").textContent})`);
   click("[data-k=x]"); await sleep(30); out.push(`certificate shows farm, score and date: ${/Larkfield/.test(d.getElementById("ctCert").textContent) && /7 of 8|8 of 8|6 of 8/.test(d.getElementById("ctCert").textContent)} / "${d.querySelector(".ct-cert .sig").textContent}"`);

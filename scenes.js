@@ -25,11 +25,11 @@ window.Scenes = (function () {
       } },
     { id: "crane_offduty", who: "crane", from: 13, to: 17, at: [32, 10], card: ["A scratched second seal", "under the Crown's seal"], hint: "Crane is standing by the well without his ledger.",
       async run(c) {
-        await c.lines("crane", ["Item: off duty. Item: my ledger is at home. Item: I feel exposed.", "Item: I am not here to collect. Item: I am here to say something I am not employed to say.", "Item: the writ you carry; I have read it eleven times. Item: it is longer than it should be. Item: a debt of this kind does not usually come with a second seal."]);
+        await c.lines("crane", ["Heir. I am off duty, and my ledger is at home. I feel exposed.", "I am not here to collect. I am here to say something I am not employed to say.", "Item: the writ you carry. I have read it eleven times, and it is longer than it should be. A debt of this kind does not usually come with a second seal."]);
         const k = await c.ask("crane", "He waits, pen-less, which seems to hurt him.", ["A second seal?", "Why tell me?"]);
-        if (k === 0) await c.lines("crane", ["Item: small, under the Crown's, scratched as if someone wished it were not there.", "Item: I cannot read it. Item: there is a word for what I am not, and I do not have it. Item: I dislike that."]);
-        else await c.lines("crane", ["Item: I was a clerk in the Duke's counting-house once. Item: two columns did not agree. Item: no one asked, until you.", "Item: do not make me regret my sentences."]);
-        await c.lines("crane", ["Item: keep your sacks counted, heir. Item: I shall go back to being unpleasant."]);
+        if (k === 0) await c.lines("crane", ["Small, under the Crown's, and scratched as if someone wished it were not there.", "I cannot read it. There is a word for what I am not, and I do not have it. I dislike that."]);
+        else await c.lines("crane", ["I was a clerk in the Duke's counting-house once. Two columns did not agree, and no one asked about it, until you.", "Do not make me regret my sentences."]);
+        await c.lines("crane", ["Keep your sacks counted, heir. I shall go back to being unpleasant."]);
         c.flag("craneSeal", true); c.clue(); c.trust("crane", 2);
       } },
     { id: "tomas_contracts", who: "tomas", from: 13, card: ["A grey cloak buys seed contracts", "offered triple"], hint: "Tomas is whispering. Tomas never whispers.",
@@ -87,10 +87,10 @@ window.Scenes = (function () {
       } },
     { id: "crane_seal", who: "crane", from: 23, at: [32, 10], card: ["Vane's mark on the seal", "Crown sold your debt"], need: s => s.flags && s.flags.craneSeal, hint: "Crane is by the well again. He has a paper.",
       async run(c) {
-        await c.lines("crane", ["Item: I have a copy of the writ. Item: it is a copy I should not have made. Item: I made it.", "Item: the second seal. Item: a man in the counting-house once taught me to read the small ones. Item: it is a note-buyer's mark, and it means the Crown sold your debt, heir, to someone."]);
+        await c.lines("crane", ["Item: a copy of the writ. It is a copy I should not have made, and I made it.", "The second seal. A man in the counting-house once taught me to read the small ones. It is a note-buyer's mark, and it means the Crown sold your debt, heir, to someone."]);
         const k = await c.ask("crane", "He holds the paper at arm's length, as if it might go off.", ["To whom?", "Can they do that?"]);
-        if (k === 0) await c.lines("crane", ["Item: the mark is Corvin Vane's. Item: it is a small mark; Vane has never been a man for large ones."]);
-        else await c.lines("crane", ["Item: they can. Item: a debt is a thing, like a sack, to be bought, sold and called in. Item: the part I find unpleasant is the discount."]);
+        if (k === 0) await c.lines("crane", ["The mark is Corvin Vane's. It is a small mark; Vane has never been a man for large ones."]);
+        else await c.lines("crane", ["They can. A debt is a thing, like a sack, to be bought, sold and called in. Item: the part I find unpleasant is the discount."]);
         c.flag("craneVane", true); c.clue(); c.trust("crane", 2);
       } },
     { id: "vane_offer", who: "duke", from: 24, at: [36, 10], card: ["Vane's “partnership”", "a mortgage payable on demand"], hint: "The Steward is in the square. He has brought a pen.",

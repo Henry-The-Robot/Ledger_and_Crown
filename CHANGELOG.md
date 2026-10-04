@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.3: playtest fixes
+- **Crane** no longer starts every sentence with "Item:". He is formal and pedantic, and "Item:" is now an occasional list marker (about one sentence in ten, at most two to a box). Checked the other characters' verbal habits: none is overdone (Tomas's "my friend" is in 9% of his sentences, Ashby's "dear" 13%, Hobb's "eventually" 1%).
+- **Ezra's loan on day 9.** The 100/200 loan in the chapter-7 scene ignored the engine's answer: if Ezra's limit (which counts what you already owe) was too low, the loan silently failed and no Cash arrived. Now he only offers what he will lend (greying out the rest and saying why), refusals are shown, and the notebook records what was actually borrowed.
+- **Conversations.** A topic you've asked goes away (no more "(again)"); a buyer says when she isn't buying today; a buyer's standing deal is on her menu, so a conversation never blocks a deal.
+- The Play link carries `?v=` and the title page shows the version, so a cached page is easy to spot.
+- Tests: `ezra-loan.html`, `chat.html`; the Crane rule in `test-t3b.js`/`test-court.js` now allows the tic but not the habit.
+
 ## Stability (quality gate)
 - Coming back to a finished season (reload, new tab) no longer starts a silent new game: Maud offers Continue, which returns to the closing books, the Reeve's Court (unless already passed) and the ending, or a new game. A season ended by selling the farm returns to its ending.
 - The notebook gains "The real floor" after the first Market Day's floor bet (cost vs the best sale you give up), with a clue card.

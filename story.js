@@ -116,7 +116,7 @@ window.Story = (function () {
   async function ch1() {
     const V = Verbs, W = G.world, b = S.balanceSheet(G.s.bal), s0 = G.s, cost = S.R.unitCost;
     V.parchReset(); V.craneOn = true;
-    await G.say("crane", "Item: Edric's heir. Item: Bailiff Crane, of the Crown, with forty-one things to list before Midwinter. Item: I shall be thorough. Item: walk with me.", ["Walk with you"]);
+    await G.say("crane", "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me.", ["Walk with you"]);
     const sackVal = s0.sacks * cost, cropPlots = () => s0.plots.filter(p => p.crop), cropVal = cropPlots().reduce((a, p) => a + p.crop.cost, 0);
     G.toast("Crane taps the chest: Cash.");
     const tagging = V.tag({
@@ -136,20 +136,20 @@ window.Story = (function () {
     V.remark("Find the rest. Everything this farm owns.");
     await tagging;
     await V.countTotal("aTot", s0.bal.cash + sackVal + cropVal);
-    await G.say("crane", "Item: the other column, the one people prefer not to read. Item: I brought the papers myself.", ["Show me"]);
+    await G.say("crane", "Now the other column, the one people prefer not to read. I brought the papers myself.", ["Show me"]);
     V.pinRow("liab", "Ezra's note (the loan)", b.loan); await V.wait(window.__fastVerbs ? 0 : 700);
     V.pinRow("liab", "The Crown's writ, due at Midwinter", b.crown); await V.wait(window.__fastVerbs ? 0 : 500);
     await V.countTotal("lTot", b.liab);
-    const c = await G.say("crane", "Item: before I stamp it, heir, do you own more than you owe, or less?", ["More", "Less"]);
+    const c = await G.say("crane", "Before I stamp it, heir: do you own more than you owe, or less?", ["More", "Less"]);
     V.P.eq = b.equity; V.parch();
     await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
     const right = (c === 1) === (b.equity < 0);
-    await G.say("crane", right ? "Item: you have a head for it. Item: that is not a compliment, heir; it is a diagnosis." : "Item: less. Item: much less, and I am required to say it plainly.", ["Next"]); // #28's voice
+    await G.say("crane", right ? "You have a head for it. That is not a compliment, heir; it is a diagnosis." : "Less. Much less, and I am required to say it plainly.", ["Next"]); // #28's voice
     document.querySelectorAll(".vstamp").forEach(x => x.remove());
     // WS6: the writ needs a name (item 10), and Crane makes his standing offer (M3, item 3), both while he's still standing in the yard
-    await G.say("crane", "Item: the writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
+    await G.say("crane", "The writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
     await nameFarm(); V.P.title = farmName(); V.parch();
-    await G.say("crane", `Item: ${farmName()}. Item: entered on the writ.`, ["Next"]);
+    await G.say("crane", `Item: ${farmName()}. Entered on the writ, and not to be changed without a form.`, ["Next"]);
     await craneOffer({ first: true });
     if (G.s.over) return; // sold on day 1: the ending has been shown
     V.craneOn = false;
@@ -286,10 +286,16 @@ window.Story = (function () {
     const r = await Verbs.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
     G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
     if (r.okLow && r.okDay) { mastered("interest"); mastered("wc"); } // right = the lowest coin (within 5) and the day (time value is earned in Tomas's scene, not here)
-    const c = await G.say("ezra", `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`,
-      ["Borrow 100", "Borrow 200", "Nothing today"]);
-    if (c < 2) G.act(() => S.borrow(G.s, c ? 200 : 100));
-    keep("interest", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${c < 2 ? ` You borrowed ${c ? 200 : 100}: ${Math.round((c ? 200 : 100) * t.rateBp / 10000)} interest a week.` : ""}`, `${t0.rateBp / 100}% → ${t.rateBp / 100}% a week`, `Day ${G.s.day} · Ezra's forecast`);
+    // The loan must actually arrive: Ezra's limit counts what you already owe, so only offer what he will lend, and if the engine refuses, say why and ask again (it used to fail silently).
+    let borrowed = 0, intro = `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`;
+    for (;;) {
+      const room = S.terms(G.s).loanLimit + G.s.bal.loan;
+      const c = await G.say("ezra", room < 200 ? `${intro} I will lend you up to ${Math.max(0, room)} more: you owe me ${-G.s.bal.loan}.` : intro, [{ label: "Borrow 100", disabled: room < 100 }, { label: "Borrow 200", disabled: room < 200 }, "Nothing today"]);
+      if (c === 2) break; const amt = c ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
+      if (got.ok) { borrowed = amt; break; }
+      intro = `${got.msg} How much, then?`;
+    }
+    keep("interest", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${borrowed ? ` You borrowed ${borrowed}: ${Math.round(borrowed * t.rateBp / 10000)} interest a week.` : ""}`, `${t0.rateBp / 100}% → ${t.rateBp / 100}% a week`, `Day ${G.s.day} · Ezra's forecast`);
     to(8, "sleep8");
   }
   // ---------- chapters 8 and 8b: Corvin Vane, the Duke's steward (week 2 midpoint, week 3 squeeze). C2.09 overtrading; case W.T. Grant. Maud asks, then bets; she doesn't show. ----------
@@ -423,10 +429,10 @@ window.Story = (function () {
   const money = v => Number(v).toLocaleString("en-US");
   async function craneOffer(opts) { // opts.first: the day-1 scene; opts.mercy: Crane's visit when you are short for wages
     opts = opts || {}; const E = Endings, o = E.offer(G.s), farm = farmName();
-    // Crane's voice: he numbers his sentences ("Item:"), and he delivers Corvin Vane's offer reluctantly, as an instructed messenger.
-    const intro = opts.first ? `Item: I am instructed to convey an offer from Corvin Vane for ${farm}. Item: ${money(o.price)}, in coin, today. Item: I do not recommend it.`
-      : o.mercy ? `Item: Cash is ${money(o.cash)}, and ${money(o.wages)} of wages fall due. Item: I am instructed to repeat the offer for ${farm} at a reduced ${money(o.price)}. Item: I still do not recommend it.`
-      : `Item: Corvin Vane's offer for ${farm} stands at ${money(o.price)}. Item: I am obliged to say so.`;
+    // Crane's voice: he is formal and pedantic, uses "Item:" only now and then as a list marker, and he delivers Corvin Vane's offer reluctantly, as an instructed messenger.
+    const intro = opts.first ? `I am instructed to convey an offer from Corvin Vane for ${farm}. Item: ${money(o.price)}, in coin, today. I do not recommend it.`
+      : o.mercy ? `Cash is ${money(o.cash)}, and ${money(o.wages)} of wages fall due. I am instructed to repeat the offer for ${farm} at a reduced ${money(o.price)}, and I still do not recommend it.`
+      : `Item: Corvin Vane's offer for ${farm} stands at ${money(o.price)}. I am obliged to say so.`;
     const c = await G.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
     if (c === 0) { pin("offer", "Crane's offer", `${money(o.price)} now`, `Day ${G.s.day} · money now, farm later`); return false; }
     const sure = await G.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
