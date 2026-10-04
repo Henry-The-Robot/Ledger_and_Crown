@@ -4,6 +4,7 @@
 - **Crane** no longer starts every sentence with "Item:". He is formal and pedantic, and "Item:" is now an occasional list marker (about one sentence in ten, at most two to a box). Checked the other characters' verbal habits: none is overdone (Tomas's "my friend" is in 9% of his sentences, Ashby's "dear" 13%, Hobb's "eventually" 1%).
 - **Ezra's loan on day 9.** The 100/200 loan in the chapter-7 scene ignored the engine's answer: if Ezra's limit (which counts what you already owe) was too low, the loan silently failed and no Cash arrived. Now he only offers what he will lend (greying out the rest and saying why), refusals are shown, and the notebook records what was actually borrowed.
 - **Conversations.** A topic you've asked goes away (no more "(again)"); a buyer says when she isn't buying today; a buyer's standing deal is on her menu, so a conversation never blocks a deal.
+- Hobb, Ashby and Mira share the same conversation menu; an open order is now a reminder shown above it instead of replacing it (so you can still ask and deal while one is open).
 - The Play link carries `?v=` and the title page shows the version, so a cached page is easy to spot.
 - Tests: `ezra-loan.html`, `chat.html`; the Crane rule in `test-t3b.js`/`test-court.js` now allows the tic but not the habit.
 

@@ -330,8 +330,8 @@
       if (k >= mine.length) return; o = mine[k];
     }
     if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
-    if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
-    return chat(who);
+    // an open order is a reminder on top of the usual conversation (it used to replace it, so you couldn't ask or deal while one was open)
+    return chat(who, open ? `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}: put them in your shipping crate.` : "");
   }
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
   function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability (WS6: named unearned revenue, C1.01/C1.03)
@@ -528,16 +528,16 @@
   }
   // ---------- people: a line from them, then "Ask about..." (some answers are locked until they trust you) ----------
   // A conversation: what they will tell you (each topic once: after you've asked it, it goes away), and any deal they have for you today. A buyer says plainly when they aren't buying.
-  async function chat(who) {
+  async function chat(who, note) {
     s.heard = s.heard || {}; const tp = Cast.topics(who, s).filter(t => !t.heard), locked = Cast.locked(who, s);
     const deals = soOk() ? Standing.today(s).filter(o => o.who === who) : [], buyer = ["ashby", "hobb", "mira"].indexOf(who) >= 0, buying = deals.length || s.offers.some(o => o.who === who);
     const label = o => `Deal: ${o.sacks} sacks at ${o.price}${o.terms ? `, paid ${o.terms} days after` : ", Cash"}`;
-    const k = await sayP(who, Cast.greet(who, s) + (buyer && !buying ? `<br><i>${shortWho(who)} isn't buying today.</i>` : ""), tp.map(t => t.label).concat(deals.map(label), ["Leave"]));
+    const k = await sayP(who, Cast.greet(who, s) + (note ? `<br><i>${note}</i>` : "") + (buyer && !buying && !note ? `<br><i>${shortWho(who)} isn't buying today.</i>` : ""), tp.map(t => t.label).concat(deals.map(label), ["Leave"]));
     if (k >= tp.length + deals.length) return; if (k >= tp.length) return standingOrder(deals[k - tp.length]);
     const t = tp[k], key = who + ":" + t.id;
     for (const ln of t.lines) await sayP(who, ln, ["Next"]);
     if (!s.heard[key]) { s.heard[key] = s.day; if (s.trust[who] != null && s.trust[who] < 10) { s.trust[who]++; toast(`${Cast.name(who).split(",")[0]} trusts you a little more ♥`); FX.sfx("good"); } }
-    if (locked && !tp.some(x => x !== t)) toast("There's more they'd say, with time."); return chat(who);
+    if (locked && !tp.some(x => x !== t)) toast("There's more they'd say, with time."); return chat(who, note);
   }
   async function runScene(sc) { // an optional village scene: marked done first (a reload mid-scene never replays it), then played
     s.scenes[sc.id] = s.day; s.flags = s.flags || {};

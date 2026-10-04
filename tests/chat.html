@@ -18,5 +18,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   const deal = w.Standing.today(s).find(o => o.who === "ashby"); G.hud(); G.talk("ashby"); await sleep(80);
   out.push(`day ${s.day}: her standing deal is on the menu${deal ? ` (${deal.sacks} sacks at ${deal.price})` : " (none found)"}: ${!!deal && btns().some(b => /^Deal:/.test(b))}; she is buying, so no "isn't buying": ${!/isn't buying/.test(txt())}`);
   if (deal) { click(/^\d?Deal:/); await sleep(80); out.push(`choosing it opens the order: ${/A standing order/.test(txt())}`); }
+  // Hobb: the same menu, and an open order is a reminder on top of it (it used to replace the whole conversation)
+  G.closeDlg(); s.trust.hobb = 8; s.offers.length = 0; const ord = { id: 999, who: "hobb", sacks: 12, price: 9, terms: 14, due: s.day + 5, value: 108, status: "open", late: false }; s.orders.push(ord); G.hud(); G.talk("hobb"); await sleep(80);
+  out.push(`Hobb with an open order: the reminder is shown: ${/Still waiting on 12 sacks/.test(txt())}; and he can still be asked things: ${btns().some(b => /^Ask/.test(b))}; Leave: ${btns().includes("Leave")}`);
+  const hf = btns().find(b => /^Ask/.test(b)); if (hf) { click(new RegExp(hf.slice(0, 12).replace(/[()]/g, "."))); await sleep(60); for (let i = 0; i < 8 && !/Leave/.test(btns().join()); i++) { click(/Next/); await sleep(40); } out.push(`Hobb: the asked topic is gone and nothing says (again): ${!btns().includes(hf) && btns().every(b => !/again/.test(b))}; the reminder stays: ${/Still waiting/.test(txt())}`); }
 } catch (e) { out.push("THROWN " + e.message); } document.getElementById("out").textContent = out.join("\n"); })();
 </script></body></html>
