@@ -1,0 +1,748 @@
+<title>Ledger &amp; Crown Master Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one ledger page. A red double margin rule runs down the left; section folios sit in that margin. */
+:root{
+  --paper:#eef2ea; --panel:#e2e9dc; --ink:#1d2721; --muted:#56655b; --rule:#a9bccb; --red:#a3352f; --gold:#8a6d22; --green:#2f6b45;
+  --chip-built:#cfe3d3; --chip-refine:#f0e2b8; --chip-next:#f3cfc9; --chip-later:#dde3e8;
+  --f-display:"IM Fell English", "Iowan Old Style", Georgia, serif;
+  --f-body:"Literata", "Iowan Old Style", Georgia, serif;
+  --f-data:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#131916; --panel:#1b2420; --ink:#e2e8df; --muted:#9aa89f; --rule:#34495a; --red:#e07b70; --gold:#d3b360; --green:#7fc79a;
+  --chip-built:#21402c; --chip-refine:#4a3f1c; --chip-next:#4d2622; --chip-later:#27313a; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#131916; --panel:#1b2420; --ink:#e2e8df; --muted:#9aa89f; --rule:#34495a; --red:#e07b70; --gold:#d3b360; --green:#7fc79a;
+  --chip-built:#21402c; --chip-refine:#4a3f1c; --chip-next:#4d2622; --chip-later:#27313a; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;margin:0}
+.page{max-width:58rem;margin:0 auto;padding-inline:16px;padding-block:28px 64px}
+.sheet{position:relative;padding-left:0}
+@media (min-width:760px){
+  .sheet{padding-left:5.2rem}
+  .sheet::before,.sheet::after{content:"";position:absolute;top:0;bottom:0;width:1px;background:var(--red);opacity:.55}
+  .sheet::before{left:4.1rem}.sheet::after{left:4.35rem}
+  .folio{position:absolute;left:-5.2rem;width:3.6rem;text-align:right;font-family:var(--f-data);font-size:.8rem;color:var(--red);padding-top:.55rem}
+}
+@media (max-width:759px){.folio{display:block;font-family:var(--f-data);font-size:.78rem;color:var(--red);letter-spacing:.06em}}
+header.top{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:26px}
+.eyebrow{font-family:var(--f-data);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2.1rem,5vw,3.1rem);line-height:1.05;margin:.25rem 0 .4rem;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:400;font-size:1.85rem;line-height:1.15;margin:0 0 .6rem;text-wrap:balance}
+h3{font-family:var(--f-body);font-weight:600;font-size:1.12rem;margin:1.4rem 0 .35rem}
+h4{font-family:var(--f-data);font-weight:500;font-size:.8rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:1rem 0 .3rem}
+p{margin:.45rem 0;max-width:68ch}
+.lede{font-size:1.15rem;font-style:italic;max-width:62ch}
+section{position:relative;padding-block:26px;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0}
+ul,ol{margin:.4rem 0;padding-left:1.3rem;max-width:70ch}
+li{margin:.22rem 0}
+b,strong{font-weight:600}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.tag{font-family:var(--f-data);font-size:.74rem;color:var(--muted);white-space:nowrap}
+.cid{font-family:var(--f-data);font-size:.8rem;color:var(--green);white-space:nowrap}
+.miss{font-family:var(--f-data);font-size:.74rem;color:var(--red);white-space:nowrap}
+.asks{counter-reset:ask;list-style:none;padding:0;margin:.4rem 0;display:grid;gap:10px;max-width:none}
+.asks li{counter-increment:ask;display:grid;grid-template-columns:2.2rem 1fr;gap:10px;align-items:start;background:var(--panel);padding:12px 14px;border-left:3px solid var(--red)}
+.asks li::before{content:counter(ask);font-family:var(--f-display);font-size:1.7rem;line-height:1;color:var(--red)}
+.asks li > div{min-width:0}
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:10px;margin-top:10px}
+.status div{background:var(--panel);padding:10px 12px;min-width:0}
+.status .k{font-family:var(--f-data);font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.tbl{overflow-x:auto;margin:.6rem 0 1rem;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+table{border-collapse:collapse;width:100%;min-width:40rem;font-size:.92rem}
+th{font-family:var(--f-data);font-weight:500;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--ink);vertical-align:bottom}
+td{padding:8px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.ladder{display:grid;grid-template-columns:7.5rem repeat(4,minmax(0,1fr));gap:6px;margin:.8rem 0 1rem}
+.ladder .h{font-family:var(--f-data);font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:4px 2px;align-self:end}
+.ladder .ch{font-family:var(--f-display);font-size:1.15rem;line-height:1.1;padding:8px 4px 8px 0;border-top:1px solid var(--ink)}
+.ladder .ch small{display:block;font-family:var(--f-data);font-size:.7rem;color:var(--muted);letter-spacing:.05em}
+.cell{padding:8px 9px;min-width:0;font-size:.86rem;line-height:1.35;border-top:1px solid var(--ink)}
+.cell b{display:block;font-size:.92rem}
+.c-built{background:var(--chip-built)}.c-refine{background:var(--chip-refine)}.c-next{background:var(--chip-next)}.c-later{background:var(--chip-later)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-family:var(--f-data);font-size:.75rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:.8rem;height:.8rem;margin-right:6px;vertical-align:-1px}
+.legend .l1::before{background:var(--chip-built)}.legend .l2::before{background:var(--chip-refine)}.legend .l3::before{background:var(--chip-next)}.legend .l4::before{background:var(--chip-later)}
+@media (max-width:640px){
+  .ladder{grid-template-columns:1fr 1fr}
+  .ladder .h{display:none}
+  .ladder .ch{grid-column:1 / -1}
+}
+.season{margin:1.2rem 0 1.6rem;padding:14px 16px;background:var(--panel);border-top:3px solid var(--ink)}
+.season header{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-bottom:.3rem}
+.season header h3{margin:0;font-family:var(--f-display);font-weight:400;font-size:1.55rem}
+.season .q{font-style:italic;color:var(--muted)}
+.season dl{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:4px 14px;margin:.6rem 0}
+.season dt{font-family:var(--f-data);font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:.2rem}
+.season dd{margin:0;min-width:0}
+@media (max-width:560px){.season dl{grid-template-columns:1fr}.season dt{padding-top:.5rem}}
+.core{list-style:none;padding:0;margin:.2rem 0;max-width:none}
+.core li{display:grid;grid-template-columns:3.1rem minmax(0,1fr);gap:8px;padding:5px 0;border-bottom:1px dotted var(--rule)}
+.core li:last-child{border-bottom:0}
+.core .id{font-family:var(--f-data);font-size:.8rem;color:var(--red);padding-top:.15rem}
+.core .why{display:block;font-size:.86rem;color:var(--muted)}
+.note{border-left:3px solid var(--gold);padding:6px 12px;background:var(--panel);margin:.7rem 0;max-width:70ch}
+.vane{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:.8rem 0;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+.vane div{padding:10px 10px;border-right:1px solid var(--rule);min-width:0;font-size:.9rem}
+.vane div:last-child{border-right:0}
+.vane .t{font-family:var(--f-display);font-size:1.15rem;display:block}
+.vane .w{display:block;margin-top:.3rem}
+.vane .step{font-family:var(--f-data);font-size:.72rem;color:var(--red)}
+@media (max-width:700px){.vane{grid-template-columns:1fr 1fr}.vane div:nth-child(2){border-right:0}.vane div:nth-child(-n+2){border-bottom:1px solid var(--rule)}}
+.toc{columns:2 15rem;font-size:.92rem;margin:.6rem 0 0;padding-left:1.3rem}
+a{color:var(--red)}
+a:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+details{margin:.35rem 0;border-top:1px solid var(--rule)}
+summary{cursor:pointer;padding:6px 0;font-size:.95rem}
+summary:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.st{font-family:var(--f-data);font-size:.72rem;padding:1px 6px;white-space:nowrap}
+.st.ok{background:var(--chip-built)}.st.v{background:var(--chip-later)}.st.g{background:var(--chip-refine)}.st.miss{background:var(--chip-next)}
+.sev{font-family:var(--f-data);font-size:.72rem;padding:1px 6px;white-space:nowrap;background:var(--chip-next)}
+.sev.m{background:var(--chip-refine)}.sev.l{background:var(--chip-later)}
+footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-size:.85rem;color:var(--muted)}
+</style>
+
+<div class="page">
+<header class="top">
+  <div class="eyebrow">Master plan · v1.0 · 4 October 2026 · creative lead · for Kyle's review · no build starts before your yes</div>
+  <h1>Ledger &amp; Crown Master Plan</h1>
+  <p class="lede">You inherit a broke farm and a patient villain. Over four in-game years you grow it into the realm's treasury. You learn a full MBA core by running the business, not by reading about it.</p>
+  <ol class="toc">
+    <li><a href="#decide">Decide first</a></li>
+    <li><a href="#vision">The vision and the four chapters</a></li>
+    <li><a href="#rules">Design rules for every season</a></li>
+    <li><a href="#length">How many seasons, how long</a></li>
+    <li><a href="#ch1">Chapter 1, season by season</a></li>
+    <li><a href="#ideas">Where each of your ideas went</a></li>
+    <li><a href="#later">Chapters 2 to 4: the curriculum map</a></li>
+    <li><a href="#s1">Season 1: what changes</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#review">Review of the game today</a></li>
+    <li><a href="#risks">Risks</a></li>
+    <li><a href="#tech">Technical foundation</a></li>
+    <li><a href="#coverage">Curriculum coverage, session by session</a></li>
+  </ol>
+</header>
+
+<div class="sheet">
+
+<section id="decide">
+  <span class="folio">§0</span>
+  <h2>Decide first</h2>
+  <ol class="asks">
+    <li><div><b>Shape: 4 chapters, 4 seasons each.</b> A chapter is one in-game year at a bigger scale: Farm, Town, Province, Kingdom. Each year ends at Midwinter. Approve, or say 2 seasons for later chapters. <a href="#length">Why 4</a>.</div></li>
+    <li><div><b>Season lengths for Chapter 1:</b> Spring 28 days, Summer 28, Autumn 42, Winter 56. That is about 16 to 20 hours of play for the chapter. Approve or change.</div></li>
+    <li><div><b>The Chapter 1 map</b> (<a href="#ch1">§4</a>): what each season teaches, its finale, and where your ideas landed (<a href="#ideas">§5</a>). Mark anything you want moved.</div></li>
+    <li><div><b>Season 1 changes</b> (<a href="#s1">§7</a>): 9 items in order. The builder starts item 2 after your yes.</div></li>
+    <li><div><b>Curriculum asks</b> (<a href="#coverage">§12</a>). Every Chapter 1 session is now written. Before Summer, the MBA teacher should: review the 4 generic drafts Summer leans on (C7.01, C8.01–03); write a contract-law session (none exists, although the primer lists it); restore the EV-to-equity waterfall session that the C6 rebuild dropped (your own 3/10 gap); and merge the curriculum branch into main. OK?</div></li>
+    <li><div><b>Fix the foundation before Summer</b> (<a href="#tech">§11</a>). Saves have no version and are deleted at the end of a season. Safari can wipe them after 7 days away. No tests run automatically. Content, map and seasons are all hard-coded. The "season engine" phase grows to about 2 weeks to cover this. Approve?</div></li>
+  </ol>
+  <div class="status">
+    <div><span class="k">Live game</span><br><span id="st-live">v0.4.6 on master (PR #41, tag v0.4.6-beta). All 25 node tests pass.</span></div>
+    <div><span class="k">Playtest-2 review</span><br><span id="st-pt2">Critic: 0 critical, 8 major. All 8 fixed by a Sonnet builder, checked by me, then merged.</span></div>
+    <div><span class="k">Stale PRs</span><br><span id="st-prs">#27, #28, #29 closed. #40 is merged inside #41.</span></div>
+  </div>
+</section>
+
+<section id="vision">
+  <span class="folio">§1</span>
+  <h2>The vision and the four chapters</h2>
+  <p>Each chapter is a bigger business and a bigger Vane. The player grows from heir to farmer, to owner of a small group, to head of a trading house, to the King's advisor. Corvin Vane grows with you. In every chapter his weapon is the next course's idea, used against you. You beat him by understanding it better than he does.</p>
+
+  <div class="ladder" role="table" aria-label="Sixteen seasons across four chapters">
+    <div class="h"></div><div class="h">Spring · learn</div><div class="h">Summer · combine</div><div class="h">Autumn · retain</div><div class="h">Winter · prove it</div>
+    <div class="ch">1 · The Farm<small>Year 1 · one farm, one village</small></div>
+    <div class="cell c-built"><b>Profit is not cash</b>Built, v0.4.5. Refine.</div>
+    <div class="cell c-next"><b>Forced to say yes</b>Design next</div>
+    <div class="cell c-later"><b>Someone is skimming</b>Then</div>
+    <div class="cell c-later"><b>Midwinter</b>Chapter finale</div>
+    <div class="ch">2 · The Town<small>Year 2 · farm, mill, bakery</small></div>
+    <div class="cell c-later"><b>Buying in</b>M&amp;A, diligence</div>
+    <div class="cell c-later"><b>The mill line</b>operations</div>
+    <div class="cell c-later"><b>Three houses, one purse</b>people, transfer prices</div>
+    <div class="cell c-later"><b>The Guild</b>monopoly, valuation</div>
+    <div class="ch">3 · The Province<small>Year 3 · a trading house</small></div>
+    <div class="cell c-later"><b>New markets</b>customers, unit economics</div>
+    <div class="cell c-later"><b>The river road</b>supply chain, transport</div>
+    <div class="cell c-later"><b>Raising capital</b>investors, leverage</div>
+    <div class="cell c-later"><b>The Duke's debts</b>buyouts, risk</div>
+    <div class="ch">4 · The Kingdom<small>Year 4 · the realm</small></div>
+    <div class="cell c-later"><b>The King's ledger</b>the realm's economy</div>
+    <div class="cell c-later"><b>The Mint</b>money, rates, inflation</div>
+    <div class="cell c-later"><b>Foreign coin</b>trade, currency, crises</div>
+    <div class="cell c-later"><b>The Grand Audit</b>capstone, all courses</div>
+  </div>
+  <div class="legend"><span class="l1">Built</span><span class="l3">Design next</span><span class="l4">Planned (titles are working names)</span></div>
+
+  <h3>Corvin Vane grows with you</h3>
+  <div class="vane">
+    <div><span class="step">Chapter 1</span><span class="t">The Duke's steward</span><span class="w">Buys every note in the valley. Squeezes buyers' credit so they squeeze you. Buys the seed supply. Calls every note at Midwinter.</span></div>
+    <div><span class="step">Chapter 2</span><span class="t">Master of the Guild</span><span class="w">Monopoly prices. Exclusive deals. Buys your rivals. Sells you a mill with cooked books.</span></div>
+    <div><span class="step">Chapter 3</span><span class="t">The Provincial Bank</span><span class="w">Owns the river tolls. Buys the Duke's estates with borrowed money. Trades on what only he knows.</span></div>
+    <div><span class="step">Chapter 4</span><span class="t">Lord Treasurer</span><span class="w">Clips the coin. Borrows abroad in foreign money. Captures the regulators. Brings on a crisis of trust.</span></div>
+  </div>
+  <p class="tag">Courses behind each weapon: C1, C2, C6 · C4, C10, C1.10 · C6, C4.09, C9 · C11, C12.</p>
+
+  <h3>The King thread</h3>
+  <p>In Spring the Crown is only a number: 1,250 by Midwinter. In Summer the King's purveyor arrives with an order you cannot refuse. At Midwinter the Exchequer's clerk watches you defend your books. In Chapters 2 and 3 the King grants charters and raises levies. In Chapter 4 he summons the one person whose books held.</p>
+
+  <h3>The cast grows up with the business</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Who</th><th>Chapter 1</th><th>Chapter 2</th><th>Chapter 3</th><th>Chapter 4</th></tr></thead>
+    <tbody>
+      <tr><td><b>Maud</b></td><td>Mentor. Teaches, then goes quiet.</td><td>Your board's chair</td><td>Governance and oversight</td><td>Witness at the Grand Audit</td></tr>
+      <tr><td><b>Crane</b></td><td>The Crown's bailiff. Finds the second seal.</td><td>Your clerk. Keeps your controls.</td><td>Your auditor</td><td>Testifies on the realm's books</td></tr>
+      <tr><td><b>Ezra</b></td><td>Moneylender</td><td>Your lender for the mill</td><td>Founds a bank against Vane's</td><td>Advises on the Mint</td></tr>
+      <tr><td><b>Ashby, Hobb</b></td><td>Customers. In Vane's net.</td><td>Partners, if you bought in</td><td>Run your town houses</td><td>—</td></tr>
+      <tr><td><b>Jory</b></td><td>Your first hire</td><td>A manager</td><td>Your factor in a far town</td><td>—</td></tr>
+      <tr><td><b>Grisby</b></td><td>Rival stall. Takes the bad bets you refuse.</td><td>A target to buy. His books have red flags.</td><td>—</td><td>—</td></tr>
+      <tr><td><b>The Traveller</b></td><td colspan="4">A man with a cow who visits each season. His tales are real business cases from far lands. Each tale holds a clue to what comes next. He replaces the planned "Traveller's letters".</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note"><b>Option for you:</b> Vane and Edric were partners once. Edric walked away; that is why Vane says "Edric said no to me once." Reveal it at the end of Chapter 1 or in Chapter 4. Say yes, no or later.</p>
+</section>
+
+<section id="rules">
+  <span class="folio">§2</span>
+  <h2>Design rules for every season</h2>
+  <ol>
+    <li><b>The idea is the mechanic.</b> If a player can win while ignoring the idea, cut the scene. This rule stands from the game design.</li>
+    <li><b>The villain's weapon is the lesson.</b> Vane always uses the next idea against you.</li>
+    <li><b>The forced yes</b> (your idea). Each season removes one easy answer that an earlier season taught. The player must now handle the hard case with real numbers.</li>
+    <li><b>One ramp per year</b> (your idea). Spring: learn with help. Summer: combine two ideas in one decision. Autumn: hold the ideas under regular checkpoints. Winter: prove it, with real consequences for a wrong number.</li>
+    <li><b>Load cap.</b> At most 8 new core ideas per season and 6 named previews. Spring today has about 30 ideas; that is the main cause of the "too much talk" problem.</li>
+    <li><b>Test only what was taught.</b> A season may preview any idea. A check may only use ideas taught in an earlier season or earlier in the same season.</li>
+    <li><b>Every earlier core idea comes back at least twice a season</b>, inside play, not as a quiz.</li>
+    <li><b>The valley is alive, and each change means something.</b> A new house means more bread demand. Grey cloaks on the map mean Vane bought another note.</li>
+    <li><b>Cutscenes for turning points only.</b> At most 25 seconds. Skippable. Replayable from the journal. Each one shows a clue or a fact the player needs.</li>
+  </ol>
+
+  <h3>The forced yes, across Chapter 1</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Spring teaches</th><th>Later, the game forces the opposite</th><th>So the player learns</th></tr></thead>
+    <tbody>
+      <tr><td>Long payment terms are dangerous</td><td>Summer: every buyer demands 14 days. The King's order cannot be refused.</td><td>To price terms and finance the gap</td></tr>
+      <tr><td>Do not overtrade</td><td>Summer: the King's order forces growth</td><td>To fund growth safely</td></tr>
+      <tr><td>Avoid debt</td><td>Autumn: the grain store pays back only with a loan</td><td>When debt creates value</td></tr>
+      <tr><td>Focus on what you know</td><td>Autumn: blight ruins the crop you know</td><td>When to change course</td></tr>
+      <tr><td>The books are kept for you</td><td>Winter: you keep them, and act on your own numbers</td><td>To build and trust your own statements</td></tr>
+      <tr><td>Cash in the chest is safe</td><td>Winter: grain held for the winter price earns more</td><td>The cost of carrying stock</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="length">
+  <span class="folio">§3</span>
+  <h2>How many seasons, how long</h2>
+  <p>I sized the game by what the player must learn and keep, as you asked.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Fact</th><th class="r">Number</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Sessions the curriculum plans, 17 courses</td><td class="r num">177</td><td><span class="tag">[Certain] curriculum branch c4e4ea2, 2026-10-04</span></td></tr>
+      <tr><td>Sessions written / strictly reviewed</td><td class="r num">154 / 58</td><td><span class="tag">[Certain] session files; coverage assessment</span></td></tr>
+      <tr><td>Study time per session</td><td class="r num">45–65 min</td><td><span class="tag">[Certain] README tables</span></td></tr>
+      <tr><td>Course time in all</td><td class="r num">~160 h</td><td><span class="tag">[Likely] 177 × ~54 min</span></td></tr>
+      <tr><td>Spring covers, at first-look depth</td><td class="r num">~12 sessions in ~2 h</td><td><span class="tag">[Likely] your run + the curriculum audit</span></td></tr>
+      <tr><td>Play per session once depth and recall are added</td><td class="r num">20–25 min</td><td><span class="tag">[Guessing] measure after Summer</span></td></tr>
+      <tr><td>Whole game</td><td class="r num">~60–70 h</td><td><span class="tag">[Guessing]</span></td></tr>
+      <tr><td>Sessions per chapter (§12)</td><td class="r num">59 · 41 · 50 · 27</td><td><span class="tag">[Certain] the coverage map; Chapter 4 also holds 16 unwritten</span></td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Recommendation: 4 seasons per chapter.</b> Chapter 1 carries 59 sessions, the foundations, at 12 to 16 per season. Later chapters hold 27 to 50. Two seasons would need 20 or more ideas each, which is Spring's overload problem again. Retention also needs spacing across real days, and 4 seasons means at least 4 sittings per chapter. A farm year has 4 seasons, and the story's Midwinter deadline already ends the year.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Chapter 1 season</th><th class="r">Days</th><th class="r">Play</th><th class="r">New core ideas</th><th>Help</th><th>Checks</th></tr></thead>
+    <tbody>
+      <tr><td>Spring</td><td class="r num">28</td><td class="r num">2–3 h</td><td class="r num">8</td><td>Maud shows, asks, bets, then goes quiet</td><td>The Reeve's Court</td></tr>
+      <tr><td>Summer</td><td class="r num">28</td><td class="r num">3–4 h</td><td class="r num">8</td><td>Hints on request only</td><td>The Purveyor's Tender</td></tr>
+      <tr><td>Autumn</td><td class="r num">42</td><td class="r num">4–5 h</td><td class="r num">8</td><td>None on Spring ideas. Crane checks your entries, then checks fewer.</td><td>A short Assize each week, plus the Harvest Inquest</td></tr>
+      <tr><td>Winter</td><td class="r num">56</td><td class="r num">6–8 h</td><td class="r num">6 + all</td><td>None. You keep the books.</td><td>Midwinter: the crisis week and the Midwinter Assize</td></tr>
+    </tbody>
+  </table></div>
+  <p>Decide the lengths of Chapters 2 to 4 after we measure retention in Chapter 1. If players keep Spring's ideas a week later with no review, later chapters can be shorter.</p>
+</section>
+
+<section id="ch1">
+  <span class="folio">§4</span>
+  <h2>Chapter 1, The Farm, season by season</h2>
+  <p>Each idea has an id (SP1, SU3 …). "Needs" lists the earlier ideas it depends on. Session ids are from the curriculum branch of 4 October (C2.09 = course C2, session 9). All of them are written. <span class="miss">draft</span> marks a generic draft that needs a review first. The full list per season is in <a href="#coverage">§12</a>.</p>
+
+  <article class="season">
+    <header><h3>Spring</h3><span class="q">How does a profitable farm go broke?</span><span class="tag">28 days · built · refine (§7)</span></header>
+    <dl>
+      <dt>Answer</dt><dd>Profit is not cash: receivables and stock eat it. Then: who wanted Edric to fail? Vane.</dd>
+      <dt>Core ideas</dt><dd><ul class="core">
+        <li><span class="id">SP1</span><span>Claims: assets, liabilities, equity, and a guarantee as a hidden claim <span class="cid">C1.01</span></span></li>
+        <li><span class="id">SP2</span><span>Profit is not cash: accruals, receivables, deposits <span class="cid">C1.02 C1.03</span></span></li>
+        <li><span class="id">SP3</span><span>Margin vs markup <span class="cid">C0.02 C1.04</span></span></li>
+        <li><span class="id">SP4</span><span>Fixed vs variable cost, break-even <span class="cid">C2.01 C2.02</span></span></li>
+        <li><span class="id">SP5</span><span>Opportunity cost: the real floor price <span class="cid">C2.03</span></span></li>
+        <li><span class="id">SP6</span><span>Time value: the price of waiting, present value <span class="cid">C0.01 C5.01</span></span></li>
+        <li><span class="id">SP7</span><span>Working capital: overtrading, and the cash cycle in days <span class="cid">C2.09</span> <span class="why">The days count is not built yet. Summer depends on it.</span></span></li>
+        <li><span class="id">SP8</span><span>Expected value and ruin <span class="cid">C0.06</span></span></li>
+      </ul>Capstone: the three statements as one story <span class="cid">C1.08 C16.01</span>; claim → number → reason at the Court <span class="cid">C0.08</span>.</dd>
+      <dt>Previews</dt><dd>Demand and segments at Market Day, depreciation, sunk cost, negotiation walk-away, legal vs ethical vs smart, callable debt.</dd>
+      <dt>Finale</dt><dd>The Reeve's Court (built).</dd>
+      <dt>Cutscenes</dt><dd>The opening (built). New: Vane arrives (day 12). "It's only my name", Ashby's flashback (day 21). The night the pigs got in. Market Day opens. Crane reads the seal.</dd>
+      <dt>Living valley</dt><dd>Week 2: carts and new stalls. Week 3: a house goes up. Week 4: a new family, a sapling. Grey cloaks appear as Vane buys notes. Day 18: the Traveller and his cow. His tale is a far-off firm that grew itself broke. He mentions the King's purveyor is on the road.</dd>
+    </dl>
+  </article>
+
+  <article class="season">
+    <header><h3>Summer</h3><span class="q">Why does every buyer suddenly want 14 days?</span><span class="tag">28 days · design next</span></header>
+    <dl>
+      <dt>Answer</dt><dd>Vane lends to the buyers so they can pay the farmers late. He drains every farm's cash at once.</dd>
+      <dt>Forced yes</dt><dd>The King's purveyor takes 120 sacks at a fixed price. He pays with an Exchequer tally in 42 days. You cannot refuse the King. Every buyer now asks 14 days or more. <span class="tag">[Likely] Royal purveyance and tally sticks are real history; the tally could be sold at a discount.</span></dd>
+      <dt>Core ideas</dt><dd><ul class="core">
+        <li><span class="id">SU1</span><span>Finance the cash gap: sell the tally at a discount, borrow, ask Tomas for longer terms, or take a deposit. Compare the yearly cost of each. <span class="cid">C2.09 C5.01</span> <span class="why">Needs SP2, SP6, SP7.</span></span></li>
+        <li><span class="id">SU2</span><span>Price for terms: what 14 days is worth in coin; interests, your walk-away option, the bargaining range <span class="cid">C16.11 C16.12</span> <span class="why">Needs SP5, SP6.</span></span></li>
+        <li><span class="id">SU3</span><span>The hidden bill: Edric's water bill, two years unpaid, with interest. Record it and restate the books. <span class="cid">C1.06 C1.10</span> <span class="why">Needs SP1, SP2.</span></span></li>
+        <li><span class="id">SU4</span><span>Contribution per scarce resource: which order earns most per plot-day and per cart trip; the next sack, not the average <span class="cid">C2.03</span> <span class="why">Needs SP4.</span></span></li>
+        <li><span class="id">SU5</span><span>Demand and price: elasticity by customer type; cost and scale <span class="cid">C4.01–03</span> <span class="why">Needs SP3, SP4.</span></span></li>
+        <li><span class="id">SU6</span><span>Customers: the job they hire you for, segments, positioning. The chicken farm wants low-grade grain. The baker offers a banner on her shop. <span class="cid">C8.01–03</span> <span class="miss">draft</span> <span class="why">Needs SP3.</span></span></li>
+        <li><span class="id">SU7</span><span>Focus, sunk cost and a fair test: the shiny new crop. Try it on one plot with a pass line set in advance, or go all in. <span class="cid">C3.09 C7.01 C14.06</span> <span class="miss">C7.01 draft</span> <span class="why">Needs SP5, SP8.</span></span></li>
+        <li><span class="id">SU8</span><span>Legal, ethical, smart: the purveyor's clerk offers to pay faster for a "gift" (a bribe). The banner deal has a penalty clause. <span class="cid">C12.02 C12.09</span> + contracts <span class="miss">no session</span> <span class="why">Needs SP1.</span></span></li>
+      </ul></dd>
+      <dt>Set pieces</dt><dd><b>The banner deal:</b> deliver to the bakery every day; in return your name hangs on her shop. A contract, a capacity promise and a marketing gain in one. <b>The shiny crop:</b> plant it or not. If you refuse, Grisby takes it, and a cutscene shows his field overrun; he pays to clear it. <b>Jory joins</b> for the harvest push (light; full hiring is Autumn). <b>Midsummer bread fair:</b> sponsor it or not; a first look at what a customer costs to win.</dd>
+      <dt>Finale</dt><dd><b>The Purveyor's Tender.</b> A three-way negotiation at the Midsummer Fair: the King's purveyor, Vane's agent and you. You win on terms and evidence, not on the lowest price. You prepare it the way a case is prepared: decision, facts, options, recommendation <span class="cid">C0.07</span>.</dd>
+      <dt>Cutscenes</dt><dd>The King's messenger. The chicken farm opens. Grisby's ruined field. Vane's credit ring exposed.</dd>
+      <dt>Living valley</dt><dd>The chicken farm east of town. A second miller's cart. The Midsummer fair.</dd>
+      <dt>Previews</dt><dd>Interest rates rise late in summer. Insurance (a hail scare). Hiring.</dd>
+    </dl>
+  </article>
+
+  <article class="season">
+    <header><h3>Autumn</h3><span class="q">Someone is skimming the grain.</span><span class="tag">42 days · then</span></header>
+    <dl>
+      <dt>Answer</dt><dd>The cheapest hand you hired, if you hired him. Vane's seed shop paid him. You find it in the numbers, not by luck.</dd>
+      <dt>Forced yes</dt><dd>The harvest is too big for one person: you must hire. Vane buys the seed supply and raises prices. No more help on Spring ideas.</dd>
+      <dt>Core ideas</dt><dd><ul class="core">
+        <li><span class="id">AU1</span><span>Hiring and pay: three candidates; you can't see who is honest (hidden information). Pay more for better work, or pay per sack and watch quality fall (incentives backfire). What motivates Jory. <span class="cid">C4.09 C7.02 C7.05 C7.09 C2.08</span> <span class="miss">C7.02 draft</span> <span class="why">Needs SU4.</span></span></li>
+        <li><span class="id">AU2</span><span>Budgets: fixed budget vs one that flexes with volume <span class="cid">C2.05</span> <span class="why">Needs SP4.</span></span></li>
+        <li><span class="id">AU3</span><span>Variances: the gap between budget and actual that shows the skimming <span class="cid">C2.06</span> <span class="why">Needs AU2.</span></span></li>
+        <li><span class="id">AU4</span><span>Controls and fraud: counts, two signers, separate duties. Jory saw something: does he speak up, and do you listen? <span class="cid">C2.10 C12.04</span> <span class="why">Needs AU3.</span></span></li>
+        <li><span class="id">AU5</span><span>The grain store: repair now or later. Spend vs expense, depreciation, payback and net present value. Pay cash, borrow or lease. Plan the repair so it finishes before harvest (the critical path). <span class="cid">C1.05 C5.04 C9.04</span> <span class="why">Needs SP6, SU1.</span></span></li>
+        <li><span class="id">AU6</span><span>Insurance: pay a premium or carry the risk of fire and rats <span class="cid">C0.06 C5.06</span> <span class="why">Needs SP8.</span></span></li>
+        <li><span class="id">AU7</span><span>Supplier power: Vane's seed is dear. The next town's seed is cheaper, a day late, and fails 15% of the time. How much seed to stock when supply can fail (the newsvendor). <span class="cid">C10.01 C9.03</span> <span class="why">Needs SP8, SU5.</span></span></li>
+        <li><span class="id">AU8</span><span>Pivot and write-down: blight spoils grain. Write it down to what it will fetch. Sell it as chicken feed or fodder for the Traveller's cow. <span class="cid">C1.04 C8.01 C14.08</span> <span class="why">Needs SU6.</span></span></li>
+      </ul>Also: the harvest as a flow, where stock piles up in front of the slowest step <span class="cid">C9.01</span>.</dd>
+      <dt>Checkpoints</dt><dd>A short Assize every 7 days: 3 claims mixed from Spring, Summer and Autumn. A miss costs coin or trust, never the game. Crane checks every entry you post in week 1, and one in three by week 6. This prepares Winter.</dd>
+      <dt>Finale</dt><dd><b>The Harvest Inquest.</b> Find the skimmer from the variance report, the counts and the books. A deduction puzzle, after <i>Return of the Obra Dinn</i>.</dd>
+      <dt>Previews</dt><dd>Investing spare cash: Ashby wants a partner for a second oven.</dd>
+    </dl>
+  </article>
+
+  <article class="season">
+    <header><h3>Winter</h3><span class="q">Midwinter.</span><span class="tag">56 days · chapter finale</span></header>
+    <dl>
+      <dt>The squeeze</dt><dd>The fields are bare, so no crop income. Grain sits in store. Vane calls every note in the valley on the same morning.</dd>
+      <dt>Forced yes</dt><dd><b>You keep the books.</b> The game stops building your statements. Your decisions run on your own numbers; the world runs on the true ones. Crane counts the chest each week, so an error shows up within 7 days. A slip costs in proportion to its size. One slip never ends the game.</dd>
+      <dt>Core ideas</dt><dd><ul class="core">
+        <li><span class="id">WI1</span><span>Keep the books: post entries, build all three statements and your own cash model <span class="cid">C1.01–08 C0.04 C0.05</span> <span class="why">Needs all of Spring.</span></span></li>
+        <li><span class="id">WI2</span><span>The cost of carry: sell grain now, or hold it for the winter price against storage, rats and interest. Pay a traveller for news of the spring price, or not (the value of information). <span class="cid">C5.01 C9.03 C3.06</span> <span class="why">Needs AU5, AU6, AU7.</span></span></li>
+        <li><span class="id">WI3</span><span>Interest rates and inflation: the Crown's mint clips the coin and prices rise. Real vs stated return. <span class="cid">C11.02–03</span> <span class="why">Needs SP6, SU5.</span></span></li>
+        <li><span class="id">WI4</span><span>Read books as a lender does: ratios and red flags, in your books for Ezra and in Vane's polished offer <span class="cid">C1.09–10</span> <span class="why">Needs WI1.</span></span></li>
+        <li><span class="id">WI5</span><span>How much debt is safe for a farm with a bare winter <span class="cid">C6.03</span> <span class="why">Needs SU1, WI4.</span></span></li>
+        <li><span class="id">WI6</span><span>What a business is worth: future cash, not book value. Who gets paid first when notes are called. <span class="cid">C5.05 C16.03</span> + the waterfall <span class="miss">no session since the C6 rebuild</span> <span class="why">Needs SP1, SP6, AU5.</span></span></li>
+      </ul>Also: who wins and who loses at Midwinter (stakeholders) <span class="cid">C12.05</span>; your Assize submission is a one-page, answer-first memo <span class="cid">C13.01</span> <span class="miss">draft</span>.</dd>
+      <dt>Finale</dt><dd><b>Midwinter.</b> A crisis week: who gets paid first; save Hobb's mill and Ashby's bakery, or let Vane take them. Then the <b>Midwinter Assize</b> before the King's Exchequer. You present the books you kept, and your own errors are on the record.</dd>
+      <dt>Hook</dt><dd>Buy into the mill and the bakery, or watch Vane own them. Either way, Chapter 2 opens in the town.</dd>
+    </dl>
+  </article>
+</section>
+
+<section id="ideas">
+  <span class="folio">§5</span>
+  <h2>Where each of your ideas went</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Your idea</th><th>Where</th><th>Why there</th></tr></thead>
+    <tbody>
+      <tr><td>Forced to accept long terms; the King's order</td><td>Summer: the constraint and the finale</td><td>Needs Spring's cash-cycle days, which Spring must finish first</td></tr>
+      <tr><td>Micro and macroeconomics in S2</td><td>Micro in Summer. Macro in Winter.</td><td>Rates and inflation need demand and price first</td></tr>
+      <tr><td>Basics of marketing</td><td>Summer (SU6)</td><td>The return on marketing spend comes in Chapter 3</td></tr>
+      <tr><td>Business law and ethics</td><td>Summer (SU8)</td><td>The curriculum has no contracts session. Ask 5 covers it.</td></tr>
+      <tr><td>Water bill with interest; recalculate the books</td><td>Summer (SU3)</td><td>A hidden liability is the next layer of Spring's guarantee</td></tr>
+      <tr><td>Repair grain storage; finance and insurance</td><td>Autumn (AU5, AU6)</td><td>Needs present value (Spring) and financing (Summer)</td></tr>
+      <tr><td>Daily deliveries for a storefront banner</td><td>Summer set piece</td><td>Contract, capacity and marketing in one choice</td></tr>
+      <tr><td>Sponsor a bread-making event</td><td>Summer, optional</td><td>A first look at what a customer costs to win</td></tr>
+      <tr><td>Invest extra cash in another business</td><td>Autumn preview; Winter decision</td><td>Needs valuation (Winter). It becomes the bridge to Chapter 2.</td></tr>
+      <tr><td>Villain buys the seed supply; cheaper seed with a delay and 15% failure</td><td>Autumn (AU7)</td><td>Supplier power plus expected value with a failure rate</td></tr>
+      <tr><td>Hire a farm hand</td><td>Jory in Summer (light). The full choice in Autumn.</td><td>Hiring, controls and theft belong together</td></tr>
+      <tr><td>Pick candidates; the cheap one steals; find it in the statements</td><td>Autumn (AU1–AU4) and the Harvest Inquest</td><td>Needs budgets and variances, taught earlier in Autumn</td></tr>
+      <tr><td>Pivot: diseased grain sold as chicken feed or cow fodder</td><td>Autumn (AU8)</td><td>Needs Summer's chicken-farm customer</td></tr>
+      <tr><td>Focus: the shiny crop, pests or weeds, the counterfactual</td><td>Summer (SU7)</td><td>Replaces the planned second crop (flax). Grisby takes the bait if you don't.</td></tr>
+      <tr><td>Animated cutscenes</td><td>5 new in Spring; 3 to 5 per season after</td><td>Built on the opening's engine</td></tr>
+      <tr><td>A map that grows</td><td>Spring (week by week); Summer adds the chicken farm</td><td>Every change is information</td></tr>
+      <tr><td>A visitor with a cow who hints at the future</td><td>The Traveller, every season</td><td>His tales are real cases; spaced recall in a story</td></tr>
+      <tr><td>The villain scales with you</td><td>§1</td><td>His weapon is always the next course</td></tr>
+      <tr><td>2 or 4 seasons; size by learning load</td><td>§3: 4 seasons</td><td>About 45 sessions per chapter</td></tr>
+      <tr><td>S3 checkpoints; S4 you build the statements and live with errors</td><td>Autumn Assizes; Winter keeps its own books</td><td>Crane's checks fade through Autumn to prepare Winter</td></tr>
+      <tr><td>Map the material before fixing S1</td><td>§4 and §6</td><td>One dependency to fix in Spring: the cash-cycle days</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="later">
+  <span class="folio">§6</span>
+  <h2>Chapters 2 to 4: the curriculum map</h2>
+  <p>A rough map, so no later chapter leans on an idea it never taught. Each course's prerequisites are met by an earlier chapter. One exception is deliberate: C12.02 (legal, ethical, smart) appears in Chapter 1 although the C12 course lists strategy as a prerequisite. That one session does not need strategy.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Chapter</th><th>Courses and sessions</th><th>Signature play</th></tr></thead>
+    <tbody>
+      <tr><td><b>2 · The Town</b><br><span class="tag">41 sessions</span></td><td><span class="cid">C1.07</span> equity when partners buy in · <span class="cid">C2.04 C2.07</span> activity costing, transfer prices · <span class="cid">C3.01–05 C3.11</span> probability to regression (the almanac), the product-mix optimizer · <span class="cid">C4.04 C4.05 C4.07 C4.11</span> markets and tolls, monopoly, game theory, vertical integration · <span class="cid">C5.02 C5.10 C6.08</span> bonds, valuing a company · <span class="cid">C7.03 C7.04 C7.06–08</span> teams, leadership, conflict, group decisions, culture · <span class="cid">C8.04–06 C8.09</span> lifetime value, pricing, framing, promotion · <span class="cid">C9.02 C9.05 C9.06 C9.08</span> queues, quality, lean, forecasting · <span class="cid">C10.02 C10.03 C10.05 C10.06</span> capabilities, positioning, scope · <span class="cid">C12.01 C12.03 C12.08</span> frameworks, governance, reputation · <span class="cid">C13.02 C13.03</span> charts, slides (not written) · <span class="cid">C16.13 C16.14 C16.16</span> negotiation tactics, power, hard conversations</td><td>Buy the mill (diligence on Grisby's or Hobb's books). Run three houses with one purse. The mill line as a bottleneck. Price grain between your own houses. The Guild's monopoly.</td></tr>
+      <tr><td><b>3 · The Province</b><br><span class="tag">50 sessions</span></td><td><span class="cid">C3.07 C3.08 C3.10</span> simulation, A/B tests, integrated case · <span class="cid">C4.06 C4.08 C4.10</span> price discrimination, oligopoly, auctions and networks · <span class="cid">C5.03 C5.06–09</span> shares, risk, CAPM, cost of capital, efficient markets · <span class="cid">C6.01 C6.02 C6.04–07 C6.09 C6.10</span> capital structure, WACC and APV, payout, options, valuation capstones · <span class="cid">C7.10</span> leading people and agents · <span class="cid">C8.07 C8.08 C8.10</span> product design, growth, go-to-market · <span class="cid">C9.07 C9.09 C9.10</span> supply chain, service, operations strategy · <span class="cid">C10.04 C10.07–09</span> the strategy triangle, value creation, corporate strategy, metrics · <span class="cid">C12.07</span> ESG · <span class="cid">C13.04–07</span> speaking, listening (not written) · <span class="cid">C14 all but 06, 08</span> the founder's toolkit · <span class="cid">C15.01–05</span> the clockwork clerks (AI; 05 not written) · <span class="cid">C16.15 C16.17</span> value-creating deals, negotiation capstone</td><td>Open new markets. Travel times on the map are real lead times. Raise money from guild investors. Beat Vane's bank.</td></tr>
+      <tr><td><b>4 · The Kingdom</b><br><span class="tag">27 sessions</span></td><td><span class="cid">C11.01 C11.04–10</span> the realm's economy, the Mint, cycles, foreign coin, trade, crises (Iceland vs Canada, 2008), the macro memo · <span class="cid">C10.10</span> organizing for strategy · <span class="cid">C12.06 C12.10</span> regulation and lobbying, leading with values · <span class="cid">C13.08–10 C15.06–10</span> (not written) · <span class="cid">C16.02 C16.04–10</span> the Grand Audit (not written)</td><td>Balance the realm's books. Run the Mint. A foreign-coin crisis Vane built. The Grand Audit across every course.</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Curriculum readiness</b> (branch of 4 October): 154 of 177 sessions written; 58 strictly reviewed (C0, C1, C2, C5, C11, C12). The 23 unwritten sessions all sit in Chapters 2 to 4 (C13, C15, C16's capstone). Rule: build a scene only from a written session, and review it before the build.</p>
+</section>
+
+<section id="s1">
+  <span class="folio">§7</span>
+  <h2>Season 1: what changes</h2>
+  <p>In order. Item 1 is happening now. Items 2 to 9 wait for your yes.</p>
+  <ol>
+    <li><b>Done today: v0.4.6 is live.</b> Your iPad fixes, the fixed-cost and present-value lessons, practice tiers, and the critic's fixes. The Court is now 9 claims, pass 6, and a retake asks different claims.</li>
+    <li><b>Cut the load.</b> From about 30 ideas to the 8 core ideas and up to 6 previews. One "desk question" a day, skippable, in place of the standing order, the daily problem and the night question. Market Day ideas become previews.</li>
+    <li><b>Finish what Summer needs:</b> the cash-cycle days count (receivable, stock and payable days on your own books); one "who gets paid first" decision; four naming passes (sunk cost, anchoring, walk-away option, legal vs ethical vs smart).</li>
+    <li><b>Make Vane visible:</b> a "Vane's notes" card that counts the notes he buys; grey cloaks on the map; three favours that pay off at the Court (Hobb, Ashby, Crane); one night scene at the well.</li>
+    <li><b>Living valley, first version:</b> weekly map changes (§4); changes from your choices (Ashby's new sign if you helped her); the Traveller on day 18.</li>
+    <li><b>Five cutscenes</b> on the opening's engine: Vane arrives, "It's only my name", the pigs' night, Market Day opens, Crane reads the seal.</li>
+    <li><b>Hearts that unlock terms</b> (kept from the plan). Drop flax and the restoration board from Spring: flax becomes Summer's shiny crop; the board becomes Autumn's grain store.</li>
+    <li><b>Fill the iPad screen.</b> At 1194 × 834 the live game leaves a large empty band below and beside the play area. <span class="tag">[Likely] seen in a browser at iPad size; check on the device.</span></li>
+    <li><b>Prove it:</b> I play weeks 1 and 4 at iPad size; one new player plays the whole season with a timer; 3 days later they answer one question per core idea. Then tag Spring v1.0.</li>
+  </ol>
+</section>
+
+<section id="roadmap">
+  <span class="folio">§8</span>
+  <h2>Roadmap</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Phase</th><th>What</th><th>Gate before the next phase</th><th>Size</th></tr></thead>
+    <tbody>
+      <tr><td><b>0 · Now</b></td><td>Merge v0.4.6. Close stale PRs. <b>Done.</b></td><td>All tests pass on master</td><td class="num">done</td></tr>
+      <tr><td><b>1 · Spring final</b></td><td>§7 items 2 to 9</td><td>3 new players pass the Court. 6 of 8 core ideas held after 3 days.</td><td class="num">~1–2 weeks</td></tr>
+      <tr><td><b>2 · Foundation and season engine</b></td><td>The technical fixes in <a href="#tech">§11</a>: versioned saves that carry into the next season, save export and import, automatic tests on every PR, one version stamp, season settings as data, lessons and scenes as data, one cutscene engine, a map layer that changes by day and by choice, a starting difficulty per idea read from the transcript.</td><td>Spring runs on the engine with no change in behaviour; all tests pass in CI</td><td class="num">~2 weeks</td></tr>
+      <tr><td><b>3 · Summer</b></td><td>Curriculum first: review C4.01–03, C16.11–12; re-ground C7.01, C8.01–03; write a contracts session. Then a season design for your review, then the build.</td><td>Spring's gate, plus: Spring ideas used in Summer play with no help</td><td class="num">~2–3 weeks</td></tr>
+      <tr><td><b>4 · Autumn</b></td><td>Curriculum first: review C4.09, C7.02, C7.05, C7.09, C9.01, C9.03, C9.04, C10.01, C14.08.</td><td>The Inquest is solvable from the numbers alone</td><td class="num">~3 weeks</td></tr>
+      <tr><td><b>5 · Winter</b></td><td>Curriculum first: a waterfall session (claims order, EV to equity); review C3.06, C6.03, C16.03; re-ground C13.01. The kept-books system and Midwinter.</td><td>A full-year player passes the Midwinter Assize with books they kept</td><td class="num">~3–4 weeks</td></tr>
+      <tr><td><b>6 · Chapter 2 design</b></td><td>Resize Chapters 2 to 4 from Chapter 1's data</td><td>Your review</td><td class="num">—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="tag">Sizes are [Guessing], from Spring's pace with 2 builders and the cloud agent.</p>
+  <p><b>Process rule:</b> nothing reaches master without a critic pass and a creative-lead review. This week, eight PRs went live without one.</p>
+</section>
+
+<section id="review">
+  <span class="folio">§9</span>
+  <h2>Review of the game today</h2>
+  <h3>What works</h3>
+  <ul>
+    <li>One clear question pulls you in: a profitable farm, an empty chest.</li>
+    <li>The lesson is the plot. The villain's trap (a big order on slow terms) is the course's first lesson.</li>
+    <li>The Reeve's Court gives the season a real showdown, built from your own books.</li>
+    <li>Double-entry books under the hood: every statement ties out, so the numbers can be trusted.</li>
+    <li>Strong test coverage and bots that check balance (careful players survive; overtraders lose).</li>
+  </ul>
+  <h3>What holds it back</h3>
+  <ul>
+    <li><b>Too much at once.</b> About 30 ideas in 2 to 3 hours. Up to five prompts compete in one day.</li>
+    <li><b>Vane is mostly talked about.</b> He is on screen on days 12, 15, 24 and the end.</li>
+    <li><b>The world is still.</b> The village looks the same on day 28 as on day 1.</li>
+    <li><b>Lessons and story still alternate in places.</b> Where Maud sets a problem, the story stops.</li>
+    <li><b>The Court asked the same ten claims on a retake</b>, and its break-even figure ignored your real wage bill. One practice problem taught time value the wrong way round. All three are fixed in v0.4.6.</li>
+    <li><b>Lessons are code.</b> Each lesson is hand-written in the story file. Fifteen more seasons that way will not scale (phase 2).</li>
+    <li><b>Docs drift.</b> Old names and old curriculum maps remain in some files. Once you approve, this plan replaces the old curriculum map and creative plan, and I mark those files superseded.</li>
+  </ul>
+</section>
+
+<section id="risks">
+  <span class="folio">§10</span>
+  <h2>Risks</h2>
+  <ul>
+    <li><b>Build cost.</b> 16 seasons is large. Spring took about a week of heavy agent work. The season engine is the defence.</li>
+    <li><b>Overload creeps back.</b> Every season will want more than 8 ideas. The cap holds unless you lift it.</li>
+    <li><b>Winter's kept books could frustrate.</b> Weekly counts catch errors early; costs scale with the error; no single slip ends the game.</li>
+    <li><b>The curriculum moves.</b> 94 of 168 sessions are unwritten. Each season starts by asking for its sessions.</li>
+    <li><b>Cutscene fatigue.</b> Keep them short, skippable and useful.</li>
+    <li><b>What would change my mind on 4 seasons:</b> if new players hold Spring's ideas a week later with no review, later chapters can use 2 or 3 seasons.</li>
+  </ul>
+</section>
+
+<section id="tech">
+  <span class="folio">§11</span>
+  <h2>Technical foundation</h2>
+  <p>The core is sound. Under the hood every action posts to a true double-entry journal, so the statements always tie out. Tests check that, and bots check the balance. The problems are in what surrounds the core. The game was built for one 28-day season played on one device. Sixteen seasons over many weeks need a different footing. Fix these before Summer.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Problem</th><th>Why it matters</th><th>Fix</th><th>When</th></tr></thead>
+    <tbody>
+      <tr><td class="num">T1</td><td><b>Saves have no version and no migration.</b> The whole game is one saved blob. Finishing the season's last review, or restarting, deletes it <span class="tag">[Certain] game.js:822, 834</span>.</td><td>Summer cannot read Spring's flags (who you helped, Vane's offer) or carry your books forward. Any change to the save shape can break old saves.</td><td>A versioned save with migrations; a lasting player profile (transcript, flags, relationships, money carried) kept apart from the season save; a closed-season record that is never deleted; more than one slot.</td><td><span class="sev">before Summer</span></td></tr>
+      <tr><td class="num">T2</td><td><b>Saves live only in the browser.</b> Safari can delete a site's stored data after 7 days of use without a visit, unless the game is on the home screen <span class="tag">[Likely] WebKit storage policy, 2020</span>.</td><td>A game played over weeks can lose a whole season. A new iPad or a cleared browser loses everything.</td><td>Ask the browser to keep the data; prompt "Add to Home Screen" (the game already has the manifest); an export and import save code or file.</td><td><span class="sev">before Summer</span></td></tr>
+      <tr><td class="num">T3</td><td><b>No tests run automatically.</b> 25 node tests run only when an agent remembers. About 40 browser tests need a tool that is not installed <span class="tag">[Certain] no CI in the repo; the fix builder could not run them the normal way</span>.</td><td>This week eight PRs went live unreviewed, and the review found real lesson errors.</td><td>A free GitHub Actions check on every PR (node tests plus headless browser tests); no merge on red.</td><td><span class="sev">now</span></td></tr>
+      <tr><td class="num">T4</td><td><b>The version stamp is typed by hand</b> into 20+ script tags <span class="tag">[Certain]</span>.</td><td>One missed tag and Safari keeps an old script: the cause of earlier "fixed but not fixed" reports.</td><td>One version constant, a tool that stamps every tag, a test that fails on a mismatch.</td><td><span class="sev">now</span></td></tr>
+      <tr><td class="num">T5</td><td><b>The engine is Spring-only.</b> 28 days, a fixed price for each day, fixed event windows and the Duke's order are constants <span class="tag">[Certain] engine.js:8–47</span>.</td><td>Every replay has the same prices. A new season means editing the engine.</td><td>Season settings as data files; a market model (demand by customer type, already started in Market Day) in place of a fixed price list.</td><td><span class="sev m">season engine</span></td></tr>
+      <tr><td class="num">T6</td><td><b>Lessons, scenes and cutscenes are code.</b> The story file is 68 KB and the main game file 117 KB <span class="tag">[Certain]</span>.</td><td>Each new lesson is new code and a new risk. A curriculum correction means a code change.</td><td>Lessons and scenes as data records (lines, choices, numbers as formulas over the books, the curriculum id); one player for scenes and cutscenes.</td><td><span class="sev m">season engine</span></td></tr>
+      <tr><td class="num">T7</td><td><b>The map is drawn in code,</b> prop by prop <span class="tag">[Certain] game.js:840 on</span>.</td><td>A valley that changes by week and by choice is not possible without a rewrite each time.</td><td>A map layer of placed props, each with a "from day" and a "when flag" rule.</td><td><span class="sev m">season engine</span></td></tr>
+      <tr><td class="num">T8</td><td><b>No one hears from players.</b> "Report a problem" writes to the player's own device <span class="tag">[Likely] game.js:278</span>. The only learning data is your play.</td><td>The retention gates in the roadmap cannot be measured.</td><td>Now: a "copy my progress report" button (transcript plus bug notes) a tester pastes to us. Later, with outside players: a small free backend, which needs a sign-up you approve.</td><td><span class="sev m">with Spring v1.0</span></td></tr>
+      <tr><td class="num">T9</td><td><b>"Mastered" needs two real calendar dates.</b></td><td>A one-evening Spring can never show mastery, so the next season cannot use it to set difficulty.</td><td>Separate in-game credit (for difficulty) from the transcript's mastered level (for real retention).</td><td><span class="sev l">season engine</span></td></tr>
+      <tr><td class="num">T10</td><td><b>Clutter and drift:</b> test-result files and build shots in the repo root, a frozen copy of the game in the agent repo, the curriculum branch not merged into main.</td><td>Agents read stale material. I based the first draft of this plan on the stale main.</td><td>Move or delete with your approval; merge the curriculum branch.</td><td><span class="sev l">now</span></td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Database and backend:</b> keep the game static (GitHub Pages, no server, $0) for now. A backend adds cost, sign-ups and privacy duties. It earns its place only when other people play and we need their learning data. That becomes a decision for you at Spring v1.0.</p>
+</section>
+
+<section id="coverage">
+  <span class="folio">§12</span>
+  <h2>Curriculum coverage, session by session</h2>
+  <p>Read from the curriculum branch of 4 October (commit c4e4ea2) and its primer. I mapped every planned session to the season or chapter that teaches it to the bar. All 177 have a home; none is left out. A builder can read the same map as data: <span class="cid">projects/mba-game/curriculum-coverage.json</span>, rebuilt by <span class="cid">tools/coverage.py</span>.</p>
+  <p class="note"><b>What I had read before your question:</b> every module's session list and the two Season 1 audits, but not the sessions themselves, and on the stale main branch. This section is the first full map. The per-season content review (does each scene teach what the session's objectives say, correctly?) comes next, starting with Spring.</p>
+
+  <h3>The 16 competencies: where the game builds each one</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Competency (primer §2)</th><th>Chapter 1</th><th>Then</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Read and build the three statements</td><td>Spring (read); Winter (build your own)</td><td>Ch2 diligence on another firm's books</td></tr>
+      <tr><td>2 · Cost and break-even for a decision</td><td>Spring; Summer (scarce resources)</td><td>Ch2 activity costing</td></tr>
+      <tr><td>3 · Judgment under uncertainty</td><td>Spring (expected value); Winter (value of information)</td><td>Ch2 regression; Ch3 simulation, A/B tests</td></tr>
+      <tr><td>4 · Market and pricing analysis</td><td>Summer (demand, elasticity)</td><td>Ch2 monopoly, game theory; Ch3 price discrimination</td></tr>
+      <tr><td>5 · Valuation and capital allocation</td><td>Spring (present value); Autumn (NPV); Winter (worth vs book)</td><td>Ch2 valuing the mill; Ch3 cost of capital</td></tr>
+      <tr><td>6 · Capital structure and policy</td><td>Winter (safe debt)</td><td>Ch3 in full</td></tr>
+      <tr><td>7 · Operations design</td><td>Autumn (harvest flow, critical path, newsvendor)</td><td>Ch2 the mill line; Ch3 supply chain</td></tr>
+      <tr><td>8 · Strategy</td><td>Autumn (supplier power)</td><td>Ch2–4</td></tr>
+      <tr><td>9 · Customer and marketing analytics</td><td>Summer (jobs, segments, positioning)</td><td>Ch2 lifetime value; Ch3 go-to-market</td></tr>
+      <tr><td>10 · Leading people and teams</td><td>Autumn (hiring, pay, motivation)</td><td>Ch2 teams and culture</td></tr>
+      <tr><td>11 · Ethical and institutional judgment</td><td>Summer (the bribe); Autumn (speaking up); Winter (stakeholders)</td><td>Ch2 governance; Ch4 regulation</td></tr>
+      <tr><td>12 · Negotiation</td><td>Summer (the Tender)</td><td>Ch2 tactics and power; Ch3 capstone</td></tr>
+      <tr><td>13 · Entrepreneurial execution</td><td>Summer (a test with a pass line); Autumn (pivot)</td><td>Ch3 in full</td></tr>
+      <tr><td>14 · Data and AI for decisions</td><td>—</td><td>Ch3 the clockwork clerks; Ch4</td></tr>
+      <tr><td>15 · Macro and global context</td><td>Winter (rates, inflation)</td><td>Ch4 in full</td></tr>
+      <tr><td>16 · Integration</td><td>Winter (Midwinter)</td><td>Ch4 the Grand Audit</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The 14 backbone ideas: where each is first played</h3>
+  <p>Cash is not profit (SP2) · time value and opportunity cost (SP5, SP6) · think at the margin (SU4) · sunk costs (SU7) · incentives (AU1, piece rates) · risk and ruin (SP8, AU6) · unit economics (SP4, then Ch3) · constraints decide output (SU4, AU harvest flow) · evidence discipline (SU7's pass line) · strategy is choice (SU7, Ch2) · value creation vs capture (SU2, the banner trade) · the alternative sets your power (SP5, SU2, AU7) · predictable biases (SU7, the Court's claims) · answer first (the Court; Winter's memo).</p>
+
+  <h3>Problems in the curriculum itself</h3>
+  <ul>
+    <li><b>The curriculum branch is not in main.</b> Main holds 74 sessions; the branch holds 154. Any agent reading main sees an old course.</li>
+    <li><b>No session teaches contract law.</b> The primer says C12 covers "law for managers (contracts, liability, employment)"; no session file does. Summer's banner deal needs it.</li>
+    <li><b>The EV-to-equity waterfall lost its session.</b> The C6 README still says session 04 teaches it and gates the module on it; session 04 is now WACC and APV. This is your own recorded gap (3 of 10).</li>
+    <li><b>Chapter 1 leans on 6 generic drafts</b> (C7.01, C7.02, C8.01–03, C13.01) and 19 grounded but unreviewed sessions. Each needs a review before its season is built.</li>
+    <li><b>Stale plans inside READMEs:</b> C13 still plans negotiation as session 06 (now C16.11–17); C7's README lists the old session plan.</li>
+  </ul>
+
+  <h3>Every session and its home</h3>
+  <p class="tag">Status: reviewed = strict review passed · grounded, unreviewed = built from sources, numbers checked, no independent review · generic draft = written from general knowledge · not written.</p>
+<!--COVERAGE:START-->
+<div class="tbl"><table><thead><tr><th>Where</th><th class="r">Sessions</th><th class="r">Reviewed</th><th class="r">Grounded, unreviewed</th><th class="r">Generic draft</th><th class="r">Not written</th></tr></thead><tbody>
+<tr><td>Ch1 Spring</td><td class="r num">15</td><td class="r num">14</td><td class="r num">1</td><td class="r num">0</td><td class="r num">0</td></tr>
+<tr><td>Ch1 Summer</td><td class="r num">16</td><td class="r num">5</td><td class="r num">7</td><td class="r num">4</td><td class="r num">0</td></tr>
+<tr><td>Ch1 Autumn</td><td class="r num">16</td><td class="r num">7</td><td class="r num">8</td><td class="r num">1</td><td class="r num">0</td></tr>
+<tr><td>Ch1 Winter</td><td class="r num">12</td><td class="r num">8</td><td class="r num">3</td><td class="r num">1</td><td class="r num">0</td></tr>
+<tr><td>Ch2 The Town</td><td class="r num">41</td><td class="r num">8</td><td class="r num">30</td><td class="r num">1</td><td class="r num">2</td></tr>
+<tr><td>Ch3 The Province</td><td class="r num">50</td><td class="r num">6</td><td class="r num">39</td><td class="r num">0</td><td class="r num">5</td></tr>
+<tr><td>Ch4 The Kingdom</td><td class="r num">27</td><td class="r num">10</td><td class="r num">1</td><td class="r num">0</td><td class="r num">16</td></tr>
+<tr><td><b>All</b></td><td class="r num"><b>177</b></td><td class="r num">58</td><td class="r num">89</td><td class="r num">7</td><td class="r num">23</td></tr></tbody></table></div>
+<details><summary><b>Ch1 Spring</b> · 15 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C0.01</td><td>time value of money</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C0.02</td><td>percentages growth margins</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C0.03</td><td>algebra for business models</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C0.06</td><td>probability expected value</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C0.08</td><td>speaking and exam technique</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.01</td><td>accounting equation</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.02</td><td>accruals vs cash</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.03</td><td>revenue recognition</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.04</td><td>inventory and cogs</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.08</td><td>cash flow statement</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.01</td><td>cost behavior</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.02</td><td>cvp breakeven</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.09</td><td>working capital cash overtrading</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.01</td><td>time value of money</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C16.01</td><td>three statements one story</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch1 Summer</b> · 16 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C0.07</td><td>the case method</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.06</td><td>liabilities and leases</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.03</td><td>contribution margin mix</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C3.09</td><td>judgment and biases anchoring availability calibration</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.01</td><td>demand supply elasticity</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.02</td><td>elasticity applied</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.03</td><td>costs economies of scale</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.01</td><td>decision biases</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C8.01</td><td>jobs to be done</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C8.02</td><td>segmentation targeting</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C8.03</td><td>positioning</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C12.02</td><td>legal ethical smart</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.09</td><td>fraud bribery insider trading</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C14.06</td><td>the minimum viable product and testing your riskiest assumption</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C16.11</td><td>negotiation interests and the pie</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C16.12</td><td>preparing to negotiate interests power options and your alternative</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch1 Autumn</b> · 16 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C1.05</td><td>long lived assets depreciation</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.05</td><td>budgeting</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.06</td><td>variance analysis</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.08</td><td>performance incentives</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.10</td><td>internal controls fraud</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C4.09</td><td>asymmetric information adverse selection and moral hazard</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C5.04</td><td>npv and capital budgeting</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C7.02</td><td>motivation beyond money</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C7.05</td><td>motivation content and process theories</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.09</td><td>performance management rewards and talent</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.01</td><td>flow capacity and inventory buildup</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.03</td><td>inventory eoq and the newsvendor</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.04</td><td>projects and the critical path</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.01</td><td>industry structure five forces and the value chain</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C12.04</td><td>speaking up whistleblowing</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C14.08</td><td>when things go wrong missed plans pivot or kill</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch1 Winter</b> · 12 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C0.04</td><td>spreadsheet modelling i</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C0.05</td><td>spreadsheet modelling ii</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.09</td><td>ratio analysis</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C1.10</td><td>earnings quality red flags</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C3.06</td><td>decision trees expected value and the value of information</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C5.05</td><td>free cash flow</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C6.03</td><td>debt capacity leverage</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C11.02</td><td>money and interest rates</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.03</td><td>inflation tracking and drivers</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.05</td><td>stakeholders when interests conflict</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C13.01</td><td>one page memo answer first</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C16.03</td><td>valuing a decision and when the number lies</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch2 The Town</b> · 41 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C1.07</td><td>equity</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.04</td><td>activity based costing</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C2.07</td><td>transfer pricing</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C3.01</td><td>probability conditional</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.02</td><td>sampling confidence</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.03</td><td>hypothesis significance</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.04</td><td>regression building and reading a model</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.05</td><td>regression pitfalls confounding overfitting causation</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.11</td><td>linear optimization product mix and shadow prices</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.04</td><td>competitive markets market definition taxes and tariffs</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.05</td><td>monopoly pricing markup and the limits of market power</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.07</td><td>game theory simultaneous and sequential moves</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.11</td><td>vertical integration double marginalization and transfer pricing</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C5.02</td><td>bonds and yields</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.10</td><td>dcf vs multiples</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C6.08</td><td>valuing companies dcf terminal values eva and comparables</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.03</td><td>team design roles</td><td><span class="st g">generic draft</span></td></tr>
+<tr><td class="cid">C7.04</td><td>leadership power traits style and situation</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.06</td><td>teams that work purpose stages conflict and diversity</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.07</td><td>decisions biases fallacies and group decision making</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.08</td><td>culture and leading change</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.04</td><td>customer lifetime value and funnel analytics</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.05</td><td>pricing value break even channel and willingness to pay</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.06</td><td>consumer psychology framing context and choice</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.09</td><td>promotion allocation consideration sets and experiments</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.02</td><td>utilization queues and littles law</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.05</td><td>quality tqm and process capability</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.06</td><td>lean tps and constraints</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.08</td><td>forecasting and demand uncertainty</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.02</td><td>resources capabilities and the resource based view</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.03</td><td>the delta model three options eight positions</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.05</td><td>customer segmentation and the value proposition</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.06</td><td>mission scope and the strategic agenda the dmk case</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C12.01</td><td>ethical frameworks</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.03</td><td>governance limited liability fiduciary duty</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.08</td><td>reputation and crisis</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C13.02</td><td>Data storytelling</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.03</td><td>Slides</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.13</td><td>tactics concessions and the aggressive negotiator</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C16.14</td><td>power styles and coalitions</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C16.16</td><td>difficult conversations complaints apologies and fair process</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch3 The Province</b> · 50 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C3.07</td><td>combining risks portfolios and monte carlo simulation</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.08</td><td>ab testing design power peeking and deciding</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C3.10</td><td>integrated case should v10 launch a premium bundle</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.06</td><td>price discrimination two part tariffs and bundling</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.08</td><td>oligopoly cournot bertrand and cartels</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C4.10</td><td>auctions bidding and network externalities</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C5.03</td><td>stocks and ddm</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.06</td><td>risk and return</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.07</td><td>diversification and capm</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.08</td><td>cost of capital wacc</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C5.09</td><td>market efficiency</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C6.01</td><td>capital structure mm</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.02</td><td>why capital structure matters</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.04</td><td>wacc and apv valuing a project with debt</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.05</td><td>payout policy dividends repurchases and what they signal</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.06</td><td>financing wrap up growth trade off pecking order and agency</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.07</td><td>real options valuing flexibility</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.09</td><td>valuation capstone asteroid pictures fcf wacc apv and option</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C6.10</td><td>integrated practice apex drugs capital structure and growth</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C7.10</td><td>capstone leading a small team of people and agents</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.07</td><td>product design voice of the customer and conjoint</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.08</td><td>diffusion growth and the razors and blades ratio</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C8.10</td><td>go to market capstone the six steps and the profit check</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.07</td><td>supply chain sourcing and the bullwhip</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.09</td><td>service operations and planning systems</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C9.10</td><td>operations strategy and clockspeed</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.04</td><td>the triangle applied walmart dell capital one</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.07</td><td>value creation market to book spread and growth</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.08</td><td>corporate strategy ten tasks business units integration and portfolio</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C10.09</td><td>metrics aggregate scorecard granular and strategic funds</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C12.07</td><td>esg sustainability greenwashing</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C13.04</td><td>Speaking under pressure</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.05</td><td>Listening and tough questions</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.06</td><td>Negotiation (now taught in C16.11-17)</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.07</td><td>Difficult conversations</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C14.01</td><td>what kind of venture and first market</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.02</td><td>customer discovery listening not selling</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.03</td><td>beachhead market and bottoms up tam</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.04</td><td>business model ltv and coca</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.05</td><td>how customers buy decision units sales process and channel economics</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.07</td><td>the financial plan cash flow valuation and ownership</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.09</td><td>founders equity vesting and the first 30 days</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C14.10</td><td>the pitch and the ten minute business plan capstone</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C15.01</td><td>data models decisions value</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C15.02</td><td>errors thresholds and costs</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C15.03</td><td>will it work on new data</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C15.04</td><td>optimize the cost you care about</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C15.05</td><td>AI unit economics</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.15</td><td>creating value trades pareto and judging a deal</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C16.17</td><td>negotiation capstone a full plan and scorecard</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+</tbody></table></div></details>
+<details><summary><b>Ch4 The Kingdom</b> · 27 sessions</summary><div class="tbl"><table><thead><tr><th>Session</th><th>Title</th><th>Status</th></tr></thead><tbody>
+<tr><td class="cid">C10.10</td><td>organizing for strategy and the integrated capstone</td><td><span class="st v">grounded, unreviewed</span></td></tr>
+<tr><td class="cid">C11.01</td><td>gdp growth unemployment</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.04</td><td>central banks monetary policy</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.05</td><td>business cycle ad as</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.06</td><td>exchange rates currency risk</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.07</td><td>trade balance of payments</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.08</td><td>crises how imbalances become crises</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.09</td><td>country analysis</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C11.10</td><td>macro for your business memo</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.06</td><td>regulation compliance lobbying</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C12.10</td><td>leading with values</td><td><span class="st ok">reviewed</span></td></tr>
+<tr><td class="cid">C13.08</td><td>Storytelling</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.09</td><td>Cross-cultural communication</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C13.10</td><td>The pitch, the board report, the crisis</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C15.06</td><td>Failure modes: drift, feedback loops</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C15.07</td><td>Risk, bias and fairness</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C15.08</td><td>Automation and people</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C15.09</td><td>Data strategy and AI governance</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C15.10</td><td>Your AI project</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.02</td><td>Diagnosing an organization</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.04</td><td>Cross-functional trade-offs</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.05</td><td>Competitive strategy and systems</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.06</td><td>M&A valuation and integration</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.07</td><td>Profitability at scale</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.08</td><td>Global and emerging markets</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.09</td><td>Stakeholder communication and boards</td><td><span class="st miss">not written</span></td></tr>
+<tr><td class="cid">C16.10</td><td>Capstone decision under constraints</td><td><span class="st miss">not written</span></td></tr>
+</tbody></table></div></details>
+<!--COVERAGE:END-->
+</section>
+
+<footer>Sources: the game repo (code, CHANGELOG, STORY-BIBLE, the two Season 1 audits), the curriculum on branch claude/cool-babbage-ww225e at c4e4ea2 (MBA-CORE-PRIMER.md, the coverage assessment, every module's session list), your Google Doc "Ledger and Crown Ideas", the game design and creative plan files, and a critic review of the playtest-2 branch. Tags: [Certain] read in a file, [Likely] inferred, [Guessing] judgment.</footer>
+</div>
+</div>

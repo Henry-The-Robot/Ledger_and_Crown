@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-10-04.** All items below shipped in v0.4.2–v0.4.6. Builders now start at `docs/builders/README.md`
+> and work from their pack's `WORK-ORDER.md`. Kept for history only.
+
 # Work order for the next builder (cloud or local) — v0.4 → release (2026-10-03, creative lead)
 
 **Branch:** work on `integrate-s1` (the v0.4 candidate, PR #32). One feature branch per item off `integrate-s1`, PR **into

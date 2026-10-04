@@ -1,0 +1,1598 @@
+{
+ "ref": "c4e4ea2",
+ "sessions": [
+  {
+   "id": "C0.01",
+   "module": "C0",
+   "n": 1,
+   "title": "time value of money",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C0.02",
+   "module": "C0",
+   "n": 2,
+   "title": "percentages growth margins",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C0.03",
+   "module": "C0",
+   "n": 3,
+   "title": "algebra for business models",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C0.04",
+   "module": "C0",
+   "n": 4,
+   "title": "spreadsheet modelling i",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C0.05",
+   "module": "C0",
+   "n": 5,
+   "title": "spreadsheet modelling ii",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C0.06",
+   "module": "C0",
+   "n": 6,
+   "title": "probability expected value",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C0.07",
+   "module": "C0",
+   "n": 7,
+   "title": "the case method",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "R"
+  },
+  {
+   "id": "C0.08",
+   "module": "C0",
+   "n": 8,
+   "title": "speaking and exam technique",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.01",
+   "module": "C1",
+   "n": 1,
+   "title": "accounting equation",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.02",
+   "module": "C1",
+   "n": 2,
+   "title": "accruals vs cash",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.03",
+   "module": "C1",
+   "n": 3,
+   "title": "revenue recognition",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.04",
+   "module": "C1",
+   "n": 4,
+   "title": "inventory and cogs",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.05",
+   "module": "C1",
+   "n": 5,
+   "title": "long lived assets depreciation",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C1.06",
+   "module": "C1",
+   "n": 6,
+   "title": "liabilities and leases",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "R"
+  },
+  {
+   "id": "C1.07",
+   "module": "C1",
+   "n": 7,
+   "title": "equity",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C1.08",
+   "module": "C1",
+   "n": 8,
+   "title": "cash flow statement",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C1.09",
+   "module": "C1",
+   "n": 9,
+   "title": "ratio analysis",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C1.10",
+   "module": "C1",
+   "n": 10,
+   "title": "earnings quality red flags",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C2.01",
+   "module": "C2",
+   "n": 1,
+   "title": "cost behavior",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C2.02",
+   "module": "C2",
+   "n": 2,
+   "title": "cvp breakeven",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C2.03",
+   "module": "C2",
+   "n": 3,
+   "title": "contribution margin mix",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "R"
+  },
+  {
+   "id": "C2.04",
+   "module": "C2",
+   "n": 4,
+   "title": "activity based costing",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C2.05",
+   "module": "C2",
+   "n": 5,
+   "title": "budgeting",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C2.06",
+   "module": "C2",
+   "n": 6,
+   "title": "variance analysis",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C2.07",
+   "module": "C2",
+   "n": 7,
+   "title": "transfer pricing",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C2.08",
+   "module": "C2",
+   "n": 8,
+   "title": "performance incentives",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C2.09",
+   "module": "C2",
+   "n": 9,
+   "title": "working capital cash overtrading",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C2.10",
+   "module": "C2",
+   "n": 10,
+   "title": "internal controls fraud",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C3.01",
+   "module": "C3",
+   "n": 1,
+   "title": "probability conditional",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C3.02",
+   "module": "C3",
+   "n": 2,
+   "title": "sampling confidence",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C3.03",
+   "module": "C3",
+   "n": 3,
+   "title": "hypothesis significance",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C3.04",
+   "module": "C3",
+   "n": 4,
+   "title": "regression building and reading a model",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C3.05",
+   "module": "C3",
+   "n": 5,
+   "title": "regression pitfalls confounding overfitting causation",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C3.06",
+   "module": "C3",
+   "n": 6,
+   "title": "decision trees expected value and the value of information",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "V"
+  },
+  {
+   "id": "C3.07",
+   "module": "C3",
+   "n": 7,
+   "title": "combining risks portfolios and monte carlo simulation",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C3.08",
+   "module": "C3",
+   "n": 8,
+   "title": "ab testing design power peeking and deciding",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C3.09",
+   "module": "C3",
+   "n": 9,
+   "title": "judgment and biases anchoring availability calibration",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C3.10",
+   "module": "C3",
+   "n": 10,
+   "title": "integrated case should v10 launch a premium bundle",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C3.11",
+   "module": "C3",
+   "n": 11,
+   "title": "linear optimization product mix and shadow prices",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C4.01",
+   "module": "C4",
+   "n": 1,
+   "title": "demand supply elasticity",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C4.02",
+   "module": "C4",
+   "n": 2,
+   "title": "elasticity applied",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C4.03",
+   "module": "C4",
+   "n": 3,
+   "title": "costs economies of scale",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C4.04",
+   "module": "C4",
+   "n": 4,
+   "title": "competitive markets market definition taxes and tariffs",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C4.05",
+   "module": "C4",
+   "n": 5,
+   "title": "monopoly pricing markup and the limits of market power",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C4.06",
+   "module": "C4",
+   "n": 6,
+   "title": "price discrimination two part tariffs and bundling",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C4.07",
+   "module": "C4",
+   "n": 7,
+   "title": "game theory simultaneous and sequential moves",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C4.08",
+   "module": "C4",
+   "n": 8,
+   "title": "oligopoly cournot bertrand and cartels",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C4.09",
+   "module": "C4",
+   "n": 9,
+   "title": "asymmetric information adverse selection and moral hazard",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C4.10",
+   "module": "C4",
+   "n": 10,
+   "title": "auctions bidding and network externalities",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C4.11",
+   "module": "C4",
+   "n": 11,
+   "title": "vertical integration double marginalization and transfer pricing",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C5.01",
+   "module": "C5",
+   "n": 1,
+   "title": "time value of money",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "R"
+  },
+  {
+   "id": "C5.02",
+   "module": "C5",
+   "n": 2,
+   "title": "bonds and yields",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C5.03",
+   "module": "C5",
+   "n": 3,
+   "title": "stocks and ddm",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C5.04",
+   "module": "C5",
+   "n": 4,
+   "title": "npv and capital budgeting",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C5.05",
+   "module": "C5",
+   "n": 5,
+   "title": "free cash flow",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C5.06",
+   "module": "C5",
+   "n": 6,
+   "title": "risk and return",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C5.07",
+   "module": "C5",
+   "n": 7,
+   "title": "diversification and capm",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C5.08",
+   "module": "C5",
+   "n": 8,
+   "title": "cost of capital wacc",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C5.09",
+   "module": "C5",
+   "n": 9,
+   "title": "market efficiency",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C5.10",
+   "module": "C5",
+   "n": 10,
+   "title": "dcf vs multiples",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C6.01",
+   "module": "C6",
+   "n": 1,
+   "title": "capital structure mm",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.02",
+   "module": "C6",
+   "n": 2,
+   "title": "why capital structure matters",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.03",
+   "module": "C6",
+   "n": 3,
+   "title": "debt capacity leverage",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "V"
+  },
+  {
+   "id": "C6.04",
+   "module": "C6",
+   "n": 4,
+   "title": "wacc and apv valuing a project with debt",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.05",
+   "module": "C6",
+   "n": 5,
+   "title": "payout policy dividends repurchases and what they signal",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.06",
+   "module": "C6",
+   "n": 6,
+   "title": "financing wrap up growth trade off pecking order and agency",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.07",
+   "module": "C6",
+   "n": 7,
+   "title": "real options valuing flexibility",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.08",
+   "module": "C6",
+   "n": 8,
+   "title": "valuing companies dcf terminal values eva and comparables",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C6.09",
+   "module": "C6",
+   "n": 9,
+   "title": "valuation capstone asteroid pictures fcf wacc apv and option",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C6.10",
+   "module": "C6",
+   "n": 10,
+   "title": "integrated practice apex drugs capital structure and growth",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C7.01",
+   "module": "C7",
+   "n": 1,
+   "title": "decision biases",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "G"
+  },
+  {
+   "id": "C7.02",
+   "module": "C7",
+   "n": 2,
+   "title": "motivation beyond money",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "G"
+  },
+  {
+   "id": "C7.03",
+   "module": "C7",
+   "n": 3,
+   "title": "team design roles",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "G"
+  },
+  {
+   "id": "C7.04",
+   "module": "C7",
+   "n": 4,
+   "title": "leadership power traits style and situation",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C7.05",
+   "module": "C7",
+   "n": 5,
+   "title": "motivation content and process theories",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C7.06",
+   "module": "C7",
+   "n": 6,
+   "title": "teams that work purpose stages conflict and diversity",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C7.07",
+   "module": "C7",
+   "n": 7,
+   "title": "decisions biases fallacies and group decision making",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C7.08",
+   "module": "C7",
+   "n": 8,
+   "title": "culture and leading change",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C7.09",
+   "module": "C7",
+   "n": 9,
+   "title": "performance management rewards and talent",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C7.10",
+   "module": "C7",
+   "n": 10,
+   "title": "capstone leading a small team of people and agents",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C8.01",
+   "module": "C8",
+   "n": 1,
+   "title": "jobs to be done",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "G"
+  },
+  {
+   "id": "C8.02",
+   "module": "C8",
+   "n": 2,
+   "title": "segmentation targeting",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "G"
+  },
+  {
+   "id": "C8.03",
+   "module": "C8",
+   "n": 3,
+   "title": "positioning",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "G"
+  },
+  {
+   "id": "C8.04",
+   "module": "C8",
+   "n": 4,
+   "title": "customer lifetime value and funnel analytics",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C8.05",
+   "module": "C8",
+   "n": 5,
+   "title": "pricing value break even channel and willingness to pay",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C8.06",
+   "module": "C8",
+   "n": 6,
+   "title": "consumer psychology framing context and choice",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C8.07",
+   "module": "C8",
+   "n": 7,
+   "title": "product design voice of the customer and conjoint",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C8.08",
+   "module": "C8",
+   "n": 8,
+   "title": "diffusion growth and the razors and blades ratio",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C8.09",
+   "module": "C8",
+   "n": 9,
+   "title": "promotion allocation consideration sets and experiments",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C8.10",
+   "module": "C8",
+   "n": 10,
+   "title": "go to market capstone the six steps and the profit check",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C9.01",
+   "module": "C9",
+   "n": 1,
+   "title": "flow capacity and inventory buildup",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C9.02",
+   "module": "C9",
+   "n": 2,
+   "title": "utilization queues and littles law",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C9.03",
+   "module": "C9",
+   "n": 3,
+   "title": "inventory eoq and the newsvendor",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C9.04",
+   "module": "C9",
+   "n": 4,
+   "title": "projects and the critical path",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C9.05",
+   "module": "C9",
+   "n": 5,
+   "title": "quality tqm and process capability",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C9.06",
+   "module": "C9",
+   "n": 6,
+   "title": "lean tps and constraints",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C9.07",
+   "module": "C9",
+   "n": 7,
+   "title": "supply chain sourcing and the bullwhip",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C9.08",
+   "module": "C9",
+   "n": 8,
+   "title": "forecasting and demand uncertainty",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C9.09",
+   "module": "C9",
+   "n": 9,
+   "title": "service operations and planning systems",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C9.10",
+   "module": "C9",
+   "n": 10,
+   "title": "operations strategy and clockspeed",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C10.01",
+   "module": "C10",
+   "n": 1,
+   "title": "industry structure five forces and the value chain",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C10.02",
+   "module": "C10",
+   "n": 2,
+   "title": "resources capabilities and the resource based view",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C10.03",
+   "module": "C10",
+   "n": 3,
+   "title": "the delta model three options eight positions",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C10.04",
+   "module": "C10",
+   "n": 4,
+   "title": "the triangle applied walmart dell capital one",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C10.05",
+   "module": "C10",
+   "n": 5,
+   "title": "customer segmentation and the value proposition",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C10.06",
+   "module": "C10",
+   "n": 6,
+   "title": "mission scope and the strategic agenda the dmk case",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C10.07",
+   "module": "C10",
+   "n": 7,
+   "title": "value creation market to book spread and growth",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C10.08",
+   "module": "C10",
+   "n": 8,
+   "title": "corporate strategy ten tasks business units integration and portfolio",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C10.09",
+   "module": "C10",
+   "n": 9,
+   "title": "metrics aggregate scorecard granular and strategic funds",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C10.10",
+   "module": "C10",
+   "n": 10,
+   "title": "organizing for strategy and the integrated capstone",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "V"
+  },
+  {
+   "id": "C11.01",
+   "module": "C11",
+   "n": 1,
+   "title": "gdp growth unemployment",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.02",
+   "module": "C11",
+   "n": 2,
+   "title": "money and interest rates",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C11.03",
+   "module": "C11",
+   "n": 3,
+   "title": "inflation tracking and drivers",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C11.04",
+   "module": "C11",
+   "n": 4,
+   "title": "central banks monetary policy",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.05",
+   "module": "C11",
+   "n": 5,
+   "title": "business cycle ad as",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.06",
+   "module": "C11",
+   "n": 6,
+   "title": "exchange rates currency risk",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.07",
+   "module": "C11",
+   "n": 7,
+   "title": "trade balance of payments",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.08",
+   "module": "C11",
+   "n": 8,
+   "title": "crises how imbalances become crises",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.09",
+   "module": "C11",
+   "n": 9,
+   "title": "country analysis",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C11.10",
+   "module": "C11",
+   "n": 10,
+   "title": "macro for your business memo",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C12.01",
+   "module": "C12",
+   "n": 1,
+   "title": "ethical frameworks",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C12.02",
+   "module": "C12",
+   "n": 2,
+   "title": "legal ethical smart",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "R"
+  },
+  {
+   "id": "C12.03",
+   "module": "C12",
+   "n": 3,
+   "title": "governance limited liability fiduciary duty",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C12.04",
+   "module": "C12",
+   "n": 4,
+   "title": "speaking up whistleblowing",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "R"
+  },
+  {
+   "id": "C12.05",
+   "module": "C12",
+   "n": 5,
+   "title": "stakeholders when interests conflict",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "R"
+  },
+  {
+   "id": "C12.06",
+   "module": "C12",
+   "n": 6,
+   "title": "regulation compliance lobbying",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C12.07",
+   "module": "C12",
+   "n": 7,
+   "title": "esg sustainability greenwashing",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "R"
+  },
+  {
+   "id": "C12.08",
+   "module": "C12",
+   "n": 8,
+   "title": "reputation and crisis",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "R"
+  },
+  {
+   "id": "C12.09",
+   "module": "C12",
+   "n": 9,
+   "title": "fraud bribery insider trading",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "R"
+  },
+  {
+   "id": "C12.10",
+   "module": "C12",
+   "n": 10,
+   "title": "leading with values",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "R"
+  },
+  {
+   "id": "C13.01",
+   "module": "C13",
+   "n": 1,
+   "title": "one page memo answer first",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "G"
+  },
+  {
+   "id": "C13.02",
+   "module": "C13",
+   "n": 2,
+   "title": "Data storytelling",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.03",
+   "module": "C13",
+   "n": 3,
+   "title": "Slides",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.04",
+   "module": "C13",
+   "n": 4,
+   "title": "Speaking under pressure",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.05",
+   "module": "C13",
+   "n": 5,
+   "title": "Listening and tough questions",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.06",
+   "module": "C13",
+   "n": 6,
+   "title": "Negotiation (now taught in C16.11-17)",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.07",
+   "module": "C13",
+   "n": 7,
+   "title": "Difficult conversations",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.08",
+   "module": "C13",
+   "n": 8,
+   "title": "Storytelling",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.09",
+   "module": "C13",
+   "n": 9,
+   "title": "Cross-cultural communication",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C13.10",
+   "module": "C13",
+   "n": 10,
+   "title": "The pitch, the board report, the crisis",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C14.01",
+   "module": "C14",
+   "n": 1,
+   "title": "what kind of venture and first market",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.02",
+   "module": "C14",
+   "n": 2,
+   "title": "customer discovery listening not selling",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.03",
+   "module": "C14",
+   "n": 3,
+   "title": "beachhead market and bottoms up tam",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.04",
+   "module": "C14",
+   "n": 4,
+   "title": "business model ltv and coca",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.05",
+   "module": "C14",
+   "n": 5,
+   "title": "how customers buy decision units sales process and channel economics",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.06",
+   "module": "C14",
+   "n": 6,
+   "title": "the minimum viable product and testing your riskiest assumption",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C14.07",
+   "module": "C14",
+   "n": 7,
+   "title": "the financial plan cash flow valuation and ownership",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.08",
+   "module": "C14",
+   "n": 8,
+   "title": "when things go wrong missed plans pivot or kill",
+   "home": "1AU",
+   "season": "Ch1 Autumn",
+   "trust": "V"
+  },
+  {
+   "id": "C14.09",
+   "module": "C14",
+   "n": 9,
+   "title": "founders equity vesting and the first 30 days",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C14.10",
+   "module": "C14",
+   "n": 10,
+   "title": "the pitch and the ten minute business plan capstone",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C15.01",
+   "module": "C15",
+   "n": 1,
+   "title": "data models decisions value",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C15.02",
+   "module": "C15",
+   "n": 2,
+   "title": "errors thresholds and costs",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C15.03",
+   "module": "C15",
+   "n": 3,
+   "title": "will it work on new data",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C15.04",
+   "module": "C15",
+   "n": 4,
+   "title": "optimize the cost you care about",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C15.05",
+   "module": "C15",
+   "n": 5,
+   "title": "AI unit economics",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "missing"
+  },
+  {
+   "id": "C15.06",
+   "module": "C15",
+   "n": 6,
+   "title": "Failure modes: drift, feedback loops",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C15.07",
+   "module": "C15",
+   "n": 7,
+   "title": "Risk, bias and fairness",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C15.08",
+   "module": "C15",
+   "n": 8,
+   "title": "Automation and people",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C15.09",
+   "module": "C15",
+   "n": 9,
+   "title": "Data strategy and AI governance",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C15.10",
+   "module": "C15",
+   "n": 10,
+   "title": "Your AI project",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.01",
+   "module": "C16",
+   "n": 1,
+   "title": "three statements one story",
+   "home": "1SP",
+   "season": "Ch1 Spring",
+   "trust": "V"
+  },
+  {
+   "id": "C16.02",
+   "module": "C16",
+   "n": 2,
+   "title": "Diagnosing an organization",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.03",
+   "module": "C16",
+   "n": 3,
+   "title": "valuing a decision and when the number lies",
+   "home": "1WI",
+   "season": "Ch1 Winter",
+   "trust": "V"
+  },
+  {
+   "id": "C16.04",
+   "module": "C16",
+   "n": 4,
+   "title": "Cross-functional trade-offs",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.05",
+   "module": "C16",
+   "n": 5,
+   "title": "Competitive strategy and systems",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.06",
+   "module": "C16",
+   "n": 6,
+   "title": "M&A valuation and integration",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.07",
+   "module": "C16",
+   "n": 7,
+   "title": "Profitability at scale",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.08",
+   "module": "C16",
+   "n": 8,
+   "title": "Global and emerging markets",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.09",
+   "module": "C16",
+   "n": 9,
+   "title": "Stakeholder communication and boards",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.10",
+   "module": "C16",
+   "n": 10,
+   "title": "Capstone decision under constraints",
+   "home": "4",
+   "season": "Ch4 The Kingdom",
+   "trust": "missing"
+  },
+  {
+   "id": "C16.11",
+   "module": "C16",
+   "n": 11,
+   "title": "negotiation interests and the pie",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C16.12",
+   "module": "C16",
+   "n": 12,
+   "title": "preparing to negotiate interests power options and your alternative",
+   "home": "1SU",
+   "season": "Ch1 Summer",
+   "trust": "V"
+  },
+  {
+   "id": "C16.13",
+   "module": "C16",
+   "n": 13,
+   "title": "tactics concessions and the aggressive negotiator",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C16.14",
+   "module": "C16",
+   "n": 14,
+   "title": "power styles and coalitions",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C16.15",
+   "module": "C16",
+   "n": 15,
+   "title": "creating value trades pareto and judging a deal",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  },
+  {
+   "id": "C16.16",
+   "module": "C16",
+   "n": 16,
+   "title": "difficult conversations complaints apologies and fair process",
+   "home": "2",
+   "season": "Ch2 The Town",
+   "trust": "V"
+  },
+  {
+   "id": "C16.17",
+   "module": "C16",
+   "n": 17,
+   "title": "negotiation capstone a full plan and scorecard",
+   "home": "3",
+   "season": "Ch3 The Province",
+   "trust": "V"
+  }
+ ]
+}
