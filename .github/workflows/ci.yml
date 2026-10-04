@@ -1,0 +1,28 @@
+# CI: every PR and every push to master runs the node tests and every browser test page.
+# Required check name: "tests". (The creative lead makes it required in the repo's branch protection.)
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Node tests
+        run: node tests/run-all.js
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Browser tests (every tests/*.html page, real-time Chromium)
+        run: node tests/run-html.js --all 90000

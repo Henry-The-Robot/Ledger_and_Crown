@@ -7,6 +7,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
   const f = document.createElement("iframe"); f.style.width = "1180px"; f.style.height = "800px"; f.src = "../game.html?sandbox&new=1"; document.body.appendChild(f); await new Promise(r => f.onload = r); await sleep(400);
   const w = f.contentWindow, d = w.document, G = w.G, s = G.s, S = w.Spring, errs = []; w.addEventListener("error", e => errs.push(e.message)); G.closeDlg(); G.hidePanel();
   const btns = () => [...d.querySelectorAll("#dlg .ch button")].filter(b => b.offsetParent), click = re => { const b = btns().find(x => re.test(x.textContent)); if (!b) throw new Error("no button " + re + " in " + btns().map(x => x.textContent)); b.click(); };
+  // this page covers the numeric path: hide the decision (choice) problems so today's problem is always a number (the choice path is covered in week4.html and test-practice.js)
+  w.Practice.BANK.forEach(b => { const m = b.make; b.make = (st, tier) => { const q = m(st, tier); return q && q.choices ? null : q; }; });
   while (s.day < 4) S.sleep(s); G.hud();
   G.talk("maud"); await sleep(60); out.push(`Maud offers today's problem: ${btns().some(b => /Maud's problem/.test(b.textContent))}`);
   click(/Maud's problem/); await sleep(80); click(/No stake/); await sleep(80); // the optional wager comes first (standing-ui.html covers it)

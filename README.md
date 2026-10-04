@@ -1,5 +1,7 @@
 # Ledger & Crown — Spring at Thornfield (beta)
 
+[![ci](https://github.com/Henry-The-Robot/thornfield-beta/actions/workflows/ci.yml/badge.svg)](https://github.com/Henry-The-Robot/thornfield-beta/actions/workflows/ci.yml)
+
 A story game that teaches real business numbers (profit vs. cash, the three financial statements,
 working capital) by running a small farm. Uncle Edric made a profit every year and still died
 broke — you find out why, before the Crown takes the farm at Midwinter. Maud the reeve mentors you
