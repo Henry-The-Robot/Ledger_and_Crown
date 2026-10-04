@@ -162,11 +162,17 @@
       FX.sfx("open"); if (!fast && !q.has("auto")) FX.type(d.querySelector(".tx"), undefined, i => FX.blip(who, i));
     });
   }
+  // On touch the page never scrolls: if iOS moves it anyway (a focused field, the keyboard, a rotation), put it back so taps land where the map is drawn.
+  // Pin only for the number pad's own box (#num): it is the active element, or it is on screen and no other field has focus (it blurs itself on touch). The farm-name box, the forecast
+  // cells and the break-even box are real inputs: while one has focus the page must be free to scroll above the iOS keyboard.
+  const pinPage = () => { const a = document.activeElement, other = a && a.id !== "num" && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); return !other && (!!(a && a.id === "num") || !!$("num")); };
+  if (TOUCH) { const home = () => { if ((window.scrollY || window.scrollX) && pinPage()) window.scrollTo(0, 0); }; window.addEventListener("scroll", home, { passive: true }); if (window.visualViewport) visualViewport.addEventListener("scroll", home); document.addEventListener("focusout", () => setTimeout(home, 50)); }
   // On-screen number pad (0-9, minus, backspace, Check) for the ask and haggle boxes: mouse and touch alike (WS2).
   // On touch the input is inputmode=none, so the iOS keyboard never opens over the dialog. Pad keys sit after the choices in the DOM.
   function numberPad(d, first) {
     const inp = $("num"), np = document.createElement("div"); np.className = "np"; np.setAttribute("aria-label", "Number pad");
-    if (TOUCH) inp.setAttribute("inputmode", "none");
+    // On touch the pad types, so the field is read-only and never takes focus: a focused field makes iOS scroll the whole page up to "reveal" it, which shifted the dialog and the map (playtest 2026-10-03).
+    if (TOUCH) { inp.setAttribute("inputmode", "none"); inp.readOnly = true; inp.addEventListener("focus", () => { inp.blur(); window.scrollTo(0, 0); }); }
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "−", "0", "⌫"].forEach(k => { const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.tabIndex = -1; b.dataset.k = k;
       b.setAttribute("aria-label", k === "−" ? "Minus sign" : k === "⌫" ? "Backspace" : k);
       b.addEventListener("pointerdown", e => e.preventDefault()); // keep focus where it is
@@ -276,8 +282,8 @@
   }
   // Stall detector: the story is waiting but nothing is on screen for 4 s -> point the player to the menu.
   setInterval(() => {
-    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court"); // the ending card, the week card and the Court are screens too
-    stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Open the menu (☰, top right) to restart the day.");
+    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court, #mkt, #intro"); // the ending card, the week card, the Court, Market Day and the intro are screens too
+    stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Freeing the map in a moment; the menu (☰) can also restart the day."); if (stall.t === 7 && Story.unstick()) toast("Freed. You can play on.");
   }, 1000);
   const stall = {};
   (function () { const pb = document.createElement("button"); pb.id = "menubtn"; pb.className = "btn alt"; pb.textContent = "☰ Menu";
@@ -330,8 +336,8 @@
       if (k >= mine.length) return; o = mine[k];
     }
     if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
-    if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
-    return chat(who);
+    // an open order is a reminder on top of the usual conversation (it used to replace it, so you couldn't ask or deal while one was open)
+    return chat(who, open ? `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}: put them in your shipping crate.` : "");
   }
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
   function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability (WS6: named unearned revenue, C1.01/C1.03)
@@ -475,6 +481,7 @@
       ["Is a sprinkler worth it?", sprinklerAdvice],
       ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
       ["Ask Tomas about…", () => chat("tomas")],
+      ...(s.bills.length > 1 ? s.bills.slice().sort((a, b) => a.due - b.due).map(b => { const d = S.discNow(s, b), amt = b.amount - d; return [`Pay only the bill due day ${b.due}: ${amt}${d ? ` (${d} off)` : ""}`, () => commit(c => S.payOneBill(c, b.id), r => say("tomas", r.ok ? "Paid that one. The other stands." : r.msg)), s.bal.cash < amt]; }) : []),
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => commit(c => S.payBills(c), r => say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg)), !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -518,22 +525,28 @@
     if (!p) return say(T, "Nothing worth asking today. Your books are quiet.");
     const stake = await wagerStake(TR.name(p.concept)); // optional: a few coins on your first answer, never a gate
     window.__walked = false; window.__tries = 0; let right = true, tries = 0;
-    if (cmp || p.choices) { const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
+    if (cmp || p.choices) { window.__want = p.answer; const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
     else { await ask(T, p.text, p.answer, p.hints, null, p.tol, (p.docs || []).map(d => d === "ledger" ? { label: "Open the Ledger", open: ledger } : { label: "Open the cash forecast", open: () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }) }), p.work); right = !window.__walked; tries = window.__tries; }
     if (stake) { if (right && tries === 0) { act(() => S.wagerWin(s, stake, "Practice wager")); FX.sfx("coin"); toast(`First answer right: you win ${stake}.`); } else toast(`Maud keeps your ${stake}.`); }
+    // self-explanation: after a first-try right answer, one "why" (a choice), so the idea is said as well as done
+    if (right && tries === 0 && p.why) { const k = s.day % p.why.opts.length, ord = p.why.opts.map((_, i) => (i + k) % p.why.opts.length), w = await dlg({ who: T, text: `Right. ${p.why.q}`, choices: ord.map(i => p.why.opts[i]) }); if (ord[w.i] === p.why.right) { TR.master(p.concept, s.day); toast("That's the reason."); } else await sayP(T, `Close, but no: ${p.why.opts[p.why.right]}.`, ["I see"]); }
     const q = Practice.record(s, p, right, !right);
     if (right) { TR.master(p.concept, s.day); FX.sfx("good"); if (s.trust[T] != null && q.favour % 2 === 0 && s.trust[T] < 10) s.trust[T]++; toast(q.streak > 1 ? `${q.streak} days running ★` : T === "ezra" ? "Ezra inclines his head." : "Maud nods."); }
     else toast("We'll come back to this one.");
     hud(); save(); drainUses();
   }
   // ---------- people: a line from them, then "Ask about..." (some answers are locked until they trust you) ----------
-  async function chat(who) {
-    s.heard = s.heard || {}; const tp = Cast.topics(who, s), locked = Cast.locked(who, s);
-    const k = await sayP(who, Cast.greet(who, s), tp.map(t => t.label + (t.heard ? " (again)" : "")).concat(["Leave"]));
-    if (k >= tp.length) return; const t = tp[k], key = who + ":" + t.id;
+  // A conversation: what they will tell you (each topic once: after you've asked it, it goes away), and any deal they have for you today. A buyer says plainly when they aren't buying.
+  async function chat(who, note) {
+    s.heard = s.heard || {}; const tp = Cast.topics(who, s).filter(t => !t.heard), locked = Cast.locked(who, s);
+    const deals = soOk() ? Standing.today(s).filter(o => o.who === who) : [], buyer = ["ashby", "hobb", "mira"].indexOf(who) >= 0, buying = deals.length || s.offers.some(o => o.who === who);
+    const label = o => `Deal: ${o.sacks} sacks at ${o.price}${o.terms ? `, paid ${o.terms} days after` : ", Cash"}`;
+    const k = await sayP(who, Cast.greet(who, s) + (note ? `<br><i>${note}</i>` : "") + (buyer && !buying && !note ? `<br><i>${shortWho(who)} isn't buying today.</i>` : ""), tp.map(t => t.label).concat(deals.map(label), ["Leave"]));
+    if (k >= tp.length + deals.length) return; if (k >= tp.length) return standingOrder(deals[k - tp.length]);
+    const t = tp[k], key = who + ":" + t.id;
     for (const ln of t.lines) await sayP(who, ln, ["Next"]);
     if (!s.heard[key]) { s.heard[key] = s.day; if (s.trust[who] != null && s.trust[who] < 10) { s.trust[who]++; toast(`${Cast.name(who).split(",")[0]} trusts you a little more ♥`); FX.sfx("good"); } }
-    if (locked && !tp.some(x => !x.heard) ) toast("There's more they'd say, with time."); return chat(who);
+    if (locked && !tp.some(x => x !== t)) toast("There's more they'd say, with time."); return chat(who, note);
   }
   async function runScene(sc) { // an optional village scene: marked done first (a reload mid-scene never replays it), then played
     s.scenes[sc.id] = s.day; s.flags = s.flags || {};
@@ -610,14 +623,16 @@
   let guess = null; // a prediction the player made before sleeping, revealed with the morning's real number
   async function sleepNow() {
     const f = S.forecast(s, 1)[0];
-    if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9)) { atDesk = false;
+    // the nightly "what will Cash be?" is a drill, not a ritual: skip it once the player has it right twice running or has waved it away twice, and ask only every third day otherwise
+    const nq = s.nightQ = s.nightQ || { right: 0, skips: 0, last: -9 };
+    if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9) && nq.right < 2 && nq.skips < 2 && s.day - nq.last >= 3) { atDesk = false; nq.last = s.day;
       const bits = [f.cin ? `${f.cin} comes in (invoices due)` : "", f.wages ? `${f.wages} of wages and interest goes out` : "", f.bills ? `${f.bills} of Tomas's bills goes out` : "", f.fines ? `${f.fines} of forfeits goes out` : ""].filter(Boolean).join("; ");
       const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}, and Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
-      guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; }
+      guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; if (!guess) nq.skips++; }
     doSleep();
   }
   function revealPrediction() {
-    if (!guess) return; const g = guess, right = g.v === s.bal.cash; guess = null;
+    if (!guess) return; const g = guess, right = g.v === s.bal.cash; guess = null; const nq = s.nightQ || (s.nightQ = { right: 0, skips: 0, last: -9 }); nq.right = right ? nq.right + 1 : 0;
     TR.use("wc", right, s.day - 1);
     say("maud", right ? `Right: ${s.bal.cash}. You read the night correctly.` : `You said ${g.v}; Cash is ${s.bal.cash}.<br>${g.before} + ${g.f.cin} collected − ${g.f.wages} wages and interest − ${g.f.bills} bills${g.f.fines ? ` − ${g.f.fines} forfeits` : ""} = ${g.f.close}${g.f.close !== s.bal.cash ? ", plus whatever else happened overnight" : ""}. Start from today's Cash, add what comes in, take away what goes out.`);
   }

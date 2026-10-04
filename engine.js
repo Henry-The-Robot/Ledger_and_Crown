@@ -235,6 +235,12 @@
     const amt = sum(open.map(b => b.amount - discNow(s, b))); if (s.bal.cash < amt) return err(`You owe ${amt}; Cash is ${s.bal.cash}.`);
     open.forEach(b => payBill(s, b, true)); return ok();
   }
+  // paying one of Tomas's bills by itself (playtest: with two on account the only choice was to pay both)
+  function payOneBill(s, id) {
+    const b = s.bills.find(x => x.id === id); if (!b) return err("That bill is already paid.");
+    const amt = b.amount - discNow(s, b); if (s.bal.cash < amt) return err(`That bill is ${amt}; Cash is ${s.bal.cash}.`);
+    payBill(s, b, true); return ok();
+  }
   function payBill(s, b, early) {
     const d = early ? discNow(s, b) : 0; // a purchase discount: booked against Cost of goods sold (inventory stays at standard cost)
     if (d) post(s, "payap", `Paid Tomas's bill of ${b.amount} early: ${d} discount`, { ap: b.amount, cash: -(b.amount - d), cogs: -d });
@@ -465,6 +471,6 @@
   }
 
   root.Spring = { R, roll, eventsFor, eventDay, pellDays, pedlarDays, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, payOneBill, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

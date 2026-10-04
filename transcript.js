@@ -69,6 +69,10 @@
       `<p class="hint">Introduced: you've met it. Practiced: right on your own on 2 different days. Mastered: right on your own on 3 different days, at least once by explaining it, across at least 2 real days. Ideas come back in later seasons so you can master them.</p>` +
       `<div class="courses">${COURSES.map(row).join("")}</div><div class="diploma">&#128274; Diploma: sealed until the Grand Audit</div>`;
   }
-  root.Transcript = { COURSES, CONCEPTS, use, master, evidence, state, name, progress, reset, html, level };
+  // The Season 1 core (audit 2026-10-04): the eight ideas the season must prove and Summer builds on. Everything else in CONCEPTS is a preview Summer teaches properly.
+  // `equation` stands for claims (assets, liabilities, equity, the guarantee), `accrual` for profit vs Cash, `wc` and `overtrading` for working capital.
+  const CORE = ["equation", "accrual", "margin", "breakeven", "opportunity", "tvm", "wc", "ev"];
+  const core = () => CORE.map(id => ({ id, name: name(id), level: state(id) }));
+  root.Transcript = { COURSES, CONCEPTS, CORE, core, use, master, evidence, state, name, progress, reset, html, level };
   if (typeof module !== "undefined") module.exports = root.Transcript;
 })(typeof window !== "undefined" ? window : globalThis);

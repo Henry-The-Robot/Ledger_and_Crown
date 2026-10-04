@@ -50,3 +50,5 @@ body.in-court{overflow:hidden}
 @media (max-width:700px){.ct-hall{padding:var(--sp2)}.ct-say p.ct-claim{font-size:18px}.ct-flash{font-size:40px}.ct-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
 @media (prefers-reduced-motion:reduce){.ct-flash.on{animation:none;opacity:1}}
 .ct-note{margin-top:6px;font-size:14px;font-style:italic;color:var(--ink2);border-top:1px dashed var(--parch3);padding-top:4px}
+
+.ct-corehd{margin:.8em 0 .2em;font-weight:bold}.ct-core{list-style:none;margin:0;padding:0;columns:2;font-size:15px}.ct-core li{padding:2px 0}.ct-core li.mastered,.ct-core li.practiced{color:#2f6f62}.ct-core li.unseen{color:#8a7a68}

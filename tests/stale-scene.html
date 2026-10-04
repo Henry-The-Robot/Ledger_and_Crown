@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Stuck-scene valve</title></head><body><pre id="out">running</pre>
+<!-- Story.unstick() drops a scene that waits on nothing visible. The dropped scene's dialog may still resolve later: it must not run on, and it must not clear `busy` for the scene that replaced it.
+     Run: node tests/run-html.js tests/stale-scene.html 60000 -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const load = q => new Promise(r => { const f = document.createElement("iframe"); f.style.cssText = "width:1194px;height:834px;border:0"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => r(f); });
+async function boot() { const f = await load("?new=1&intro=0&touch=0"), w = f.contentWindow; await sleep(500); w.Story.testScene("none"); w.G.closeDlg(); document.querySelectorAll(".wkcard").forEach(e => e.remove()); return { f, w, G: w.G, s: w.G.s }; }
+// every dialog the story asks for is held until the test releases it
+function hold(x) { const calls = []; x.G.say = (who, text) => new Promise(res => calls.push({ text: String(text).replace(/<[^>]+>/g, ""), res })); return calls; }
+(async () => { try {
+  // 1. a dropped scene whose dialog later resolves does not ask its next question
+  let x = await boot(); x.s.day = 9; let calls = hold(x);
+  x.w.Story.testScene("cost"); await sleep(60);
+  out.push(`the cost scene is running and waiting on its first dialog: ${calls.length === 1 && x.w.Story.busy === true} ("${(calls[0] || {}).text && calls[0].text.slice(0, 40)}...")`);
+  out.push(`unstick() frees the map: ${x.w.Story.unstick() === true && x.w.Story.busy === false}`);
+  calls[0].res(0); await sleep(80);
+  out.push(`the stale scene does not ask its second question after the old dialog resolves: ${calls.length === 1}; busy stays false: ${x.w.Story.busy === false}`); x.f.remove();
+  // 2. the replacement scene keeps busy and runs alone: the stale chain neither continues nor clears busy
+  x = await boot(); x.s.day = 17; calls = hold(x);
+  x.w.Story.testScene("cost"); await sleep(60); const stale = calls[0]; x.w.Story.unstick();
+  x.w.Story.testScene("pv"); await sleep(60);
+  out.push(`a new scene (present value) is waiting on its own dialog: ${calls.length === 2 && /owed you|owes you/.test(calls[1].text) && x.w.Story.busy === true}`);
+  stale.res(0); await sleep(80);
+  out.push(`the old dialog resolves: no new question from the old scene (still ${calls.length} asked): ${calls.length === 2}; the new scene still owns busy: ${x.w.Story.busy === true}`);
+  calls[1].res(0); await sleep(80);
+  out.push(`the new scene carries on to its own next line: ${calls.length === 3 && /worth less|two prices/.test(calls[2].text + calls[1].text)}`); x.f.remove();
+  // 3. unstick() does nothing when no scene is running
+  x = await boot(); out.push(`unstick() with no scene running returns false and changes nothing: ${x.w.Story.unstick() === false}`); x.f.remove();
+} catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); } document.getElementById("out").textContent = out.join("\n"); })();
+</script></body></html>

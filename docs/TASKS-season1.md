@@ -48,6 +48,7 @@ to play on**. His notes: not enough *practice playing*; story not pulling him in
 3. **Clue-card wording:** each card = a short title + the player's number + where found (≤ 12 words). Editor pass owns it.
 4. **Market Day:** days 7, 14, 21 only. Day 28 is the Court.
 5. **Crane:** one voice everywhere, "Item:" numbered sentences.
+6. **The Reeve's Court (2026-10-04, playtest-2 review):** a sitting has **9 claims, pass = 6 refuted**. One claim per Season 1 core idea (eight) plus the guarantee claim (the mystery's payoff; the "on demand" claim stands in if the guarantee flag is not set). Each idea has a pool of variants; a retake draws a different variant and changes the numbers of the hypothetical claims (break-even, floor offer, waiting, caravan). The break-even claim uses the player's real weekly bill.
 State: **v0.4 candidate = PR #32, branch `integrate-s1`** (run-all 17/17, smoke 0 errors, bots over 40 seeds: careful paid 29 / bridged 11; overtrader and reckless lose 40/40).
 
 ## Quality gate before Kyle plays another season (creative lead, 2026-10-03)

@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Ezra's loan in the story</title></head><body><pre id="out">running</pre>
+<!-- Chapter 7 (day 9): after the forecast lowers Ezra's rate he offers 100 or 200. The loan must arrive in Cash; Ezra only offers what his limit allows given what is already owed.
+     Run: node tests/run-html.js tests/ezra-loan.html 60000 -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const load = q => new Promise(r => { const f = document.createElement("iframe"); f.style.cssText = "width:1194px;height:834px;border:0"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => r(f); });
+// Drive chapter 7 through the real Story code with the two screens that need a human stubbed: Ezra's forecast question (answered right) and the dialog answers (recorded).
+async function scene(owed, pick) {
+  const f = await load("?new=1&intro=0&touch=0"), w = f.contentWindow; await sleep(500); const G = w.G, s = G.s, S = w.Spring; w.Story.testScene("none"); G.closeDlg(); document.querySelectorAll(".wkcard").forEach(e => e.remove());
+  const st = w.Story.state; st.ch = 7; st.stage = "ezra7"; s.day = 9; if (owed) S.borrow(s, owed); G.hud();
+  w.Verbs.timeline = async () => ({ okLow: true, okDay: true, low: 50, lowDay: 10 }); const seen = [];
+  G.say = async (who, text, choices) => { const labels = (choices || []).map(c => typeof c === "string" ? c : c.label), dis = (choices || []).map(c => !!(c && c.disabled)); seen.push({ who, text, labels, dis }); return /How much/.test(text) ? pick(labels, dis, seen.filter(x => /How much/.test(x.text)).length) : 0; };
+  const c0 = s.bal.cash; w.Story.onTalk("ezra"); for (let i = 0; i < 40 && !w.Story.state.notebook.some(n => n.id === "interest"); i++) await sleep(50);
+  return { f, w, s, seen, c0, S };
+}
+(async () => { try {
+  const bal = x => x.S.balanceSheet(x.s.bal).assets === x.S.balanceSheet(x.s.bal).liab + x.S.balanceSheet(x.s.bal).equity;
+  // a fresh game owes 100: Borrow 200 is on offer and the Cash arrives
+  let x = await scene(0, (l, d) => l.indexOf("Borrow 200")), q = x.seen.find(y => /How much/.test(y.text));
+  out.push(`fresh game: Borrow 100 and 200 are both open: ${q.dis[0] === false && q.dis[1] === false}`);
+  out.push(`Borrow 200 puts the money in Cash (${x.c0} -> ${x.s.bal.cash}) and on the loan (${-x.s.bal.loan}): ${x.s.bal.cash === x.c0 + 200 && -x.s.bal.loan === 300}; the books balance: ${bal(x)}; the notebook says 200: ${/You borrowed 200/.test(JSON.stringify(x.w.Story.state.notebook))}`); x.f.remove();
+  // a player who already owes 200 (limit 300): 200 is greyed out (it used to fail silently), Ezra says why, 100 arrives
+  x = await scene(100, (l, d) => l.indexOf("Borrow 100")); q = x.seen.find(y => /How much/.test(y.text));
+  out.push(`already owing 200: Borrow 200 is greyed out: ${q.dis[1] === true}; Borrow 100 is open: ${q.dis[0] === false}; Ezra explains his limit: ${/up to 100 more/.test(q.text) && /you owe me 200/.test(q.text)}`);
+  out.push(`Borrow 100 arrives (${x.c0} -> ${x.s.bal.cash}): ${x.s.bal.cash === x.c0 + 100}; the notebook says 100: ${/You borrowed 100/.test(JSON.stringify(x.w.Story.state.notebook))}`); x.f.remove();
+  // if a greyed-out amount were somehow chosen, the refusal is shown and he asks again (the engine's own message, then a second offer)
+  x = await scene(100, (l, d, n) => n === 1 ? l.indexOf("Borrow 200") : l.indexOf("Borrow 100")); const asks = x.seen.filter(y => /How much/.test(y.text));
+  out.push(`a refused loan is explained and asked again: ${asks.length === 2 && /limit is 300/.test(asks[1].text)}; the Cash still arrives on the second try (${x.c0} -> ${x.s.bal.cash}): ${x.s.bal.cash === x.c0 + 100}`); x.f.remove();
+  // owing the limit: only "Nothing today"
+  x = await scene(200, (l, d) => l.indexOf("Nothing today")); q = x.seen.find(y => /How much/.test(y.text)); out.push(`owing 300 (the limit): only "Nothing today" is open: ${q.dis[0] && q.dis[1]}; Cash unchanged: ${x.s.bal.cash === x.c0}`);
+} catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); } document.getElementById("out").textContent = out.join("\n"); })();
+</script></body></html>

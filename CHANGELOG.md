@@ -1,5 +1,44 @@
 # Changelog
 
+## v0.4.6: review fixes
+- **The Reeve's Court has 9 claims now, and you pass with 6** (creative call 6). Each sitting asks one claim for each of the eight core ideas, plus the guarantee claim. If the guarantee flag is not set, the "on demand" claim stands in.
+- **A retake is not a repeat.** Each idea has a pool of claims, and a retake draws a different one. The numbers in the break-even, floor-offer, waiting and caravan claims change every sitting.
+- **Break-even in the Court uses your real weekly bill.** That is your wages after sprinklers, plus interest. It used to quote the plain wage of 45.
+- **Repay Ezra or pay Tomas early** now compares one week of Ezra's interest with the 2% discount. It flips at about 2% a week, like the time-value problem. It used to count interest over every pay-day left.
+- **Practice "Why?" questions fit the tier.** Break-even tier 1 asks why wages set the count. Expected value tier 3 asks about a losing average. Expected-value hints quote the tier's real odds (70/30, then 60/40).
+- **The present-value lesson always plays once in week 3.** It uses the biggest invoice Ezra can fund. The Duke's 1,320 is too big for him, so it used to skip the lesson. If no invoice fits, Maud uses a small made-up one (100, due in two weeks).
+- **iPad:** the page is pinned to the top only for the number pad. The farm-name box, the forecast cells and the break-even box can scroll above the keyboard.
+- **Stuck-scene valve:** a scene dropped by the valve can no longer wake up later and race a new scene. Market Day and the intro now count as screens for the stall detector.
+- Wording: Corvin's bet no longer says "buy the seed today" when you hold the seed. The break-even lesson no longer says Grisby undercuts on day 7. He has no stall until day 14.
+- The v0.4.5 note on selling an invoice said "about 8% a week". Ezra keeps a flat 15%, so the weekly rate depends on the days left: 17.6% with one week to run, 8.5% with two, 5.6% with three.
+- Tests: `test-court.js` (9 claims, pass 6, one per idea, retakes differ, real bill), `test-practice.js` (tiers 1 to 3 swept; repay checked by hand at 7 rates), `lessons-s1.html` (the Duke's invoice), `stale-scene.html` (new), `test-t3b.js` (Crane's "Item:" tic at most 15%).
+
+## v0.4.5: the Season 1 core
+From `docs/SEASON-1-CURRICULUM-AUDIT.md`: eight core ideas the season must prove, with the Court as the test.
+- **Fixed vs variable cost (new lesson, wages day).** Maud names the two kinds of cost and contribution. A rival's price cut is a choice: how many sacks to break even now. The answer shows a small price cut roughly doubling break-even.
+- **Present value (new lesson, week 3, on a real invoice).** Ezra's two prices for cash today: sell the invoice (a flat 15% fee, so the weekly rate depends on the days left: 17.6% with one week to run, 8.5% with two, 5.6% with three) or borrow against it (the loan rate). Then what the promise is worth today.
+- **The Reeve's Court now has 10 claims (pass 7).** New claims test break-even, the opportunity-cost floor, the price of waiting, and expected value against ruin. All four are always asked. The close screen lists the eight core ideas and how far you took each.
+- **Transcript:** `Transcript.CORE` marks the eight core ideas; everything else is a preview Summer teaches.
+- **Practice ramps with mastery.** Break-even, expected value, opportunity cost, time value and the working-capital gap each have tiers 1 to 3, picked by how well you know the idea. Tier 3 adds a twist (a dearer seed, a bet whose average is a loss, a haul cost, a fee, slower customers).
+- **"Why?" after a first-try right answer** on break-even, expected value, opportunity cost and time value: pick the reason. Right earns more evidence; wrong gets the reason.
+- Tests: `lessons-s1.html`; `test-court.js`/`court.html` updated for 10 claims; `week4.html` handles decision problems.
+
+## v0.4.4: playtest 2
+- **iPad:** tapping the answer box no longer shoves the dialog up. On touch the box is read-only (the on-screen pad types into it), never takes focus, and the page is pinned back to the top if iOS scrolls it.
+- **Stuck on day 22/23:** if a scene is waiting on nothing visible for ~7 s, the game now frees the map itself (it used to need a save-and-reset). Root cause not reproduced; this is the safety valve.
+- **Reeve's Court:** Edric's letter showed behind the court overlay, so "Fold it away" could not be reached and the game seemed to hang; the hall now hides while the letter is open. "Press" is now "Press: ask for more detail", with a tooltip, and Maud's opening line explains Press then Present.
+- **Tomas:** with two or more bills you can pay any one by itself (the earliest first, with its discount), or pay all.
+- **Corvin's what-if:** no more "buy 0 packets"; if you already hold the seed it says so (and uses the real sacks-per-plot).
+- **Practice:** pure add/subtract problems are gone (equity, inventory, receivables, operating income, Crown fund). New decisions: nine packets on account vs borrowed from Ezra, and repaying 100 to Ezra vs paying Tomas early for 2%. The nightly "what will Cash be?" is asked at most every third day and stops after two right or two skips.
+
+## v0.4.3: playtest fixes
+- **Crane** no longer starts every sentence with "Item:". He is formal and pedantic, and "Item:" is now an occasional list marker (about one sentence in ten, at most two to a box). Checked the other characters' verbal habits: none is overdone (Tomas's "my friend" is in 9% of his sentences, Ashby's "dear" 13%, Hobb's "eventually" 1%).
+- **Ezra's loan on day 9.** The 100/200 loan in the chapter-7 scene ignored the engine's answer: if Ezra's limit (which counts what you already owe) was too low, the loan silently failed and no Cash arrived. Now he only offers what he will lend (greying out the rest and saying why), refusals are shown, and the notebook records what was actually borrowed.
+- **Conversations.** A topic you've asked goes away (no more "(again)"); a buyer says when she isn't buying today; a buyer's standing deal is on her menu, so a conversation never blocks a deal.
+- Hobb, Ashby and Mira share the same conversation menu; an open order is now a reminder shown above it instead of replacing it (so you can still ask and deal while one is open).
+- The Play link carries `?v=` and the title page shows the version, so a cached page is easy to spot.
+- Tests: `ezra-loan.html`, `chat.html`; the Crane rule in `test-t3b.js`/`test-court.js` now allows the tic but not the habit.
+
 ## Stability (quality gate)
 - Coming back to a finished season (reload, new tab) no longer starts a silent new game: Maud offers Continue, which returns to the closing books, the Reeve's Court (unless already passed) and the ending, or a new game. A season ended by selling the farm returns to its ending.
 - The notebook gains "The real floor" after the first Market Day's floor bet (cost vs the best sale you give up), with a clue card.
