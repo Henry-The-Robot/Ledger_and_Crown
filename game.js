@@ -57,13 +57,18 @@
     solid.add(key(FWELL.x, FWELL.y)); props.push({ y: FWELL.y + 1, draw: () => drawWell(FWELL) });
     solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
+    if (window.Market) { Market.stallTiles().forEach(([x, y]) => solid.add(key(x, y))); props.push({ y: Market.STALL.y, draw: () => Market.drawStall(ctx, cam, s, frame) }); } // WS7: your own Market Day stall on the square
   })();
   const plotAt = (x, y) => s.plots.find(p => p.x === x && p.y === y);
   const npcAt = (x, y) => Object.values(NPC).find(n => n.x === x && n.y === y && npcHere(n));
   const visitorOk = () => !storyOn || (Story.state.ch >= 5 && !Story.busy); // visitors wait until the story's first lessons are done
-  const npcHere = n => n.who === "crane" ? !!(window.Verbs && Verbs.craneOn) : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.R.pellDays[0] && s.day <= S.R.pellDays[1]
-    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.R.pedlarDays[0] && s.day <= S.R.pedlarDays[1]
-    : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open");
+  // village scenes (scenes.js) wait on certain people from certain days: the story's first lessons run first, so scenes start with chapter 5
+  const sceneOk = () => !!s && (!storyOn || (Story.state.ch >= 5 && !Story.busy));
+  const sceneFor = who => (window.Scenes && sceneOk()) ? Scenes.available(who, s) : null;
+  const cranePos = () => { if (window.Verbs && Verbs.craneOn) return [7, 7]; const sc = sceneFor("crane"); return sc && sc.at ? sc.at : null; };
+  const npcHere = n => n.who === "crane" ? (() => { const p = cranePos(); if (p) { n.x = p[0]; n.y = p[1]; } return !!p; })() : n.who === "pell" ? visitorOk() && !s.pell && s.day >= S.pellDays(s)[0] && s.day <= S.pellDays(s)[1] // WS6: the visitor windows follow this game's seeded pig and rat nights
+    : n.who === "pedlar" ? visitorOk() && !s.poison && s.day >= S.pedlarDays(s)[0] && s.day <= S.pedlarDays(s)[1]
+    : n.who !== "duke" || s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open") || !!sceneFor("duke");
   const buildingAt = (x, y) => BUILD.find(b => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h);
   const blocked = (x, y) => x < 0 || y < 0 || x >= MW || y >= MH || solid.has(key(x, y)) || !!npcAt(x, y);
   // ---------- player & input ----------
@@ -71,12 +76,13 @@
   const keys = {}; const DIRS = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
   const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right" };
   const panelOpen = () => $("panel").style.display !== "none";
+  const marketOpen = () => !!(window.Market && Market.isOpen && Market.isOpen()); // WS7: Market Day (market.js)
   addEventListener("keydown", e => {
     // Esc: close the pause menu, or a reference panel (Ledger, notebook, transcript, plan); otherwise open the pause menu.
     // Task panels (forecast to fill, journal page, the close) aren't closed by Esc: closing them would strand the story.
     if (e.code === "Escape") { if ($("pause")) $("pause").remove(); else if (panelOpen() && panelKind && !panelKind.locked && CLOSABLE.has(panelKind.k)) hidePanel(); else pauseMenu(); e.preventDefault(); return; }
     if ($("pause")) return;
-    if (panelOpen()) return;
+    if (panelOpen() || marketOpen()) return; // WS7: the Market Day overlay owns the keyboard while it is up
     if (dlgOpen()) { if (e.target.tagName === "INPUT") { if (e.key === "Enter") $("dlg").querySelector(".ch button").click(); return; }
       const n = +e.key; if (n >= 1 && n <= 9) { const b = $("dlg").querySelectorAll("button")[n - 1]; if (b && !b.disabled) b.click(); } e.preventDefault(); return; }
     if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = true; pl.target = null; e.preventDefault(); }
@@ -119,23 +125,24 @@
     if (s.over) return closeBooks();
     if (storyOn && Story.busy) return;
     const n = npcAt(x, y); if (n) { n.dir = ({ up: "down", down: "up", left: "right", right: "left" })[pl.dir]; return talk(n.who); }
+    if (window.Market && Market.stallAt(x, y)) return Market.open(); // WS7: Market Day
     if (x === CRATE.x && y === CRATE.y) return crate();
     const b = buildingAt(x, y); if (b) return b.id === "house" ? desk() : talk(b.who);
     const p = plotAt(x, y);
     if (p) { const r = act(() => S.act(s, p.i));
-      if (r.ok) { floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); if (r.msg === "harvest") story("harvest"); }
+      if (r.ok) { FX.sfx({ till: "till", plant: "plant", water: "water", harvest: "harvest", sprinkler: "sprinkler", pickup: "sprinkler" }[r.msg]); floatAt(x, y, { till: "Tilled", plant: "Planted", water: "Watered", harvest: "+3 sacks", sprinkler: "Sprinkler set", pickup: "Sprinkler picked up" }[r.msg] || "", r.msg === "harvest" ? "#7a5a10" : "#2a4a7a"); story("plant"); if (r.msg === "harvest") story("harvest"); }
       else if (r.msg) say(null, r.msg); return; }
     if (x === BOARD.x && y === BOARD.y) return noticeBoard();
     if (x === WELL.x && y === WELL.y) say(null, "The town well. Cold, clear water.");
   }
   function act(fn) { // run an engine action, then float the Cash change and feed the transcript
-    const c0 = s.bal.cash, r = fn(); drainUses(); hud();
+    const c0 = s.bal.cash, r = fn(); drainUses(); hud(); if (r && r.ok === false && r.msg) FX.sfx("error");
     if (s.bal.cash !== c0) { floatHud("cash", s.bal.cash - c0); FX.cash(s.bal.cash - c0, $("h-cash"), $("wrap")); }
     return r;
   }
   const story = (evt, info) => { if (storyOn) Story.after(evt, info); };
   let usePtr = 0;
-  function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } }
+  function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) { FX.sfx(ch === "mastered" ? "win" : "chime"); toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } } }
   // ---------- dialogue: one box, Promise-based; choices, a number field, highlights ----------
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
@@ -152,7 +159,7 @@
       if (o.input) numberPad(d, (o.choices || ["Next"])[0]); // the pad goes after the choice buttons, so button order (and the number keys) stay as they were
       d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false;
       if (o.input && !TOUCH) setTimeout(() => $("num") && $("num").focus(), 30); // on touch the pad types; no keyboard to cover the dialog
-      if (!fast && !q.has("auto")) FX.type(d.querySelector(".tx"));
+      FX.sfx("open"); if (!fast && !q.has("auto")) FX.type(d.querySelector(".tx"), undefined, i => FX.blip(who, i));
     });
   }
   // On-screen number pad (0-9, minus, backspace, Check) for the ask and haggle boxes: mouse and touch alike (WS2).
@@ -204,7 +211,7 @@
       if (a[0] === "walk") { walked = true; window.__walked = true; extra = `<br><span class="hintline"><b>Here's my working:</b> ${work || hints.join(" ") + ` That gives ${answer}.`}<br>Now you enter it.</span>`; continue; }
       if (a[0] === "doc") { await openDoc(a[1].open); continue; }
       if (r.v != null && !isNaN(r.v) && Math.abs(r.v - answer) <= (tol || 0)) { window.__want = undefined; askSkip = null; toast(walked ? "Right. We'll come back to this one." : "Right."); return r.v; }
-      tries++; if (!walked) extra = `<br><i class="hintline">${isNaN(r.v) || r.v == null ? "Type a number." : `Not ${r.v}. `}${hints[Math.min(tries - 1, hints.length - 1)]}</i>`;
+      tries++; window.__tries = tries; if (!walked) extra = `<br><i class="hintline">${isNaN(r.v) || r.v == null ? "Type a number." : `Not ${r.v}. `}${hints[Math.min(tries - 1, hints.length - 1)]}</i>`;
     }
   }
   // ---------- feedback: no email address in the game; copy a text block the player pastes into their own email ----------
@@ -245,6 +252,8 @@
       <p><button class="btn gold" id="pz-resume" style="width:100%">Resume</button></p>
       <p><button class="btn alt" id="pz-restart" style="width:100%">Restart today (from this morning's save)</button></p>
       <p><button class="btn alt" id="pz-map" style="width:100%">Save and quit</button></p>
+      <p><button class="btn alt" id="pz-intro" style="width:100%">Watch the opening</button></p>
+      <p><button class="btn alt" id="pz-music" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-sound" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-feedback" style="width:100%">Copy feedback details</button></p>
       ${askSkip ? `<p><button class="btn alt" id="pz-skip" style="width:100%">Report a problem and skip this question</button></p><p class="hint">Use this only if the game seems broken. The lesson won't count as mastered, and Maud will bring it up again later. Copies feedback details too, so you can paste them to Kyle.</p>` : ""}
@@ -252,11 +261,13 @@
     document.body.appendChild(p);
     p.onclick = e => { if (e.target === p) p.remove(); };
     $("pz-resume").onclick = () => p.remove();
+    if ($("pz-intro")) $("pz-intro").onclick = () => { p.remove(); if (window.Intro) Intro.play().then(() => { try { Music.setMood(moodNow()); } catch (e) {} }); };
     $("pz-restart").onclick = () => location.reload();
     $("pz-map").onclick = () => { save(); location.href = "index.html"; };
     $("pz-feedback").onclick = () => copyFeedback();
-    const snd = () => $("pz-sound").textContent = FX.muted ? "🔇 Sound: off (tap to turn on)" : "🔊 Sound: on (tap to mute)"; snd();
-    $("pz-sound").onclick = () => { FX.setSound(FX.muted); snd(); };
+    const snd = () => { $("pz-sound").textContent = FX.sfxOn ? "🔔 Sound effects: on (tap to mute)" : "🔕 Sound effects: off (tap to turn on)"; $("pz-music").textContent = FX.musicOn ? "🎵 Music: on (tap to mute)" : "🎵 Music: off (tap to turn on)"; }; snd();
+    $("pz-sound").onclick = () => { FX.setSfx(!FX.sfxOn); snd(); };
+    $("pz-music").onclick = () => { FX.setMusic(!FX.musicOn); snd(); };
     if ($("pz-skip")) $("pz-skip").onclick = () => {
       try { const log = JSON.parse(localStorage.getItem("lc_bug_reports") || "[]"); log.push({ at: new Date().toISOString(), day: s.day, stage: storyOn ? Story.state.stage : "sandbox", question: ($("dlg").querySelector(".tx") || {}).textContent, expected: window.__want }); localStorage.setItem("lc_bug_reports", JSON.stringify(log)); } catch (e) {}
       copyFeedback();
@@ -265,7 +276,7 @@
   }
   // Stall detector: the story is waiting but nothing is on screen for 4 s -> point the player to the menu.
   setInterval(() => {
-    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause");
+    const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court"); // the ending card, the week card and the Court are screens too
     stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Open the menu (☰, top right) to restart the day.");
   }, 1000);
   const stall = {};
@@ -278,7 +289,7 @@
   // Each buyer has a hidden walk-away price; good history (hearts) raises it a little. Asking far above it sours the mood.
   function floorTrack(fl, offer, top) { // a price track: red below your floor, a marker for their offer
     const lo = Math.max(0, Math.min(fl, offer) - 2), hi = Math.max(top, offer, fl) + 2, pos = v => ((v - lo) / (hi - lo) * 100).toFixed(1);
-    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Your floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
+    return `<div class="vtrack" style="--fl:${pos(fl)}%"><i class="fl" style="left:${pos(fl)}%"><span>Cost floor ${fl}</span></i><i class="of" style="left:${pos(offer)}%"><span>Offer ${offer}</span></i></div>`;
   }
   async function haggle(o, cfg) {
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
@@ -296,7 +307,7 @@
       if (pick.startsWith('"I always')) { used.rec = 1; walk += 1; line = "True enough. You've never let me down."; continue; }
       const p = r.v; round++;
       if (p == null || isNaN(p) || p <= 0) { line = "Say a number, dear."; continue; }
-      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your floor: each sack cost you ${fl}. Sure? Your margin would be ${Math.round((p - fl) / p * 100)}%.`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
+      if (p < fl && storyOn) { const k = await sayP("maud", `${p} is under your cost floor of ${fl}, so your margin would be ${Math.round((p - fl) / p * 100)}%. Sure?`, ["Think again", "Yes, sell below cost"]); if (k === 0) continue; }
       if (p <= theirs) return close(theirs);
       if (p <= walk) { line = "Done."; return close(p); }
       if (p > walk + 2) { s.trust[o.who] = Math.max(0, s.trust[o.who] - 1); line = `${p}? That's an insult. ${theirs} is my offer.`; continue; }
@@ -308,6 +319,7 @@
   // ---------- villagers ----------
   async function talk(who) {
     if (storyOn && Story.onTalk(who)) return;
+    { const sc = sceneFor(who); if (sc) return runScene(sc); }
     if (FAIR[who]) return fairDeal(who);
     if (who === "pell") return pellTalk(); if (who === "pedlar") return pedlarTalk();
     if (who === "maud") return maud(); if (who === "ezra") return ezra(); if (who === "tomas") return tomas();
@@ -319,12 +331,12 @@
     }
     if (o) { await haggle(o, { open: o.price - 1, walk: o.reserve != null ? o.reserve : o.price, line: who === "duke" ? "His Grace makes one offer." : who === "ashby" ? "I need grain for the ovens, dear." : "Grain for the wheel. Name your price." }); return; }
     if (open) return say(who, `Still waiting on ${open.sacks} sacks, due day ${open.due}${open.late ? " (late!)" : ""}.<br>Put them in your shipping crate on the farm.`);
-    const idle = { ashby: ["Good grain makes good bread. Come by in a day or two.", "The ovens are hot and the orders keep coming."], hobb: ["The wheel turns when there's grain. I'll have work soon.", "I pay on terms, but I always pay."], duke: ["His Grace is pleased."] }[who];
-    say(who, idle[s.day % idle.length]);
+    return chat(who);
   }
   // ---------- visitors: Pell the pig farmer (grain he can't pay for) and Barnaby the pedlar (rat poison) ----------
-  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability
-    say("maud", `Look at Cash: it just rose by ${o.paid}. But Revenue didn't move. You haven't earned that money yet: you owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit sits on the balance sheet as a liability, <b>Customer deposits</b>. Spend it on seed if you must, but if the grain doesn't arrive by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit.<br>The Cash is real. The profit isn't, until you deliver.`, [["Open the Ledger", ledger], ["Close", null]]);
+  function depositLesson(o) { // Cash rose, Revenue didn't: the deposit is a promise of grain, so it's a liability (WS6: named unearned revenue, C1.01/C1.03)
+    if (storyOn) Story.noteDeposit(o);
+    say("maud", `Look at Cash: it rose by ${o.paid}, but Revenue didn't move. You owe ${S.NAMES[o.who]} ${o.sacks} sacks, so the deposit is a liability, <b>Customer deposits</b>, also called <b>unearned revenue</b>.`, [["Next", () => say("maud", `If the grain isn't there by day ${o.due + S.R.lateGrace}, you refund it and pay a forfeit. The Cash is real; the profit isn't until you deliver.`, [["Open the Ledger", ledger], ["Close", null]])]]);
   }
   async function pellTalk() {
     if (s.pell) return say("pell", s.pell === "deal" ? "Twelve sacks, and my pigs stay home. You're a good neighbour." : "Nothing more to say to you.");
@@ -333,7 +345,7 @@
     if (pick === 0) { const o = S.addOffer(s, "pell", S.R.pellSacks, S.R.unitCost, 14, 4, 2), deal = await haggle(o, { open: S.R.unitCost, walk: S.R.unitCost + 1, line: "Four a sack. It's all I have, neighbour." });
       if (!deal) S.decline(s, o.id); else await sayP("pell", "Twelve sacks by day " + (s.day + 4) + ". I'll keep the pigs in.", ["Close"]); }
     else if (pick === 1) { const o = S.addOffer(s, "pell", S.R.pellSacks, 3, 21, 4, 2); o.share = true; const r = act(() => S.accept(s, o.id));
-      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise. It isn't Cash, a bill or Revenue until Pell pays it at Midwinter, so the Ledger lists it as a note and nowhere else.<br>Is it worth it? Maybe. But look at what your books say today.`, [["Open the Ledger", ledger], ["Close", null]]); }
+      if (r.ok) say("maud", `At 3 a sack you're selling under your cost of ${S.R.unitCost}, so this sale's Gross profit is −${S.R.pellSacks}. The quarter of the pig money, about ${S.R.pellShare}, is a promise.`, [["Next", () => say("maud", "It isn't Cash, a bill or Revenue until Pell pays at Midwinter, so the Ledger lists it as a note and nowhere else; is it worth it? Look at what your books say today.", [["Open the Ledger", ledger], ["Close", null]])]]); }
     else if (pick === 2) { act(() => S.refusePell(s)); say("pell", "I'll remember this. So will my pigs."); }
   }
   async function pedlarTalk() {
@@ -345,7 +357,7 @@
   }
   async function fairDeal(who) { // the market fair: a different buyer, a different price; once a day each
     const f = FAIR[who]; fairSeen[who] = f.walk;
-    if (fairDay[who] === s.day) return say(who, "I've bought my fill today. Come back tomorrow.");
+    if (fairDay[who] === s.day) return chat(who);
     const n = Math.min(f.sacks, s.sacks); if (n < 3) return say(who, `${f.line}<br>Come back with grain. (I pay up to ${f.walk} a sack.)`);
     const o = S.addOffer(s, who, n, f.walk - 1, f.terms, 0, 1);
     const deal = await haggle(o, { open: f.walk - 1, walk: f.walk, line: f.line });
@@ -358,8 +370,49 @@
     const arrow = p => p > now ? " ▲" : p < now ? " ▼" : "";
     const tip = !top ? "" : top.price > now ? `Prices are heading up: ${top.price} by day ${top.day}. Grain you don't have to ship before then could fetch more.` : top.price < now ? "Prices are slipping. Better to ship what you've promised and not hold surplus." : "Prices hold steady.";
     const text = `<b>Village notices</b><br>Going price today: <b>${now}</b> a sack.<br>${o.length ? o.map(x => `Day ${x.day}: ${x.price}${arrow(x.price)}`).join(" · ") : "The season is nearly over."}<br><i>${tip}</i>${n ? `<br><br><b>${n.title}</b><br>${n.text}` : ""}`;
-    const opts = n ? n.options.map((label, i) => [label, () => { const r = act(() => S.answerNotice(s, i)); say(r.ok ? "maud" : null, r.ok ? noticeLesson(n.id, r.msg) : r.msg); }]) : [];
+    const opts = n ? n.options.map((label, i) => [label, () => { const f0 = n.id === "frost" ? frostRead() : null, r = act(() => S.answerNotice(s, i)); if (r.ok && f0) { if (f0.ruin === (r.msg === "covered")) TR.master("ev", s.day); say("maud", frostLesson(f0, r.msg)); } else say(r.ok ? "maud" : null, r.ok ? noticeLesson(n.id, r.msg) : r.msg); }]) : [];
+    const nso = soOk() ? Standing.today(s).length : 0;
+    if (nso) opts.push([`Standing orders (${nso})`, standingBoard]);
     say(null, text, opts.concat([["Close", null]]));
+  }
+  // ---------- standing orders (standing.js): repeatable contracts on the notice board. Check one (margin, the best alternative sale, can Cash carry it, when the money comes), then take it or pass. ----------
+  const soOk = () => !!window.Standing && (!storyOn || Story.state.ch >= 5) && s.day >= Standing.MIN_DAY;
+  const shortWho = who => { const n = (S.NAMES[who] || who).split(",")[0], w = n.split(" "); return / the /.test(n) || w.length === 1 ? w[0] : w[w.length - 1]; }; // "Hobb the Miller" -> Hobb, "Widow Ashby" -> Ashby
+  function standingBoard() {
+    const list = soOk() ? Standing.today(s) : [];
+    if (!list.length) return say(null, "No standing orders on the board today. New ones go up each morning.", [["Back", noticeBoard], ["Close", null]]);
+    say(null, "<b>Standing orders</b><br>Regular buyers post a price. Check one before you take it: not every posted price is a good one.",
+      list.map(o => [`${shortWho(o.who)}: ${o.sacks} sacks at ${o.price}, ${o.terms ? `paid ${o.terms} days after` : "Cash"}, by day ${o.due}`, () => standingOrder(o)]).concat([["Back", noticeBoard], ["Close", null]]));
+  }
+  async function standingOrder(o) {
+    const f = Standing.facts(s, o), docs = [{ label: "Open the Ledger", open: ledger }], desc = `${o.sacks} sacks at ${o.price}${o.terms ? `, paid ${o.terms} days after delivery` : ", Cash on delivery"}, by day ${o.due}.`;
+    let k = await sayP(o.who, `A standing order: ${desc}`, ["Check it first", "Take it as posted", "Pass"]), checked = false;
+    if (k === 2) { Standing.mark(s, o.sid, "passed"); save(); return; }
+    if (k === 0) {
+      window.__walked = false;
+      await ask("maud", `Your cost is ${f.cost} a sack and they pay ${o.price}. What's your margin on this order, in %?`, f.margin, ["Margin is profit over the price you sell at.", "(Price − cost) ÷ price, as a percentage."], null, 1, docs, `(${o.price} − ${f.cost}) ÷ ${o.price} = ${f.margin}%.`, "Take the cost off the price, then divide what's left by the price. Try 5 − 4 = 1, and 1 ÷ 5 = 20%.");
+      checked = !window.__walked;
+      await sayP("maud", `Margin ${f.margin}%, and the road trader pays ${f.floor} for the same sack. The seed to buy is ${f.seed}, which leaves Cash at ${f.cashAfter}${o.terms ? `, and the money comes on day ${f.arrive}` : ""}.`, ["Next"]);
+      k = await sayP(o.who, `So: ${desc}`, ["Take it", "Pass"]); k = k === 0 ? 1 : 2;
+      if (k === 2) { Standing.mark(s, o.sid, "passed"); const j = Standing.judge(s, o, f); if (checked && !j.well) { for (const id of (j.why.indexOf("thin") >= 0 ? ["opportunity"] : []).concat(j.why.some(w => w !== "thin") ? ["wc"] : [])) TR.master(id, s.day); toast("Good pass: you checked first."); FX.sfx("good"); } save(); return say("maud", checked && !j.well ? j.line : "Fair. The board posts new ones every morning."); }
+    }
+    const off = S.addOffer(s, o.who, o.sacks, o.price, o.terms, o.dueIn, 1);
+    await haggle(off, { open: o.price, walk: o.price + 1, line: "A regular order, as posted." });
+    const ord = S.openOrders(s).find(x => x.id === off.id);
+    if (!ord) { S.decline(s, off.id); Standing.mark(s, o.sid, "passed"); save(); return; }
+    const j = Standing.judge(s, Object.assign({}, o, { price: ord.price }), Standing.facts(s, Object.assign({}, o, { price: ord.price })));
+    Standing.mark(s, o.sid, j.well ? "well" : "off");
+    if (checked && j.well) { ["margin", "opportunity"].forEach(id => TR.master(id, s.day)); FX.sfx("good"); toast("Taken well: you checked it first."); }
+    else if (!j.well) toast("Taken, but not well. Maud has a word.");
+    hud(); save(); drainUses(); say("maud", j.line);
+  }
+  // The frost almanac (expected value vs ruin): the numbers read BEFORE the choice, the lesson revealed after it. Ruin = losing the crops would worsen the Crown verdict.
+  const verdictRank = (f, net) => { const gap = net - f.crown; return gap >= 0 ? 3 : gap + f.hoped >= 0 ? 2 : gap >= -S.R.bridgeMax ? 1 : 0; };
+  function frostRead() { const f = S.frostFacts(s), cf = S.crownFund(s); return Object.assign({}, f, { net: cf.net, crown: cf.crown, ruin: verdictRank(cf, cf.net - f.atRisk) < verdictRank(cf, cf.net) }); }
+  function frostLesson(f, msg) {
+    const avg = `${f.atRisk} at 1 in 3 is ${f.ev} on average, against the straw's ${f.cover}`;
+    return msg === "covered" ? `Straw was ${f.cover} for certain; risking it was ${f.ev} on average. ${f.ruin ? "But losing the crops would have cost you your Crown verdict, so certainty was worth the difference." : "On average that was dearer, but you bought certainty."}`
+      : `${avg}, so on average the gamble is cheaper. ${f.ruin ? `But losing the crops would leave the Crown fund at ${f.net - f.atRisk} against ${f.crown}, and an average doesn't save you on the bad night.` : "A loss would hurt, not sink you, so taking the cheaper average is defensible."}`;
   }
   function noticeLesson(id, msg) { // revealed after the choice, never before: the lesson lands because the player committed first
     return ({ tinker: { blind: "Two of the six were mouldy. You paid 60 for four good packets: 15 each, dearer than Tomas. A bargain you can't inspect isn't a bargain. The write-off is in the Ledger as a loss, and the 12 you saved shows up against Cost of goods sold.", inspected: "Smart: you paid 5 to learn two were mouldy, then bought only the four good ones for 40. The fee is an operating expense; the inspection made the cheap seed cheaper than Tomas's." , pass: "Fine. Tomas's seed costs more but you can trust it." },
@@ -369,10 +422,12 @@
   // ---------- the Ledger tour: how to read it, in the player's own books ----------
   async function ledgerTour() {
     const j0 = s.journal[0], debits = Object.values(j0.lines).filter(v => v > 0).reduce((a, v) => a + v, 0), b = S.balanceSheet(s.bal), docs = [{ label: "Open the Ledger", open: ledger }];
-    await sayP("maud", "The Ledger is a list of every posting, newest first. Each posting touches at least two accounts. <b>Debits</b> and <b>credits</b> are the two columns, and in every posting they add up to the same number. That's why Assets always equal Liabilities plus Owner's equity.", ["Show me"]);
-    await ask("maud", `Your farm's very first posting was: <b>${dr(j0)}</b>.<br>Add up just the <b>Dr</b> (debit) amounts. What do they total?`, debits, ["Debits are the lines that start with Dr. Add only those.", "Everything the farm had at the start went on the debit side. Cash and Inventory are two of them."], null, 0, docs, `Dr amounts: ${Object.entries(j0.lines).filter(([, v]) => v > 0).map(([k, v]) => `${S.ACCTS[k][0]} ${v}`).join(" + ")} = ${debits}. The Cr side must match: that's the rule.`, "Add the Dr lines.");
-    await ask("maud", `Now today's balance sheet. Your <b>Total assets</b> are ${b.assets}. If the books balance, what must <b>Liabilities + Owner's equity</b> add up to?`, b.assets, ["The balance sheet always balances: both sides are the same number.", "Assets = Liabilities + Owner's equity."], null, 0, docs, `Assets ${b.assets} = Liabilities ${b.liab} + Owner's equity ${b.equity}. Every posting keeps this true.`, "The two sides always match.");
-    await sayP("maud", "Three habits that make the Ledger useful:<br>1. Before a big choice, read what it will post. The game shows you the entry first.<br>2. After something odd happens (a loss, a deposit), find its line in the journal.<br>3. Click any number at the top of the screen and I'll tell you what it is and where it came from.", ["Got it"]);
+    await sayP("maud", "The Ledger is a list of every posting, newest first, and each posting touches at least two accounts. <b>Debits</b> and <b>credits</b> are its two columns.", ["Next"]);
+    await sayP("maud", "In every posting they add up to the same number, which is why Assets always equal Liabilities plus Owner's equity.", ["Show me"]);
+    await ask("maud", `Your farm's very first posting was <b>${dr(j0)}</b>: what do the <b>Dr</b> (debit) amounts add up to?`, debits, ["Debits are the lines that start with Dr. Add only those.", "Everything the farm had at the start went on the debit side. Cash and Inventory are two of them."], null, 0, docs, `Dr amounts: ${Object.entries(j0.lines).filter(([, v]) => v > 0).map(([k, v]) => `${S.ACCTS[k][0]} ${v}`).join(" + ")} = ${debits}. The Cr side must match: that's the rule.`, "Add the Dr lines.");
+    await ask("maud", `Today's <b>Total assets</b> are ${b.assets}: if the books balance, what must <b>Liabilities + Owner's equity</b> add up to?`, b.assets, ["The balance sheet always balances: both sides are the same number.", "Assets = Liabilities + Owner's equity."], null, 0, docs, `Assets ${b.assets} = Liabilities ${b.liab} + Owner's equity ${b.equity}. Every posting keeps this true.`, "The two sides always match.");
+    await sayP("maud", "Three habits make the Ledger useful. First, before a big choice, read what it will post: the game shows you the entry.", ["Next"]);
+    await sayP("maud", "Second, after something odd (a loss, a deposit), find its line in the journal. Third, click any number at the top of the screen and I'll tell you where it came from.", ["Got it"]);
     s.tour = true;
   }
   // ---------- click a number: what it is, how it's made, and the latest entries behind it ----------
@@ -418,7 +473,8 @@
       [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
       ["Sprinkler: 80 Cash", () => commit(c => S.buySprinkler(c), r => say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg)), s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
-      ...(!s.fenced && s.day <= S.R.pigDay ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
+      ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
+      ["Ask Tomas about…", () => chat("tomas")],
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => commit(c => S.payBills(c), r => say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg)), !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -427,7 +483,8 @@
     const opts = [["Borrow 50", go(c => S.borrow(c, 50)), room < 50], ["Borrow 100", go(c => S.borrow(c, 100)), room < 100], ["Repay 50", go(c => S.repay(c, 50)), !owed || s.bal.cash < Math.min(50, owed) + S.loanFacts(s, 50).fee]];
     if (owed) opts.push(["Should I repay early?", () => repayAdvice(owed)]);
     if (inv && (!storyOn || Story.state.ch >= 8)) opts.push([`Sell ${S.NAMES[inv.who]}'s invoice (${inv.amount}) for ${Math.round(inv.amount * .85)} today`, go(c => S.factor(c, inv.id))]);
-    opts.push(["Leave", null]);
+    if (wk4() && Practice.available(s, TR.state)) opts.push(["A problem on your books", problem]);
+    opts.push(["Ask Ezra about…", () => chat("ezra")]); opts.push(["Leave", null]);
     const wk = Math.round(owed * t.rateBp / 10000);
     say("ezra", `Your credit: ${hearts(s.trust.ezra)}. I lend up to ${t.loanLimit} at ${t.rateBp / 100}% a week. You owe me ${owed}${owed ? `: that's ${wk} of interest every pay-day until it's repaid. Repay before day ${S.R.prepayBefore} and I charge one week's interest on what you repay.` : "."}`, opts);
   }
@@ -444,10 +501,52 @@
       `<i>${late ? "Bought this late, it's a good machine in a bad month: profit says yes, Cash says wait. " : ""}A machine is worth it when the savings over its life beat its price and your Cash can wait for them. Profit and Cash can disagree. That's the Ledger's lesson.</i>`,
       [["Back", tomas], ["Open the Ledger", ledger]]);
   }
-  function maud() { const c = S.coach(s); say("maud", c ? c.text : "Nothing to add. The books look sound to me."); }
+  // Creative call 1 (docs/TASKS-season1.md): in week 4 Maud stops teaching (no problem, shows, hints or Explain-how from her; her story scenes still play) and the daily problem comes from Ezra.
+  const wk4 = () => storyOn && Story.weekOf && Story.weekOf(s.day) === 4, teacher = () => wk4() ? "ezra" : "maud";
+  function maud() { const c = S.coach(s), has = !wk4() && !!Practice.available(s, TR.state); const opts = [[has ? "Maud's problem for today" : "Ask about something else", has ? problem : () => chat("maud")]]; if (has) opts.push(["Ask about something else", () => chat("maud")]); opts.push(["Close", null]);
+    say("maud", c ? c.text : Cast.greet("maud", s), opts); }
+  // ---------- practice: one small problem a day on your own numbers (practice.js). A right answer on your own is evidence in the transcript; a walk-through is not. ----------
+  // An optional wager on the day's problem: right on the FIRST answer and the stake comes back doubled; anything else and Maud keeps it. 0 is always fine. Real Cash, posted so the books tie (Spring.wager).
+  async function wagerStake(topic) {
+    const mx = Math.min(3, s.bal.cash); if (mx < 1) return 0; const opts = []; for (let k = 0; k <= mx; k++) opts.push(k);
+    const r = await dlg({ who: "maud", text: `Today's problem is about <b>${topic}</b>: stake a few coin on getting it right first time? I pay the stake again if you do, and no stake is fine.`, choices: opts.map(k => k ? `Stake ${k}` : "No stake") });
+    const stake = opts[r.i] || 0; if (stake) act(() => S.wager(s, stake, "Practice wager")); return stake;
+  }
+  async function problem() {
+    const T = teacher(); if (s.practice && s.practice.done[s.day]) return say(T, T === "ezra" ? "That is today's. Come back tomorrow; patience has a price, and the numbers will have moved." : "That's today's. Come back tomorrow; the numbers will have moved.");
+    const cmp = s.day >= 3 && s.offers.length >= 2 && (s.day % 3 === 0) ? Practice.compare(s) : null, p = cmp || Practice.available(s, TR.state);
+    if (!p) return say(T, "Nothing worth asking today. Your books are quiet.");
+    const stake = await wagerStake(TR.name(p.concept)); // optional: a few coins on your first answer, never a gate
+    window.__walked = false; window.__tries = 0; let right = true, tries = 0;
+    if (cmp || p.choices) { const r = (await dlg({ who: T, text: p.text, choices: cmp ? ["A", "B", "The same"] : p.choices })).i; right = r === p.answer; tries = right ? 0 : 1; if (!right) { await sayP(T, `Not quite. ${p.work}`, ["I see"]); } }
+    else { await ask(T, p.text, p.answer, p.hints, null, p.tol, (p.docs || []).map(d => d === "ledger" ? { label: "Open the Ledger", open: ledger } : { label: "Open the cash forecast", open: () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }) }), p.work); right = !window.__walked; tries = window.__tries; }
+    if (stake) { if (right && tries === 0) { act(() => S.wagerWin(s, stake, "Practice wager")); FX.sfx("coin"); toast(`First answer right: you win ${stake}.`); } else toast(`Maud keeps your ${stake}.`); }
+    const q = Practice.record(s, p, right, !right);
+    if (right) { TR.master(p.concept, s.day); FX.sfx("good"); if (s.trust[T] != null && q.favour % 2 === 0 && s.trust[T] < 10) s.trust[T]++; toast(q.streak > 1 ? `${q.streak} days running ★` : T === "ezra" ? "Ezra inclines his head." : "Maud nods."); }
+    else toast("We'll come back to this one.");
+    hud(); save(); drainUses();
+  }
+  // ---------- people: a line from them, then "Ask about..." (some answers are locked until they trust you) ----------
+  async function chat(who) {
+    s.heard = s.heard || {}; const tp = Cast.topics(who, s), locked = Cast.locked(who, s);
+    const k = await sayP(who, Cast.greet(who, s), tp.map(t => t.label + (t.heard ? " (again)" : "")).concat(["Leave"]));
+    if (k >= tp.length) return; const t = tp[k], key = who + ":" + t.id;
+    for (const ln of t.lines) await sayP(who, ln, ["Next"]);
+    if (!s.heard[key]) { s.heard[key] = s.day; if (s.trust[who] != null && s.trust[who] < 10) { s.trust[who]++; toast(`${Cast.name(who).split(",")[0]} trusts you a little more ♥`); FX.sfx("good"); } }
+    if (locked && !tp.some(x => !x.heard) ) toast("There's more they'd say, with time."); return chat(who);
+  }
+  async function runScene(sc) { // an optional village scene: marked done first (a reload mid-scene never replays it), then played
+    s.scenes[sc.id] = s.day; s.flags = s.flags || {};
+    const c = { s, S, lines: async (who, arr) => { for (const t of arr) await sayP(who, t, ["Next"]); }, ask: (who, text, labels) => sayP(who, text, labels),
+      maud: text => sayP("maud", text, ["Mm."]), flag: (k, v) => { s.flags[k] = v; }, clue: () => { s.clues = (s.clues || 0) + 1; // WS6: a scene that reveals a clue also pins a card on the case board (scenes.js: sc.card = [term, number-or-quote])
+        if (storyOn && sc.card) Story.pin("scene_" + sc.id, sc.card[0], sc.card[1], `Day ${s.day} · ${Cast.short(sc.who)}`, "scene"); else toast(`A clue: ${s.clues} of ${Scenes.CLUES}`); },
+      trust: (who, d) => { if (s.trust[who] != null) s.trust[who] = Math.max(0, Math.min(10, s.trust[who] + d)); if (d > 0) toast(`${Cast.name(who).split(",")[0]} trusts you more ♥`); },
+      letter: async i => { if (storyOn) await Story.letter(i); else await page(Story.PAGES[i], Story.LETTERS[i]); } };
+    try { await sc.run(c); } finally { hud(); save(); }
+  }
   function crate() {
     const opts = S.openOrders(s).sort((a, b) => a.due - b.due).map(o => [`Ship ${o.sacks} to ${S.NAMES[o.who]} (due day ${o.due})`,
-      () => { const r = act(() => S.deliver(s, o.id)); if (r.ok) { floatAt(CRATE.x, CRATE.y - 1, `Sold: ${o.value}`, "#2a5a2a"); story("deliver", o); } else say(null, r.msg); }, s.sacks < o.sacks]);
+      () => { const r = act(() => S.deliver(s, o.id)); if (r.ok) { FX.sfx("ship"); floatAt(CRATE.x, CRATE.y - 1, `Sold: ${o.value}`, "#2a5a2a"); story("deliver", o); } else say(null, r.msg); }, s.sacks < o.sacks]);
     opts.push(["Close", null]);
     say(null, `The shipping crate: the carter takes it today. Barn: ${s.sacks} sacks. Open orders need ${S.committed(s)}.${opts.length === 1 ? "<br>No orders yet: agree one in town first." : ""}`, opts);
   }
@@ -455,9 +554,14 @@
   function desk() {
     atDesk = true; hud();
     const c = S.coach(s);
-    dlg({ who: null, text: `Your desk: Edric's ledger, the forecast board, Maud's notebook.${c && c.danger ? `<br><b>Maud's note:</b> ${c.text}` : ""}`,
-      choices: [`Sleep (end day ${s.day})`, "Ledger", "Ledger tour: how to read it", "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", "Back to the road"] })
-      .then(r => { const f = [sleepNow, ledger, ledgerTour, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, () => { atDesk = false; hud(); }][r.i]; f && f(); });
+    const ex = storyOn ? Story.deskItems() : []; // WS6: Crane's offer and the case board join the Desk menu (before "Back to the road")
+    dlg({ who: null, text: `Your desk: Edric's ledger, the forecast board, Maud's notebook.${storyOn ? Story.deskNote() : ""}${c && c.danger ? `<br><b>Maud's note:</b> ${c.text}` : ""}`,
+      choices: [`Sleep (end day ${s.day})`, "Ledger", "Ledger tour: how to read it", `${wk4() ? "Ezra's problem" : "Maud's problem"} (${Practice.available(s, TR.state) ? "new" : "done today"})`, "Cash forecast", "The week's plan", "Notebook (N)", "Transcript (T)", `Edric's letters${storyOn && Story.state.pages.length ? ` (${Story.state.pages.length})` : ""}`, ...ex.map(x => x.label), "Back to the road"] })
+      .then(r => { const f = [sleepNow, ledger, ledgerTour, problem, () => board({ title: "Cash forecast, next two weeks", show: 14, fill: [] }), plan, notebook, transcript, letters, ...ex.map(x => x.fn), () => { atDesk = false; hud(); }][r.i]; f && f(); });
+  }
+  function letters() { // every letter of Edric's you've found, in the order you found them (the last one always last), to read again
+    const st = storyOn ? Story.state : { pages: [], pageDays: {} }, ids = storyOn ? Story.letterOrder() : [];
+    showPanel("letters", `<h1>Edric's letters <span class="hint">${ids.length} of ${Story.LETTERS.length} found</span></h1>` + (ids.map(i => `<div class="journal small"><b>${Story.LETTERS[i]}</b>${st.pageDays && st.pageDays[i] ? ` <span class="hint">found day ${st.pageDays[i]}</span>` : ""}<p>${Story.PAGES[i]}</p><p class="sig">— E.</p></div>`).join("") || "<p class='hint'>None yet. Edric left them where the lessons are.</p>"));
   }
   function plan() {
     const o = S.openOrders(s), need = S.committed(s) - s.sacks - S.sacksComing(s);
@@ -494,11 +598,11 @@
     });
   }
   // ---------- Edric's journal pages and Maud's notebook ----------
-  function page(text) { return new Promise(res => { showPanel("page", `<div class="journal"><div class="hint">A page from Uncle Edric's journal</div><p>${text}</p><p class="sig">— E.</p></div><button class="btn gold" id="pgok">Keep it</button>`); $("pgok").onclick = () => { hidePanel(); res(); }; }); }
+  function page(text, title) { return new Promise(res => { FX.sfx("chime"); showPanel("page", `<div class="journal"><div class="hint">${title ? `Edric's letter: ${title}` : "A page from Uncle Edric's journal"}</div><p>${text}</p><p class="sig">— E.</p></div><button class="btn gold" id="pgok">Keep it</button>`); $("pgok").onclick = () => { hidePanel(); res(); }; }); }
   function notebook() {
     if (panelKind && panelKind.k === "notebook") return hidePanel(); const st = storyOn ? Story.state : { notebook: [], pages: [] };
     showPanel("notebook", `<h1>Maud's notebook <span class="hint">click Close, or press N or Esc</span></h1>` + (st.notebook.map(n => `<div class="nb"><b>${n.term}</b><div>${n.line}</div><div class="hint">Your example: ${n.example}</div></div>`).join("") || "<p class='hint'>Empty for now. Maud writes in it as you learn.</p>") +
-      (st.pages.length ? `<h3>Edric's journal</h3>` + st.pages.slice().sort().map(i => `<p class="journal small">${Story.PAGES[i]}</p>`).join("") : ""));
+      (st.pages.length ? `<h3>Edric's letters</h3>` + st.pages.slice().sort().map(i => `<p class="journal small"><b>${Story.LETTERS[i]}.</b> ${Story.PAGES[i]}</p>`).join("") : ""));
   }
   function transcript() { if (panelKind && panelKind.k === "transcript") return hidePanel(); showPanel("transcript", TR.html() + `<p class="hint">Click Close, or press T or Esc.</p>`); }
   // ---------- the night ----------
@@ -508,7 +612,7 @@
     const f = S.forecast(s, 1)[0];
     if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9)) { atDesk = false;
       const bits = [f.cin ? `${f.cin} comes in (invoices due)` : "", f.wages ? `${f.wages} of wages and interest goes out` : "", f.bills ? `${f.bills} of Tomas's bills goes out` : "", f.fines ? `${f.fines} of forfeits goes out` : ""].filter(Boolean).join("; ");
-      const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}. Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
+      const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}, and Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
       guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; }
     doSleep();
   }
@@ -518,21 +622,21 @@
     say("maud", right ? `Right: ${s.bal.cash}. You read the night correctly.` : `You said ${g.v}; Cash is ${s.bal.cash}.<br>${g.before} + ${g.f.cin} collected − ${g.f.wages} wages and interest − ${g.f.bills} bills${g.f.fines ? ` − ${g.f.fines} forfeits` : ""} = ${g.f.close}${g.f.close !== s.bal.cash ? ", plus whatever else happened overnight" : ""}. Start from today's Cash, add what comes in, take away what goes out.`);
   }
   function doSleep() {
-    atDesk = false; const n0 = s.log.length, c0 = s.bal.cash, day0 = s.day; act(() => S.sleep(s));
+    atDesk = false; const n0 = s.log.length, c0 = s.bal.cash, day0 = s.day; FX.sfx("sleep"); act(() => S.sleep(s));
     const notes = s.log.slice(0, s.log.length - n0).reverse().map(l => l.t).slice(0, 4);
     // the day-end card: what Cash did, who still owes you, what was lost
     const owed = {}; s.invoices.forEach(v => owed[v.who] = (owed[v.who] || 0) + v.amount);
     const info = { day: day0, d: s.bal.cash - c0, owes: Object.entries(owed).map(([w, a]) => `${S.NAMES[w] || w} owes you <b>${a}</b>`), losses: s.journal.filter(j => j.type === "loss" && j.day === s.day - 1).map(j => j.memo) };
     if (s.over) return fast ? closeBooks() : night("The end of spring", notes, closeBooks, info);
     pl.x = 6 * T + 8; pl.y = 7 * T + 12; pl.dir = "down"; save();
-    const morning = () => { morningBark(); story("morning"); lossLesson(); revealPrediction(); };
+    const morning = () => { FX.sfx("morning"); morningBark(); story("morning"); lossLesson(); revealPrediction(); };
     if (fast) return morning();
     night(`Day ${s.day} · ${S.rain(s.day) ? "Rain" : "Sunny"}`, notes, morning, info);
   }
   function lossLesson() { // a loss shows up in the Ledger as an expense with no Cash leaving: walk the player to the exact lines
     const j = s.journal.find(x => x.type === "loss" && x.day === s.day - 1); if (!j || (storyOn && Story.busy)) return;
     const n = Object.values(j.lines)[0] ? j.lines.losses : 0; FX.thud(); FX.shake($("wrap"));
-    say("maud", `Open the Ledger and find the journal line "${j.memo}".<br>Debit Crop & stock losses ${n}, credit Inventory ${n}. Cash didn't move, but Net income fell by ${n} and so did Inventory: value you paid for is gone. That's why losses hit profit.`,
+    say("maud", `Find the journal line "${j.memo}": Debit Crop & stock losses ${n}, credit Inventory ${n}.<br>Cash didn't move, but Net income and Inventory both fell by ${n}, because value you paid for is gone.`,
       [["Open the Ledger", ledger], ["Later", null]]);
   }
   function night(title, notes, then, info) { // info: the day-end card (Cash change, who owes you, losses); tap to dismiss early
@@ -562,11 +666,13 @@
     $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
-      `<div class="wood deskonly" id="coin">${coinBar(b)}</div>`;
+      `<div class="wood deskonly" id="coin">${coinBar(b)}</div>` + (storyOn ? `<button type="button" class="wood" id="casebtn">Case board (${Story.state.clues.length})</button>` : ""); // WS6: the case board button
+    const cbtn = $("casebtn"); if (cbtn) cbtn.onclick = e => { e.stopPropagation(); if (!dlgOpen() && !panelOpen() && !Story.busy) Story.caseBoard(); };
     spot(curSpot); // hud() rebuilds the boxes, so put the lesson's spotlight (and the Books strip it needs) back
     $("bar").innerHTML = `<div class="slot"><i>sacks</i><canvas width=16 height=16 data-i="sack"></canvas><b>${s.sacks}</b></div><div class="slot"><i>seed</i><canvas width=16 height=16 data-i="seed"></canvas><b>${s.seeds}</b></div>` +
       `<div class="slot"><i>sprinkler</i><canvas width=16 height=16 data-i="sprinkler"></canvas><b>${s.sprinklersHeld}</b></div><div class="slot keys"><button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.notebook()">Notebook</button> <button class="btn alt" style="font-size:11px;padding:2px 6px" onclick="G.transcript()">Transcript</button><br>Desk at home: ledger, forecast</div>`;
     $("bar").querySelectorAll("canvas").forEach(c => c.getContext("2d").drawImage(c.dataset.i === "seed" ? A.crops[1] : A[c.dataset.i], 0, 0));
+    paintGoal();
   }
   // The top bar is built once: [Day, Cash, Crown meter] [goal] [Travel] [Books], then the Books strip underneath.
   let booksPin = false, curSpot = [];
@@ -594,7 +700,14 @@
     const segs = [["Cash", b.cash, "#2f6f62"], ["Inventory", b.inv, "#b8862b"], ["Accounts receivable", b.ar, "#5b7fc4"]], tot = Math.max(1, segs.reduce((a, x) => a + Math.max(0, x[1]), 0));
     return `<span class="k">Where your coin is</span><div class="coinmap">${segs.map(([n, v, c]) => `<div style="width:${Math.max(0, v) / tot * 100}%;background:${c}" title="${n}: ${v}">${v / tot > .18 ? `${n} ${v}` : ""}</div>`).join("")}</div>`;
   }
-  function goal(text, ch) { $("goal").innerHTML = text ? `<span class="k">Chapter ${ch} of 9</span> ${text.replace(/^Chapter \d+ · /, "")}` : ""; $("goal").style.display = text ? "block" : "none"; }
+  // WS7: on a Market Day the ribbon gains a second line with a "To the stall" button (market.js builds it); paintGoal() re-runs from hud() so it appears and goes with the day
+  // WS6: the ribbon's small header is "Week N · <title>" when the story passes one (hdr), else the old "Chapter N of 9"
+  let goalNow = { text: "", ch: 0, hdr: "" };
+  function goal(text, ch, hdr) { goalNow = { text, ch, hdr }; paintGoal(); }
+  function paintGoal() {
+    const m = window.Market && s ? Market.goalLine(s, storyOn && Story.busy) : "", html = (goalNow.text ? `<span class="k">${goalNow.hdr || `Chapter ${goalNow.ch} of 9`}</span> ${goalNow.text.replace(/^Chapter \d+ · /, "")}` : "") + m, g = $("goal");
+    if (g.dataset.h !== html) { g.dataset.h = html; g.innerHTML = html; } g.style.display = html ? "block" : "none";
+  }
   function floatHud(id, v) { const el = $("h-" + id); if (!el) return; const r = el.getBoundingClientRect(), w = $("wrap").getBoundingClientRect();
     flo(`${v > 0 ? "+" : "−"}${Math.abs(v)}`, r.left - w.left + 10, r.bottom - w.top + 4, v > 0 ? "#2f6f3a" : "#9b2335"); }
   function floatAt(tx, ty, text, col) { if (!text) return; const sc = cv.getBoundingClientRect().width / VW; flo(text, (tx * T - cam.x) * sc, (ty * T - cam.y) * sc, col); }
@@ -605,9 +718,9 @@
   // Mouse-only play: every panel you can leave gets a clickable Close at the top and bottom, and a click on
   // the dark backdrop closes it. Task panels (forecast with cells to fill, journal pages, the close) keep
   // their own buttons, because they finish a step of the story.
-  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript", "explain"]);
+  const CLOSABLE = new Set(["plan", "ledger", "notebook", "transcript", "explain", "letters", "casebd"]); // WS6: casebd = the case board
   function showPanel(k, html, locked) {
-    panelKind = { k, locked };
+    panelKind = { k, locked }; FX.sfx("page");
     const x = CLOSABLE.has(k) && !locked;
     $("panelBody").innerHTML = (x ? `<button class="btn alt pclose" style="float:right;margin:0 0 6px 10px">✕ Close</button>` : "") + html +
       (x ? `<div style="text-align:right;margin-top:10px"><button class="btn gold pclose">Done</button></div>` : "");
@@ -616,7 +729,7 @@
     $("panel").style.display = "flex"; addSignButtons($("panelBody"));
   }
   let hideWaiters = [];
-  function hidePanel() { $("panel").style.display = "none"; panelKind = null; const w = hideWaiters.splice(0); if (w.length) return w.forEach(f => f()); if (atDesk) desk(); }
+  function hidePanel() { if ($("panel").style.display !== "none") FX.sfx("close"); $("panel").style.display = "none"; panelKind = null; const w = hideWaiters.splice(0); if (w.length) return w.forEach(f => f()); if (atDesk) desk(); }
   // Open a document from inside a question and wait until the player closes it, then the question comes back.
   function openDoc(fn) { return new Promise(res => { hideWaiters.push(res); fn(); }); }
   let pre = "";
@@ -624,7 +737,7 @@
   const fmt = v => typeof v === "number" ? (v < 0 ? `(${-v})` : String(v)) : v;
   function bsTable(b, title, p) {
     pre = p || "bs1"; return `<table class="stm"><tr><th>${title}</th><th></th></tr>` + tr("Cash", b.cash, "sub", "cash") + tr("Accounts receivable", b.ar, "sub", "ar") + tr("Inventory", b.inv, "sub", "inv") +
-      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
+      tr("Equipment, net", b.equipNet, "sub", "equip") + tr("Total assets", b.assets, "total", "assets") + tr("Accounts payable", b.ap, "sub", "ap") + (b.deposits ? tr("Customer deposits = unearned revenue (grain owed)", b.deposits, "sub", "deposits") : "") + tr("Loan payable (due within the year)", b.loan, "sub", "loan") +
       tr("Crown debt (due at Midwinter)", b.crown, "sub", "crown") + tr("Owner's equity", b.equity, "sub", "equity") + tr("Liabilities + Owner's equity", b.liab + b.equity, "total") +
       `</table><div class="ok">${b.assets === b.liab + b.equity ? "Assets = Liabilities + Owner's equity ✓" : "OUT OF BALANCE"}</div>`;
   }
@@ -672,7 +785,10 @@
     const mw = s.outcome === "insolvent" ? "" : midwinter();
     if (s.outcome === "insolvent") ez.innerHTML = `<p>Ezra won't lend to an estate that couldn't pay its wages. The farm goes to auction.</p><button class="btn gold" id="again">Try spring again</button>`;
     else ez.innerHTML = mw + `<p>Before summer, Ezra reads your books. Explain them well and he lends more, cheaper.</p><button class="btn gold" id="goEzra">Take the books to Ezra</button>`;
+    ez.insertAdjacentHTML("beforeend", endBtn());
     wire(); save();
+    // WS6 finale slot: if the Ledger Duel (court.js, another builder) is loaded it runs now; otherwise the close + verdict above stand
+    if (storyOn && window.Court && Court.run && s.outcome !== "insolvent" && !(s.exam && s.exam.passed)) await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));
     $("mline").innerHTML = `<b>Maud:</b> ${text}`; $("ez").innerHTML = `<button class="btn gold" id="rnext">Next</button>`; $("rnext").onclick = () => { $("ez").innerHTML = ""; res(); }; }); }
@@ -681,7 +797,9 @@
     rows.forEach(r => { if (!r.dataset.line) return; r.classList.add("pick"); r.onclick = () => {
       if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
-  function wire() { const a = $("again"), g = $("goEzra"); if (a) a.onclick = restart; if (g) g.onclick = review; }
+  // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close
+  const endBtn = () => storyOn ? `<p><button class="btn alt" id="goEnd">How it ends</button></p>` : "";
+  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); }
   function review() {
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
@@ -689,7 +807,7 @@
       if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length); localStorage.removeItem(SAVE);
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${right === qs.length ? "You know your own books. Good." : right ? "You know some of your books." : "You don't know your own books. That costs you."}<br>
           Summer terms: lend up to <b>${after.loanLimit}</b> at <b>${after.rateBp / 100}% a week</b> (spring: ${before.loanLimit} at ${before.rateBp / 100}%).</div>
-          <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>`; return wire(); }
+          <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>${endBtn()}`; return wire(); }
       const qq = qs[i]; qq.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("ask")));
       ez.innerHTML = `<div class="ezq"><b>Ezra</b> <span class="hint">(${i + 1} of ${qs.length}; each answer moves your summer rate)</span><br>${qq.q} ${qq.ask}</div>` +
         qq.options.slice().sort(() => Math.random() - .5).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
@@ -704,7 +822,7 @@
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
-  function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); ctx.fillStyle = S.notice(s) ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); }
+  function drawBoard() { const x = BOARD.x * T - cam.x, y = BOARD.y * T - cam.y; ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 2, y + 2, 2, 14); ctx.fillRect(x + 12, y + 2, 2, 14); ctx.fillStyle = "#cf9f62"; ctx.fillRect(x, y - 6, 16, 11); ctx.fillStyle = "#f4ead0"; ctx.fillRect(x + 2, y - 4, 5, 6); ctx.fillRect(x + 9, y - 3, 5, 5); const news = S.notice(s) || (soOk() && Standing.today(s).length); ctx.fillStyle = news ? "#c43a1a" : "#946b3c"; ctx.fillRect(x + 4, y - 5, 1, 1); ctx.fillRect(x + 11, y - 4, 1, 1); if (news) { ctx.fillRect(x + 7, y - 15, 2, 5); ctx.fillRect(x + 7, y - 9, 2, 2); } }
   function drawWell(W) { const x = W.x * T - cam.x, y = W.y * T - cam.y; ctx.fillStyle = "#8d949b"; ctx.fillRect(x + 1, y + 4, 14, 11); ctx.fillStyle = "#6f757b"; ctx.fillRect(x + 1, y + 12, 14, 3);
     ctx.fillStyle = "#2d5f9a"; ctx.fillRect(x + 3, y + 5, 10, 5); ctx.fillStyle = "#6b4526"; ctx.fillRect(x + 1, y - 6, 2, 11); ctx.fillRect(x + 13, y - 6, 2, 11); ctx.fillStyle = "#9b2335"; ctx.fillRect(x - 1, y - 9, 18, 4); }
   function drawStall(f) { const x = (f.x - 1) * T - cam.x, y = (f.y - 1) * T - cam.y;
@@ -724,7 +842,7 @@
   }
   function drawPerson(who, x, y, dir, moving, stepv) { const f = A.people[who][dir], i = moving ? 1 + (Math.floor(stepv) % 2) : 0;
     ctx.fillStyle = "rgba(0,0,0,.2)"; ctx.fillRect(Math.round(x - 5 - cam.x), Math.round(y - 1 - cam.y), 10, 3); blit(f[i], x - 8, y - 16); }
-  const wants = who => storyOn ? ({ tomas: ["tomas2", "tomas6"], ashby: ["ashby3"], hobb: ["hobb4"], ezra: ["ezra7"], duke: ["duke8"] }[who] || []).indexOf(Story.state.stage) >= 0 : s.offers.some(o => o.who === who);
+  const wants = who => !!sceneFor(who) || (storyOn ? ({ tomas: ["tomas2", "tomas6", "tomas9"], ashby: ["ashby3"], hobb: ["hobb4"], ezra: ["ezra7"], duke: ["duke8", "duke9"] }[who] || []).indexOf(Story.state.stage) >= 0 : s.offers.some(o => o.who === who));
   function draw() {
     cam.x = Math.max(0, Math.min(MW * T - VW, pl.x - VW / 2)); cam.y = Math.max(0, Math.min(MH * T - VH, pl.y - VH / 2));
     ctx.fillStyle = "#79b851"; ctx.fillRect(0, 0, VW, VH); drawGround();
@@ -741,13 +859,14 @@
     if (window.Verbs) Verbs.draw(ctx, cam, frame); // WS3: frames round tagged things
     const f = facing(), p = plotAt(f.x, f.y), n = npcAt(f.x, f.y), b = buildingAt(f.x, f.y);
     if (p) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.strokeRect(f.x * T - cam.x + .5, f.y * T - cam.y + .5, 15, 15); }
-    const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
+    const hintText = dlgOpen() ? "" : n ? `E: talk to ${S.NAMES[n.who]}` : (window.Market && Market.stallAt(f.x, f.y)) ? "E: your Market Day stall" : (f.x === CRATE.x && f.y === CRATE.y) ? "E: shipping crate" : (f.x === BOARD.x && f.y === BOARD.y) ? "E: notice board" : b ? (b.id === "house" ? "E: sit at your desk" : `E: ${S.NAMES[b.who]}`) :
       p ? "E: " + (!p.tilled ? "till" : p.sprinkler ? "pick up sprinkler" : !p.crop ? (s.sprinklersHeld ? "place sprinkler" : s.seeds ? "plant seed" : "no seed: buy from Tomas") : S.stage(s, p) === 4 ? "harvest" : p.watered || S.rain(s.day) ? "watered" : "water") : "";
     $("hint").textContent = TOUCH ? "" : hintText; // the "E: ..." hint is for a keyboard; on an iPad you just tap
     const act = TOUCH && $("act"); if (act) { const lab = hintText.replace(/^E: /, "") || "Act"; if (act.dataset.l !== lab) { act.dataset.l = lab; act.textContent = lab.charAt(0).toUpperCase() + lab.slice(1); } }
   }
   let last = 0;
-  function tick(dt) { frame++; const modal = dlgOpen() || panelOpen(); if (TOUCH) { document.body.classList.toggle("inmodal", modal); if (modal) for (const k in keys) keys[k] = false; } if (!modal) move(dt); draw(); }
+  let stepAcc = .2;
+  function tick(dt) { frame++; const modal = dlgOpen() || panelOpen() || marketOpen(); if (pl.moving && !modal) { stepAcc += dt; if (stepAcc > .27) { stepAcc = 0; FX.sfx("step"); } } else stepAcc = .2; if (TOUCH) { document.body.classList.toggle("inmodal", modal); if (modal) for (const k in keys) keys[k] = false; } if (!modal) move(dt); draw(); }
   function loop(t) { const dt = Math.min(.05, (t - last) / 1000 || 0); last = t; tick(dt); requestAnimationFrame(loop); }
   // A desktop shows a fixed 320x200 view in whole-pixel steps. An iPad scales in half steps and then shows as much MAP as the screen holds, so the game
   // fills the whole screen in either orientation instead of floating in a letterbox.
@@ -783,24 +902,41 @@
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
     dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
-    travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
     const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10) });
+      // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
+      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? 1 + Math.floor(Math.random() * 2147483646) : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
-      hud(); if (storyOn) Story.start();
+      // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in
+      const go = () => { hud(); if (storyOn) Story.start(); };
+      if (!sv && storyOn && window.Intro && Intro.wanted(q)) Intro.play().then(go); else go();
     };
     if (saved && storyOn && !saved.s.over && !q.has("new")) { s = saved.s; hud(); dlg({ who: "maud", text: `Welcome back. Day ${saved.s.day}, chapter ${saved.story.ch}.`, choices: ["Continue", "Start a new game"] }).then(r => begin(r.i === 0 ? saved : null)); }
+    // a finished season: coming back (a reload, a new tab) returns to the books, the Reeve's Court and the ending instead of silently starting over
+    else if (saved && storyOn && saved.s.over && !q.has("new")) { s = saved.s; hud(); const o = saved.s.outcome; dlg({ who: "maud", text: o === "sold" ? "Welcome back. The farm is sold, but its ending is still here." : o === "insolvent" ? "Welcome back. The season ended badly: the post-mortem is still here." : "Welcome back. The spring is over: the books, the Reeve's Court and the ending are waiting.", choices: ["Continue", "Start a new game"] }).then(r => { if (r.i !== 0) return begin(null); begin(saved); setTimeout(() => { if (o === "sold") Story.showEnding("sold"); else closeBooks(); }, 60); }); }
     else begin(null);
   }
+  // ---------- sound: a tap on any button, and the score follows what's happening ----------
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("button"); if (b && !b.disabled && !b.closest("#pause")) FX.sfx(b.closest(".np") ? "pad" : "tap"); }, true);
+  function moodNow() { // which piece of the score fits the moment
+    if (!s) return "farm"; if (document.getElementById("night") && $("night").classList.contains("on")) return "night";
+    if (storyOn && window.Verbs && Verbs.craneOn) return "crane";
+    const wk = S.nextWeekEnd(s), due = S.weekBills(s) + S.billsDue(s, wk); if (!s.over && wk - s.day <= 2 && s.bal.cash < due) return "tense";
+    if (s.offers.some(o => o.who === "duke") || s.orders.some(o => o.who === "duke" && o.status === "open")) return (pl.x / T > 22) ? "tense" : "farm";
+    if (S.rain(s.day)) return "rain"; return pl.x / T > 22 ? "town" : "farm";
+  }
+  setInterval(() => { try { if (!window.Music || !s || (window.Intro && Intro.active)) return; Music.setMood(moodNow()); if (FX.sfxOn) FX.rain(S.rain(s.day) && !s.over); } catch (e) {} }, 900);
+  if (window.Market) Market.init(G); // WS7
   fit(); start();
   if (q.has("auto")) { const a = q.get("auto"); G.play(q.get("bot") || "careful", /^\d+$/.test(a) ? +a : 99); if (a === "ezra") review(); }
   if (q.has("at")) { const [x, y] = q.get("at").split(",").map(Number); pl.x = x * T + 8; pl.y = y * T + 12; }
   if (q.has("desk")) { atDesk = true; hud(); }
+  if (q.has("ending") && storyOn) setTimeout(() => { G.closeDlg(); Story.testEnding(q.get("ending")); }, 300); // WS6 test hook: ?ending=sold|seized|bridged|free shows that epilogue
   requestAnimationFrame(loop);
 })();

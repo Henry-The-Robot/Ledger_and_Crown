@@ -1,8 +1,96 @@
 # Changelog
 
+## Stability (quality gate)
+- Coming back to a finished season (reload, new tab) no longer starts a silent new game: Maud offers Continue, which returns to the closing books, the Reeve's Court (unless already passed) and the ending, or a new game. A season ended by selling the farm returns to its ending.
+- The notebook gains "The real floor" after the first Market Day's floor bet (cost vs the best sale you give up), with a clue card.
+- Tests: `stability.html` (real-time runner).
+
+## v0.4.1 candidate: editor pass and day loop (work order items 6-8)
+- Every Maud box is at most two sentences (27 lines fixed or split); the longest choiceless run in the story is 4 boxes (was 5); `test-editor.js` keeps both true.
+- Teaching-line audit against the curriculum foundation: Crane's equity question, the Market Day price-rise explanation, the guarantee as a contingent liability, the standing-order wording. See `docs/EDITOR-REPORT.md`.
+- Day loop: every day 2-28 has a choice and a surprise or set piece over 40 seeds. Notices recur (trader 3/6/10/25, hands 4/12/16), rain counts, the notice board shows a red "!". `test-dayloop.js`, `day-loop.html`.
+- `?v=` 0.4.1.
+
+## T4: The Reeve's Court (the exam and the finale, day 28)
+- `court.js` + `court.css`: Vane's advocate makes 8 claims built from the player's own statements (profit is not Cash, receivables, "owns nothing", "Edric was unprofitable", the Duke's terms vs wages, a guarantee is a liability, payable-on-demand, margin vs markup, inventory, equity). PRESS for detail (it can turn up evidence), PRESENT a statement line, a case-board clue or a found card. Refute 6 of 8 to pass; a failed hearing offers another sitting with a fresh set of claims, never a game over.
+- Crane (trust 3+) testifies once (a free correct present); Ezra (trust 3+) confirms his rate. One Maud line per refuted claim (claim, number, reason); transcript evidence only for unhinted right presents.
+- Pass: certificate (farm name, score, date) -> letter "The thing I signed" -> Crane reads the seal -> Vane's offer comes due (your answer is saved as `vaneFinal`) -> Summer teaser reading the saved flags.
+- Called by `closeBooks()` with `{G, s, Story, Endings, st}`; standalone: `game.html?court=1` (careful-bot season). Tests: `test-court.js`, `court.html`. Screenshots in `docs/court-shots/`.
+## T3b: story critic fixes
+- Sold-out epilogue no longer compares the offer with a bot's "careful" run or claims it was too low. It sets the price beside what the farm EARNS (Cash cleared this spring, or profit while that is still in grain and invoices) and beside book equity, and says the land isn't on the books.
+- Crane's offer now rises with the Cash the farm's operations have cleared and falls with the days the forecast shows the chest empty (documented in endings.js, tested both ways); book equity no longer moves it.
+- The Tomas-vs-Ezra verdict uses the discount the engine books and whole coins, one number per sentence.
+- Every Maud box is at most two sentences; every Crane line is in "Item:" sentences (story, scenes, cast).
+- Wording: "You must be the heir"; the second order says "delighted with the first" only if you took it; Edric's page says "the same kind of order".
+- The ending card, week card and Court count as screens for the stall detector; the Sold ending has a Close button; `?ending=` previews a copy and writes no unlock.
+- Edric's cash book: one row per day, profit / Cash cleared / tied up in grain and unpaid invoices (Inventory + Receivables - Payables - Deposits).
+- No "(coming)" text; the day-28 goal mentions the Reeve's Court. Tests: `test-t3b.js`, `test-offer.js` updated.
+## Creative calls 1-5 (docs/TASKS-season1.md)
+1. **Week 4:** Maud stops teaching (no daily problem, no menu of lessons; her story scenes and danger warnings still play). The daily problem comes from Ezra, with no Explain-how button; he earns trust for right answers.
+2. **Letters** list in the order you found them (day found shown), and "The thing I signed" is always last.
+3. **Clue cards:** title + your number + where found, at most 12 words in all (trimmed automatically; the six scene cards are authored to fit).
+4. **Market Day** is on days 7, 14 and 21 only; day 28 belongs to the Court (story and sandbox).
+5. **Crane's one voice** ("Item:" sentences) is in the T3b PR.
+- Tests: `test-calls.js`, `week4.html`; `test-market-day.js` updated.
+## T5: practice as play
+- **Standing orders** (`standing.js`): one or two repeatable contracts a day (days 3-26) on the notice board from Ashby, Hobb and Mira. Check one first (margin, the road trader's price for the same sack, the seed it needs and what that leaves in Cash, when the money arrives), then take it (haggled and shipped like any order) or pass. Some are traps: **thin** (no better than the best alternative sale), **slow** (the Cash lands after the season, or the next pay-day finds the chest short) and orders the chest **can't carry**. The verdict names which; a good take after the check, or a trap checked and passed, is transcript evidence.
+- **Maud's daily problem is now an optional wager:** stake 0-3 coin before seeing it; right on the first answer and it comes back doubled, anything else Maud keeps it. Real Cash, posted so the books tie. Never a gate.
+- **Four new problem types** for the foundation fixes: opportunity-cost floor, the time-value flip (answer changes with Ezra's rate), the scaling gap (tied-up Cash doubles with sales) and expected value vs ruin (an EV number, then "is it safe?"). Transcript gains "Opportunity cost" and "Expected value & ruin".
+- Tests: `test-standing.js`, `standing-ui.html`, `test-practice.js` extended.
+## T6 + T6b: the frost almanac, the real floor, break-even, Grisby with teeth
+- **Frost almanac (expected value vs ruin).** The evening before the frost the notice board gives the odds of a HARD frost (1 in 3) and the price of straw (5 a plot). Cover (certain cost, crops safe) or risk it (on average cheaper, but a hard frost kills every uncovered crop, written off at cost). After the choice Maud sets the average against the certain price and says whether losing the crops would have cost you your Crown verdict. Only a player who answers is exposed, so unattended play (bots, sandbox tuning) is unchanged. Transcript: "Expected value & ruin".
+- **Opportunity-cost floor bet** after the first Market Day: Ashby offers 5, above the sack's cost; what is the lowest price worth taking? (The fair paid more.) Optional stake through Maud's usual bet. Transcript: "Opportunity cost".
+- **Break-even cell** in every tally: "you kept N a sack; the week's wages and interest are W; how many sacks cover it?" Two tries, evidence only for a first-try answer.
+- **Grisby matters:** above the going price he undercuts by 2 (was 1); he brings a limited stock (24 in week 2, only 5 in week 3), so he sells out part-way through the week-3 afternoon. His board shows what he asked, his stock left and what he took (and how much of it was really yours).
+- **Market Day critic fixes (T6b):** Maud's bet is settled on every path (a fair quit part-way refunds the stake); Grisby's sales are capped by his stock; the demand chart leaves off earlier fairs played under the other rival condition and earlier sold-out hours; Transcript credit for demand/segments needs a price change that RAISED takings; "takings would up" reads rise/fall/stay the same.
+- Tests: `test-frost.js`, `test-market-day.js` (Grisby stock, experiment, bet settlement), `market-t6.html`.
+## The opening
+- A 74-second animated prologue (`intro.js`, `intro.css`) opens every new story game: the valley at dusk, Edric's ledger rising while his chest empties, Crane and the Crown's writ with its scratched second seal, the man in the grey cloak buying the valley's paper, you arriving at dawn, then the title. Drawn with the game's own sprites, scored with its own music moods, with sound effects cued to the picture.
+- Every spoken line is a subtitle and is also data (`Intro.SCRIPT`, `node tools/intro-script.js`): `Intro.setVoice("assets/voice/intro")` plays `<id>.mp3` per line when a voice is added. See `docs/INTRO-SCRIPT.md`.
+- Skip (button or Escape) at any time; "Watch the opening" in the pause menu replays it; `?intro=0` / `?intro=1`.
+- Tests: `test-intro.js`, `intro.html` (real-time runner).
+
 All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v0.4.0-beta (candidate)]
+
+Integrates PRs #27 (sound and music), #28 (cast, scenes, letters), #29 (practice), #30 (WS7 Market Day) and #31 (WS6 story spine) on `integrate-s1`. Do not release before creative-lead review. Cache-bust stamp `?v=0.4.0`.
+
+### Integration decisions (canon, `projects/mba-game/TASKS-season1.md`)
+- WS6's structure and mechanics (four weeks and title cards, Crane's buy-out offer, endings, case board, timeline scenes, escalating orders, time-value scene, seeded events, farm name) with #28's words and characters (cast voices, scenes, letters, flags).
+- The villain is **Corvin Vane** everywhere ("Steward Vane" renamed). Crane is the honest ex-clerk, not Vane's man: he delivers the day-1 offer as an instructed messenger ("Item: I do not recommend it").
+- Village scenes keep their days except two that landed on a story beat and moved +1: Crane's off-duty scene 12 to 13 (day 12 is Vane's first order), Crane's seal scene 22 to 23 (day 22 is the week-4 card).
+- A village scene that reveals a clue also pins a card on the case board. Practice problems pin nothing.
+- Edric's letters: #28's nine keep their numbers; WS6's midpoint page is letter 10, "The same order" (found the night Vane brings his order).
+- Maud no longer answers with only a "Next:" hint when a village scene or the day's practice problem is waiting (it was unreachable during the story, days 9-14); game.js shows her menu instead.
+- `Music` and `Sound effects` switches in the pause menu; the single shared audio context and first-tap unlock from #17/#25 are kept.
+
+### Added: Market Day (WS7, #30)
+- Days 7, 14 and 21: a stall on the square. Set a price per hour, watch who buys (thrifty, comfortable, in a hurry), a demand chart in the tally, Maud's bet on day 14, Grisby's rival stall from day 14. Every sale goes through the books (Cash, Revenue, Inventory) and the cash-flow statement still reconciles. Details: `TEST-RESULTS-WS7.md`.
+
+### Added: the four-week story spine (WS6, #31)
+- Four weeks with title cards (day 1, 8, 15, 22) and a goal ribbon "Week N · title"; Crane's standing buy-out offer (day 1 and from the Desk; a mercy price when you cannot cover wages); four endings (sold out, seized, bridged, free) with epilogues and what they unlock; the case board (every lesson, letter and village scene pins a clue); the time-value scene at Tomas; Corvin Vane's escalating orders (day 12 half, day 15 whole); Edric's cash book in week 4; seeded event nights; name your farm. Details: `TEST-RESULTS-WS6.md`.
+
+### Added: Maud's problem (practice, #29)
+- A new problem every day, set by Maud on your own live numbers (gross margin on your last sale, the equation, inventory, receivables, interest, Cash at the next pay-day, the discount, break-even, current ratio, operating income, deposits, the Crown fund). Desk menu or talk to Maud.
+- Every third day, with two offers on the table, she asks which puts more Cash in the chest by day 28.
+- Right on your own = transcript evidence (mastery needs several days), a streak, and favour (Maud trusts you more). Hinted or walked-through = no credit.
+- Tests: `test-practice.js` (1100+ generated problems checked against the engine), `practice-ui.html`.
+
+### Added: story, cast and letters
+- **A cast with a spine** (`cast.js`, `docs/STORY-BIBLE.md`): every villager has a look, a verbal habit, a mantra, a want and a secret, and a greeting pool that responds to the weather and the chest. Walk up to anyone with no business and they speak, then offer "Ask about..." topics, some locked until you have earned their trust (hearts) or the story has reached them.
+- **The mystery**: why a profitable farm went broke, and who wanted it to. Edric stood surety for Ashby's bakery (a guarantee the Ledger never showed), the Crown sold the note to **Steward Vane**, and Vane is buying up every note in the valley to call them in at Midwinter. The Duke's order is his gambit.
+- **12 village scenes** (`scenes.js`, days 9-28): optional, one-time, marked by a red "!" on the speaker. A scene IS a lesson: Hobb's request for seven more days is a real credit decision (it changes his invoice); Vane's "partnership" is a payable-on-demand covenant. Six clues, flags saved for Summer.
+- **Edric's nine letters** (from five): found where the lessons are, reread from the desk ("Edric's letters"); the last turns the season into a mystery.
+- Chapter dialogue rewritten in each character's voice (Crane's forty-one items, Tomas's patter, Ashby's "none of his luck", Hobb's pauses, Ezra's price-not-judgement, Vane's opportunity). "The Duke's steward" is now **Steward Vane**.
+- `tests/test-cast.js` (every line fits a dialogue box and has no placeholders, greetings vary and respond, topics are earned, every scene plays through every choice keeping the books balanced, the clue count matches), `tests/story-ui.html`.
+
+### Added: sound and music
+- **Score** (`music.js`): a small generative composer in six moods (farm, town waltz, rain, night lullaby, tense, the bailiff's march), all synthesized with WebAudio, so no audio files and it works offline. The score follows the game: the bailiff's march in chapter 1, night music while you sleep, rain on rainy days, the town waltz east of the village square, a heartbeat when the chest can't cover the next pay-day or the Duke's order is open.
+- **24 sound effects** (`fx.js`): footsteps, tilling, planting, watering, harvest, shipping, page turns, button taps, error buzz, stamp, sleep and morning, mastery chime, rain, and more. Each character has their own typewriter voice (pitch and timbre).
+- **On by default** (after the first tap, which iOS requires), with two switches in the menu: Music and Sound effects. The old one-switch setting is honoured if it was explicitly off. iOS ringer-switch workaround (a "playback" audio session).
+- `sound.html`: a sound check page (every mood, effect and voice on a button) so the music can be judged by ear.
+- `tests/audio.html` (run with `node tests/run-html.js`): renders every mood offline and checks the signal (non-silent, no clipping, deterministic, each different, node budget), runs all effects and the live scheduler against a fake context, and checks the preferences.
 
 ### Creative lead's list (v0.3.2 candidates, one PR each into `next`)
 - 1 Overtrading loses: one `R.duke` order (132 sacks, 28-day terms) shared by story and sandbox; `test-crown` asserts careful pays, overtrader and reckless lose.
