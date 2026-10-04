@@ -44,6 +44,11 @@
 - **Grisby matters:** above the going price he undercuts by 2 (was 1); he brings a limited stock (24 in week 2, only 5 in week 3), so he sells out part-way through the week-3 afternoon. His board shows what he asked, his stock left and what he took (and how much of it was really yours).
 - **Market Day critic fixes (T6b):** Maud's bet is settled on every path (a fair quit part-way refunds the stake); Grisby's sales are capped by his stock; the demand chart leaves off earlier fairs played under the other rival condition and earlier sold-out hours; Transcript credit for demand/segments needs a price change that RAISED takings; "takings would up" reads rise/fall/stay the same.
 - Tests: `test-frost.js`, `test-market-day.js` (Grisby stock, experiment, bet settlement), `market-t6.html`.
+## The opening
+- A 74-second animated prologue (`intro.js`, `intro.css`) opens every new story game: the valley at dusk, Edric's ledger rising while his chest empties, Crane and the Crown's writ with its scratched second seal, the man in the grey cloak buying the valley's paper, you arriving at dawn, then the title. Drawn with the game's own sprites, scored with its own music moods, with sound effects cued to the picture.
+- Every spoken line is a subtitle and is also data (`Intro.SCRIPT`, `node tools/intro-script.js`): `Intro.setVoice("assets/voice/intro")` plays `<id>.mp3` per line when a voice is added. See `docs/INTRO-SCRIPT.md`.
+- Skip (button or Escape) at any time; "Watch the opening" in the pause menu replays it; `?intro=0` / `?intro=1`.
+- Tests: `test-intro.js`, `intro.html` (real-time runner).
 
 All notable changes to Spring at Thornfield. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
