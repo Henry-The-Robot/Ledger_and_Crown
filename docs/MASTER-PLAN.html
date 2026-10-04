@@ -126,6 +126,8 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
     <li><a href="#risks">Risks</a></li>
     <li><a href="#tech">Technical foundation</a></li>
     <li><a href="#coverage">Curriculum coverage, session by session</a></li>
+    <li><a href="#menu">Main menu, season openings, cutscenes</a></li>
+    <li><a href="#devmode">Dev mode (design only)</a></li>
   </ol>
 </header>
 
@@ -743,6 +745,56 @@ footer{margin-top:30px;border-top:2px solid var(--ink);padding-top:10px;font-siz
 <tr><td class="cid">C16.10</td><td>Capstone decision under constraints</td><td><span class="st miss">not written</span></td></tr>
 </tbody></table></div></details>
 <!--COVERAGE:END-->
+</section>
+
+<section id="menu">
+  <span class="folio">§13</span>
+  <h2>Main menu, season openings and cutscenes</h2>
+  <h3>The main menu: a map of the realm</h3>
+  <p>First launch: the opening animation, then the main menu. Later launches: straight to the menu. The menu is a map of the realm, rebuilt from the old "Vale" map (<span class="cid">projects/mba-game/poc/index.html</span>), with one site per chapter: Thornfield, the Town, the Province, the Capital. Chapters 2 to 4 show a padlock and one line of teaser. Inside a chapter, its seasons appear as a path: done (with the ending you got), current, and locked. The map fills in as you progress: roads appear, the Town's lights come on when Chapter 2 opens.</p>
+  <ul>
+    <li><b>Buttons:</b> Continue · New game · Chapters (the map) · Journal (letters, clues, every cutscene you have seen) · Transcript · Settings.</li>
+    <li><b>Where it is built:</b> the platform, after the cutscene engine (P7), so Spring v1.0 ships with it.</li>
+  </ul>
+  <h3>Season openings</h3>
+  <p>Every season has its own short opening, at most 8 seconds: the season's light, the farm in that season, the season's name and its question. It plays when a season starts and when you enter a season from the main menu. It does not play when you pause and resume. The 74-second prologue stays for the first launch only; Spring also gets a short opening for re-entry. Next to build: Summer's, with Summer. Every season design must include its opening.</p>
+  <h3>Cutscenes for key story points</h3>
+  <p>Each at most 25 seconds, skippable, replayable from the Journal, and each shows a clue or a fact the player needs. A season design must list its cutscenes; the reviewer checks they exist.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Season</th><th>Cutscenes (draft list)</th></tr></thead>
+    <tbody>
+      <tr><td>Spring</td><td>The prologue (built) · Vane arrives (day 12) · "It's only my name": Ashby's flashback (day 21) · the night the pigs got in · Market Day opens (short, varies by week) · Crane reads the seal</td></tr>
+      <tr><td>Summer</td><td>The King's messenger · the chicken farm opens · Grisby's ruined field (if he took the shiny crop) · Vane's credit ring exposed · the Purveyor's Tender begins</td></tr>
+      <tr><td>Autumn</td><td>The harvest begins · the hiring line at the gate · blight in the barn · Vane's sign goes up on the seed shop · the Inquest's reveal: the skimmer named</td></tr>
+      <tr><td>Winter</td><td>First snow on bare fields · the morning every note is called · the Exchequer's carriage arrives · the Midwinter Assize verdict · the hand-off: the mill and the bakery, saved or lost</td></tr>
+      <tr><td>Chapters 2–4</td><td>Set in each chapter's outline; the same rules.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="devmode">
+  <span class="folio">§14</span>
+  <h2>Dev mode: test any moment without replaying</h2>
+  <p class="note"><b>Not built yet, by your choice.</b> This is the design, plus four cheap rules the platform keeps now so dev mode is easy later. Recommended timing: build it right after the platform phase, before Summer's build, because that is when replaying gets expensive.</p>
+  <h3>The idea: rebuild any moment from data, in about a second</h3>
+  <p>The game's economy is deterministic: same seed and same choices give the same books. The game already has bots that play whole seasons (a careful player, an overtrader, a reckless one) and recorded test playthroughs. So dev mode does not need saved games for every moment. It simulates to the moment you pick, instantly, and drops you there.</p>
+  <ol>
+    <li><b>Jump menu</b> (behind <span class="cid">?dev=1</span>, not linked anywhere): pick chapter → season → a day or a named story beat ("Vane arrives", "the Court", "the morning the notes are called") → how the player played until then (careful, overtrader, reckless, or "the full story run") → Go. You land just before the beat.</li>
+    <li><b>State editor:</b> change cash, stock, debts, trust per character and story flags, to test a branch ("Ashby at 3 hearts", "guarantee not found", "refused Vane").</li>
+    <li><b>Chapter starts from presets:</b> a later chapter reads only the hand-off record from the one before. Dev mode offers presets ("bought the mill, saved Ashby, Vane exposed"; "the canonical heir who lost"), so Chapter 2 can be tested without playing Chapter 1 at all.</li>
+    <li><b>Snapshots and bug codes:</b> "Save this moment" to a named slot, and every bug report carries a save code. You send the code; the builder opens your exact moment.</li>
+    <li><b>Galleries:</b> play any cutscene, scene or finale directly (today's <span class="cid">?court=1</span>, generalised). Time controls: skip to the next event, sleep to day N.</li>
+    <li><b>A screenshot gallery after every PR:</b> CI renders every named beat and posts the pictures, so you can see a change without playing at all.</li>
+    <li><b>Kept apart from real play:</b> dev saves live in their own storage and earn no transcript credit.</li>
+  </ol>
+  <h3>The four rules the platform keeps now (cheap; they make all of the above possible)</h3>
+  <ol>
+    <li>No unseeded randomness. Today there are two calls in <span class="cid">game.js</span>; the platform removes them.</li>
+    <li>Everything about a moment lives in the save, so a moment can be written and read back.</li>
+    <li>Every story beat, scene and cutscene has a stable id that the jump menu can list.</li>
+    <li>The hand-off record between chapters has a schema, plus preset records for testing.</li>
+  </ol>
+  <p class="tag">Size [Guessing]: 3 to 5 builder days once the platform phase is done. Most of it reuses the bots, the save format and the scene ids.</p>
 </section>
 
 <footer>Sources: the game repo (code, CHANGELOG, STORY-BIBLE, the two Season 1 audits), the curriculum on branch claude/cool-babbage-ww225e at c4e4ea2 (MBA-CORE-PRIMER.md, the coverage assessment, every module's session list), your Google Doc "Ledger and Crown Ideas", the game design and creative plan files, and a critic review of the playtest-2 branch. Tags: [Certain] read in a file, [Likely] inferred, [Guessing] judgment.</footer>
