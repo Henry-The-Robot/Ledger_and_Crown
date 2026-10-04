@@ -66,7 +66,11 @@ in the core (a platform PR), never patched in from the chapter.
 - Branch names: `ch1/<topic>`, `ch2/<topic>`, … and `platform/<topic>` (Chapter 1 builder only).
 - One task per PR into `master`. The PR body: what changed, the task id, tests and their counts, screenshots at
   1194 × 834 for any screen you changed, anything that needs a creative call.
-- **Never merge your own PR.** Every PR gets a `critic` pass and the creative lead's review, then the creative lead merges.
+- **Never merge your own PR.** A daily reviewer (a Sonnet routine, 09:40) reads every open PR, runs the tests and a
+  `critic` pass against your task's "Done means", then merges it or comments numbered fixes. Fix them on the same branch
+  and push; the next run re-reviews. PRs that touch canon or plans (this README, any CHARTER or WORK-ORDER beyond ticking a
+  status, the master plan, the story bible, the coverage map, season designs, outlines) or that need a release tag wait for
+  the creative lead, and season designs for Kyle.
 - `master` is live (GitHub Pages). Unreleased chapters stay hidden behind data: a chapter the player has not reached does
   not load. Dev access only through `?dev=chN`.
 - A release is a version tag the creative lead makes after the quality gate in your CHARTER.
