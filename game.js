@@ -162,11 +162,14 @@
       FX.sfx("open"); if (!fast && !q.has("auto")) FX.type(d.querySelector(".tx"), undefined, i => FX.blip(who, i));
     });
   }
+  // On touch the page never scrolls: if iOS moves it anyway (a focused field, the keyboard, a rotation), put it back so taps land where the map is drawn.
+  if (TOUCH) { const home = () => { if (window.scrollY || window.scrollX) window.scrollTo(0, 0); }; window.addEventListener("scroll", home, { passive: true }); if (window.visualViewport) visualViewport.addEventListener("scroll", home); document.addEventListener("focusout", () => setTimeout(home, 50)); }
   // On-screen number pad (0-9, minus, backspace, Check) for the ask and haggle boxes: mouse and touch alike (WS2).
   // On touch the input is inputmode=none, so the iOS keyboard never opens over the dialog. Pad keys sit after the choices in the DOM.
   function numberPad(d, first) {
     const inp = $("num"), np = document.createElement("div"); np.className = "np"; np.setAttribute("aria-label", "Number pad");
-    if (TOUCH) inp.setAttribute("inputmode", "none");
+    // On touch the pad types, so the field is read-only and never takes focus: a focused field makes iOS scroll the whole page up to "reveal" it, which shifted the dialog and the map (playtest 2026-10-03).
+    if (TOUCH) { inp.setAttribute("inputmode", "none"); inp.readOnly = true; inp.addEventListener("focus", () => { inp.blur(); window.scrollTo(0, 0); }); }
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "−", "0", "⌫"].forEach(k => { const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.tabIndex = -1; b.dataset.k = k;
       b.setAttribute("aria-label", k === "−" ? "Minus sign" : k === "⌫" ? "Backspace" : k);
       b.addEventListener("pointerdown", e => e.preventDefault()); // keep focus where it is
@@ -277,7 +280,7 @@
   // Stall detector: the story is waiting but nothing is on screen for 4 s -> point the player to the menu.
   setInterval(() => {
     const idle = storyOn && Story.busy && !dlgOpen() && !panelOpen() && !$("pause") && !document.querySelector(".s6ov, .wkcard, #court"); // the ending card, the week card and the Court are screens too
-    stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Open the menu (☰, top right) to restart the day.");
+    stall.t = idle ? (stall.t || 0) + 1 : 0; if (stall.t === 4) toast("Something seems stuck. Freeing the map in a moment; the menu (☰) can also restart the day."); if (stall.t === 7 && Story.unstick()) toast("Freed. You can play on.");
   }, 1000);
   const stall = {};
   (function () { const pb = document.createElement("button"); pb.id = "menubtn"; pb.className = "btn alt"; pb.textContent = "☰ Menu";
@@ -475,6 +478,7 @@
       ["Is a sprinkler worth it?", sprinklerAdvice],
       ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
       ["Ask Tomas about…", () => chat("tomas")],
+      ...(s.bills.length > 1 ? s.bills.slice().sort((a, b) => a.due - b.due).map(b => { const d = S.discNow(s, b), amt = b.amount - d; return [`Pay only the bill due day ${b.due}: ${amt}${d ? ` (${d} off)` : ""}`, () => commit(c => S.payOneBill(c, b.id), r => say("tomas", r.ok ? "Paid that one. The other stands." : r.msg)), s.bal.cash < amt]; }) : []),
       [`Pay what I owe${s.bills.some(b => S.discNow(s, b)) ? " (2% off now)" : ""}`, () => commit(c => S.payBills(c), r => say("tomas", r.ok ? "Paid. I remember who pays on time." : r.msg)), !owed], ["Leave", null]]);
   }
   function ezra() {
@@ -614,14 +618,16 @@
   let guess = null; // a prediction the player made before sleeping, revealed with the morning's real number
   async function sleepNow() {
     const f = S.forecast(s, 1)[0];
-    if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9)) { atDesk = false;
+    // the nightly "what will Cash be?" is a drill, not a ritual: skip it once the player has it right twice running or has waved it away twice, and ask only every third day otherwise
+    const nq = s.nightQ = s.nightQ || { right: 0, skips: 0, last: -9 };
+    if (f && (f.cin || f.cout) && !fast && (!storyOn || Story.state.ch >= 9) && nq.right < 2 && nq.skips < 2 && s.day - nq.last >= 3) { atDesk = false; nq.last = s.day;
       const bits = [f.cin ? `${f.cin} comes in (invoices due)` : "", f.wages ? `${f.wages} of wages and interest goes out` : "", f.bills ? `${f.bills} of Tomas's bills goes out` : "", f.fines ? `${f.fines} of forfeits goes out` : ""].filter(Boolean).join("; ");
       const r = await dlg({ who: "maud", text: `Before you sleep: tonight ${bits}, and Cash is ${s.bal.cash} now. <b>What will Cash be when you wake?</b>`, input: "Cash tomorrow", choices: ["Check my guess", "Just sleep"] });
-      guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; }
+      guess = r.i === 0 && r.v != null && !isNaN(r.v) ? { v: r.v, f, before: s.bal.cash } : null; if (!guess) nq.skips++; }
     doSleep();
   }
   function revealPrediction() {
-    if (!guess) return; const g = guess, right = g.v === s.bal.cash; guess = null;
+    if (!guess) return; const g = guess, right = g.v === s.bal.cash; guess = null; const nq = s.nightQ || (s.nightQ = { right: 0, skips: 0, last: -9 }); nq.right = right ? nq.right + 1 : 0;
     TR.use("wc", right, s.day - 1);
     say("maud", right ? `Right: ${s.bal.cash}. You read the night correctly.` : `You said ${g.v}; Cash is ${s.bal.cash}.<br>${g.before} + ${g.f.cin} collected − ${g.f.wages} wages and interest − ${g.f.bills} bills${g.f.fines ? ` − ${g.f.fines} forfeits` : ""} = ${g.f.close}${g.f.close !== s.bal.cash ? ", plus whatever else happened overnight" : ""}. Start from today's Cash, add what comes in, take away what goes out.`);
   }

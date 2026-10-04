@@ -141,7 +141,7 @@ window.Court = (function () {
         const verdict = resolved ? `<div class="ct-verdict ${r.ok ? "ok" : "no"}">${r.ok ? "REFUTED" : "SUSTAINED"}</div>` : "";
         root.innerHTML = hall(`<div class="ct-bar"><span class="ct-count">Claim ${S.i + 1} of ${claims.length}</span><span class="ct-pips">${pips()}</span><span class="ct-need">Refute ${PASS} to pass</span><button class="ct-leave" data-a="leave">Leave</button></div>
           <div class="ct-stage"><div class="ct-bubble advocate">${portrait("advocate")}<div class="ct-say"><b>${esc(WHO.advocate[0])}</b><p class="ct-claim">${c.text}</p></div></div>${verdict}${feed}</div>
-          <div class="ct-actions">${resolved ? `<button class="ct-btn gold" data-a="next">${S.i + 1 >= claims.length ? "Hear the verdict" : "Next claim"}</button>` : `<button class="ct-btn" data-a="press">Press${S.press ? ` (${S.press}/${c.press.length})` : ""}</button><button class="ct-btn gold" data-a="present" ${S.sel ? "" : "disabled"}>Present${S.sel ? "" : " (pick a card)"}</button>
+          <div class="ct-actions">${resolved ? `<button class="ct-btn gold" data-a="next">${S.i + 1 >= claims.length ? "Hear the verdict" : "Next claim"}</button>` : `<button class="ct-btn" data-a="press" title="Ask the advocate to say more about this claim; it may turn up a clue">Press: ask for more detail${S.press ? ` (${S.press}/${c.press.length})` : ""}</button><button class="ct-btn gold" data-a="present" ${S.sel ? "" : "disabled"}>Present${S.sel ? "" : " (pick a card)"}</button>
             ${S.crane ? `<button class="ct-btn witness" data-a="crane">Call Crane</button>` : ""}${S.ezra && !cards.some(k => k.id === "found:rate") ? `<button class="ct-btn witness" data-a="ezra">Call Ezra</button>` : ""}`}</div>
           <div class="ct-tray"><div class="ct-tabs">${tabs}</div><div class="ct-grid">${grid}</div></div><div class="ct-flash" id="ctFlash"></div>`);
         root.querySelectorAll("[data-a]").forEach(b => b.addEventListener("click", () => act(b.dataset.a, b.dataset.v)));
@@ -171,7 +171,8 @@ window.Court = (function () {
   // ---------- after the verdict ----------
   const LETTER9 = "I signed a paper I ought to have shown Maud. It is in the drawer with the seal I could not read. Ask Crane to read it. Ask Ezra whose name stands beneath mine. And please, whatever you do, do not let Ashby thank you for it.";
   async function letterPage(o) {
-    if (typeof o.letter === "function") return o.letter();
+    // the game's own letter panel sits under the hall, so hide the hall while it is open or "Fold it away" can't be reached and the game seems to hang
+    if (typeof o.letter === "function") { const prev = root.style.display; root.style.display = "none"; try { await o.letter(); } finally { root.style.display = prev; } return; }
     await screen(hall(`<div class="ct-stage plain"><div class="ct-letter"><small>Edric's ninth letter</small><h3>The thing I signed</h3><p>${esc(LETTER9)}</p><p class="sig">E.</p></div><div class="ct-actions"><button class="ct-btn gold" data-k="x">Fold the letter</button></div></div>`, "dim"));
   }
   async function endScene(o) {
@@ -210,7 +211,7 @@ window.Court = (function () {
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
     try {
-      await say("maud", "The Crown's advocate will make eight claims about this farm. Press one for detail, present a line from your books or a clue to refute it, and six refuted will satisfy the court.", "Begin");
+      await say("maud", "The Crown's advocate will make eight claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and six refuted will satisfy the court.", "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);
         if (r.left) { out = { passed: false, left: true, score: r.results.filter(x => x && x.ok).length, mistakes: total.mistakes, attempts: total.attempts }; break; }

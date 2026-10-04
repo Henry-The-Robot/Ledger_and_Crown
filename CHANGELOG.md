@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.4: playtest 2
+- **iPad:** tapping the answer box no longer shoves the dialog up. On touch the box is read-only (the on-screen pad types into it), never takes focus, and the page is pinned back to the top if iOS scrolls it.
+- **Stuck on day 22/23:** if a scene is waiting on nothing visible for ~7 s, the game now frees the map itself (it used to need a save-and-reset). Root cause not reproduced; this is the safety valve.
+- **Reeve's Court:** Edric's letter showed behind the court overlay, so "Fold it away" could not be reached and the game seemed to hang; the hall now hides while the letter is open. "Press" is now "Press: ask for more detail", with a tooltip, and Maud's opening line explains Press then Present.
+- **Tomas:** with two or more bills you can pay any one by itself (the earliest first, with its discount), or pay all.
+- **Corvin's what-if:** no more "buy 0 packets"; if you already hold the seed it says so (and uses the real sacks-per-plot).
+- **Practice:** pure add/subtract problems are gone (equity, inventory, receivables, operating income, Crown fund). New decisions: nine packets on account vs borrowed from Ezra, and repaying 100 to Ezra vs paying Tomas early for 2%. The nightly "what will Cash be?" is asked at most every third day and stops after two right or two skips.
+
 ## v0.4.3: playtest fixes
 - **Crane** no longer starts every sentence with "Item:". He is formal and pedantic, and "Item:" is now an occasional list marker (about one sentence in ten, at most two to a box). Checked the other characters' verbal habits: none is overdone (Tomas's "my friend" is in 9% of his sentences, Ashby's "dear" 13%, Hobb's "eventually" 1%).
 - **Ezra's loan on day 9.** The 100/200 loan in the chapter-7 scene ignored the engine's answer: if Ezra's limit (which counts what you already owe) was too low, the loan silently failed and no Cash arrived. Now he only offers what he will lend (greying out the rest and saying why), refusals are shown, and the notebook records what was actually borrowed.

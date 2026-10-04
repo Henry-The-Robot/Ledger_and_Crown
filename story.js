@@ -312,11 +312,11 @@ window.Story = (function () {
     await G.say("duke", n === 1 ? `You must be the heir! Corvin Vane, steward to His Grace, at the Duke's service, and yours. I bring the kind of opportunity that does not knock twice. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery. Think what it could do for Thornfield.`
       : `Corvin Vane again, heir. ${G.s.orders.some(x => x.who === "duke") ? "His Grace was delighted with the first." : "His Grace remembers the first, and that it went unanswered."} Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
     if (n === 1) { await page(3); await tell("This is the order that killed your uncle; the steward calls it an opportunity. I call it a loan you make him, at no interest, in your own seed."); await tell("I won't tell you what to do. I'll ask."); }
-    const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / 3) - G.s.seeds), extra = need * S.R.seedCost;
+    const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / S.R.sacksPerPlot) - G.s.seeds), extra = need * S.R.seedCost;
     const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a), ord = { sacks, price: o.price, due: o.due };
     const base = V.rows({ n: 14, tied: true }), withO = V.rows({ n: 14, tied: true, extra, order: ord });
     const delta = withO[withO.length - 1].tied - base[base.length - 1].tied; // what this order ties up by the end of the window
-    const title = `What if: you take it and buy ${need} packets of seed today (${extra})`;
+    const title = need ? `What if: you take it and buy ${need} packet${need > 1 ? "s" : ""} of seed today (${extra})` : `What if: you take it. You already hold the seed, so nothing extra is bought today`;
     await V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title, maud: n === 1 ? "Read your own board: Cash on top, and under it what is tied up in sacks and invoices." : `Last time ${money(st.tied1 || 0)} was tied up by this order. This time: ${money(delta)}.` });
     let ans;
     if (n === 1) ans = await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the Cash line for the smallest number.", "A minus sign means the chest is empty before then."], null, 0,
@@ -473,6 +473,8 @@ window.Story = (function () {
     return showEnding(kind, { s, preview: true });
   }
 
+  // Safety valve (playtest day 22/23: nothing responded until the day was saved and reset): if a scene is waiting on nothing visible, drop it so the map takes clicks again. The day's own prompts come back at the next morning or talk.
+  function unstick() { if (!busy) return false; busy = false; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); G.hud(); return true; }
   // screenshots and tests only (_build-shots/ws6-shots.html): force-start one scene on the current game, whatever the story was doing
   function testScene(kind) {
     busy = false; document.querySelectorAll(".s6ov,.wkcard").forEach(e => e.remove()); G.closeDlg(); G.hidePanel(); const s = G.s;
@@ -522,6 +524,6 @@ window.Story = (function () {
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
-  return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
+  return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
     testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();

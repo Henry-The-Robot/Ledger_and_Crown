@@ -17,7 +17,10 @@ ok(bad.length === 0, `${n} problems across 4 bots: every answer is a number, no 
 ok(P.BANK.every(b => seen.has(b.id)), "every problem type came up in play" + (P.BANK.filter(b => !seen.has(b.id)).length ? " (missing: " + P.BANK.filter(b => !seen.has(b.id)).map(b => b.id).join(",") + ")" : ""));
 ok(cmps > 0, "the two-offer comparison is built when offers are on the table");
 // the engine agrees with a worked example
-{ const s = S.newGame(); s.bal.cash = 100; const q = P.BANK.find(b => b.id === "equation").make(s), bs = S.balanceSheet(s.bal); ok(q.answer === bs.equity, "equity problem answer equals the engine's"); }
+{ const s = S.newGame(); s.day = 8; s.bal.cash = 500; s.bal.loan = -200; s.bal.ap = 0; s.bills = []; S.buySeeds(s, 3, true); const q = P.BANK.find(b => b.id === "repay100").make(s), f = S.loanFacts(s, 100);
+  ok(q && q.choices.length === 2 && q.answer === (f.net > 2 ? 0 : 1), "repay-100 decision answer matches loanFacts vs the 2% discount"); }
+{ const s = S.newGame(); s.day = 8; const q = P.BANK.find(b => b.id === "fund9").make(s); ok(q === null || (q.answer === 0 && /on account/.test(q.choices[0])), "fund-9 is null without credit or says account is cheaper"); }
+ok(!P.ids.some(i => ["equation", "operating", "fund", "inventory", "ar"].includes(i)), "pure-arithmetic problems are gone from the bank");
 // variety, determinism, one a day, streaks
 { const s = S.newGame(); const days = []; for (let d = 4; d <= 14; d++) { s.day = d; const p = P.pick(s, () => "introduced"); if (p) { days.push(p.id); P.record(s, p, true, false); } }
   ok(new Set(days).size >= 5 && days.every((x, i) => !i || x !== days[i - 1]), "different problems on different days, never the same one twice running: " + days.join(" "));
