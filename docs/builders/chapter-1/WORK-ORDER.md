@@ -1,12 +1,11 @@
 # WORK ORDER — Chapter 1 pack (v1.1, 2026-10-04, creative lead)
 
-**Start gate:** Kyle has not yet answered the master plan's asks. Do nothing here until the creative lead marks a phase
-`GO`. The **platform pack's Phase P runs first** (`docs/builders/platform/WORK-ORDER.md`), so cutscenes and the living
+**Start gate:** Kyle approved the plan on 2026-10-04 (Phase S: yes). The **platform pack's work runs first** (`docs/builders/platform/WORK-ORDER.md`), so cutscenes and the living
 map are built once, on the new core. One task per PR (`ch1/<topic>`) into `master`, merged by the creative lead.
 
 | Phase | Status |
 |---|---|
-| S · Spring final (v1.0) | WAITING (Kyle: plan ask 4; after platform P) |
+| S · Spring final (v1.0) | GO once the platform pack reaches P8 (cutscenes and props exist) |
 | U · Summer | WAITING (after S; season design first) |
 | A · Autumn, W · Winter | later |
 

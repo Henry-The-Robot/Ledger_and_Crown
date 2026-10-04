@@ -4,15 +4,16 @@
 Spring is built and live as **v0.4.6** (tag `v0.4.6-beta`, PR #41): four weeks, the Reeve's Court (9 claims, pass 6,
 rotating variants: creative call 6), Market Day on days 7/14/21, the 74-second opening, practice tiers, fixed-vs-variable
 and present-value lessons, Kyle's iPad playtest-2 fixes. Node tests 25/25. The master plan (4 chapters × 4 seasons) and
-this builder system are new; Kyle has not yet answered the plan's asks, so Phase P has not started.
+this builder system are new. Kyle approved the plan on 2026-10-04: four chapters fixed, season count and span set by the
+material, play time growing by chapter. The platform pack goes first; Phase S follows once cutscenes and map props exist.
 
 ## Live / branch state
 master = v0.4.6 (live on GitHub Pages). Open PRs: none from this builder. Stale PRs #27–#29 closed; #40 merged inside #41.
 
 ## Next 3 actions
-1. Wait for the creative lead to mark Phase P `GO` in WORK-ORDER.md.
-2. P1 — CI.
-3. P2 — one version stamp.
+1. Work the platform pack (P1, P2, W1, W2, P3 …) — see `docs/builders/platform/HANDOVER.md`.
+2. Then S1 — cut the load.
+3. Then S2 — what Summer needs.
 
 ## Failure lesson
 - From the last week: eight PRs (#33–#39) went live before any review, and the review then found lesson errors (a Court
@@ -20,7 +21,7 @@ master = v0.4.6 (live on GitHub Pages). Open PRs: none from this builder. Stale 
 - Rule: never merge your own PR; every PR waits for the critic and the creative lead.
 
 ## Blocked on the creative lead / Kyle
-- Plan asks 1–6 (2026-10-04).
+- Nothing for Spring. Summer's build waits on the curriculum asks (contract-law session; reviews of C7.01, C8.01–03).
 
 ## Decisions made and why
 - 2026-10-04: platform before Spring polish — so cutscenes and the living map are built once, on the new engine.

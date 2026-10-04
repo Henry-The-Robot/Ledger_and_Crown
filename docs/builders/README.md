@@ -1,6 +1,8 @@
 # Chapter builders — one builder, four chapter packs (v1.1, 2026-10-04, creative lead)
 
-Ledger & Crown has 4 chapters (Farm, Town, Province, Kingdom), each one in-game year of 4 seasons.
+Ledger & Crown has 4 chapters (Farm, Town, Province, Kingdom). **Four chapters is fixed; nothing else is** (Kyle,
+2026-10-04): each chapter has as many seasons as its material needs, a season spans as much game time as teaches its
+ideas best (weeks or months), and real play time per season grows in later chapters because the ideas get harder.
 There is **one builder role**, run as one session at a time. Each chapter has a **pack**: a folder in `docs/builders/`
 that holds everything a fresh session needs for that chapter and nothing else. A session works on one chapter, loads only
 that pack, and leaves the pack current when it stops. Going back to edit Chapter 1 while Chapter 2 is under way means
@@ -113,7 +115,7 @@ A design task for a later chapter (curriculum notes, outline) may run in a separ
 5-hour budget allows. It touches only its own pack.
 
 ## Chapter hand-off contract (what one chapter passes to the next)
-Each chapter ends at Midwinter and writes a closed record into the player's profile. The next chapter reads only this.
+Each chapter ends where its outline says (Chapter 1 ends at Midwinter) and writes a closed record into the player's profile. The next chapter reads only this.
 Chapter 1 → 2 (draft; the Chapter 1 builder defines it exactly in the save task, the creative lead approves):
 `profile.carry.ch1 = { ending, cash, debts:[{to, amount, rate, callable}], stakes:{mill, bakery}, relations:{maud, crane, ezra, ashby, hobb, jory, tomas}, flags:{vaneFinal, guarantee, hobbExt, ashbyPromise, craneVane, …}, transcript snapshot, statements at Midwinter }`.
 A player who lost Chapter 1 still gets a standard carry record (the "canonical heir"), so every chapter can start.

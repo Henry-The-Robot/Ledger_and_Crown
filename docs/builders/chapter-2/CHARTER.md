@@ -1,7 +1,7 @@
 # CHARTER — Chapter 2 builder: The Town (v1.0, 2026-10-04, creative lead)
 
 ## Mission
-Design, then build, Chapter 2 of Ledger & Crown: the player's second year, when the farm becomes a small group (farm,
+Design, then build, Chapter 2 of Ledger & Crown: the next stage after Midwinter, when the farm becomes a small group (farm,
 mill, bakery) in the market town. A player who finishes it can buy a business, run three houses with one purse, and beat
 a monopoly. It teaches 41 curriculum sessions (`docs/curriculum-coverage.json`, `home` = `2`) and keeps Chapter 1's ideas
 alive by forcing them into harder forms.
@@ -23,7 +23,7 @@ alive by forcing them into harder forms.
   new mentor for operations (a millwright; name and voice are yours to propose).
 - **Cast arcs:** Ashby and Hobb become partners or casualties; Jory becomes a manager; Grisby is a business you can buy, and
   his books have red flags.
-- **Seasons (working titles):** Spring "Buying in" (diligence, valuation, partnerships) · Summer "The mill line"
+- **Seasons (working titles; your outline sets how many and how long — the material decides):** Spring "Buying in" (diligence, valuation, partnerships) · Summer "The mill line"
   (process, queues, quality, forecasting) · Autumn "Three houses, one purse" (transfer prices, teams, culture, conflict) ·
   Winter "The Guild" (monopoly, game theory, positioning, the town bond).
 - **Forced yes candidates:** Chapter 1 taught "keep it simple, one business"; now you must integrate three. Chapter 1 taught

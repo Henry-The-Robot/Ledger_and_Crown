@@ -1,7 +1,7 @@
 # CHARTER — Chapter 4 builder: The Kingdom (v1.0, 2026-10-04, creative lead)
 
 ## Mission
-Design, then build, Chapter 4 of Ledger & Crown: the fourth year, when the King summons the one person whose books held.
+Design, then build, Chapter 4 of Ledger & Crown: the last chapter, when the King summons the one person whose books held.
 The player advises the Crown, balances the realm's books, runs the Mint, survives a foreign-coin crisis Vane built, and
 passes the Grand Audit across every course. It teaches 27 sessions (`docs/curriculum-coverage.json`, `home` = `4`) and
 integrates all 177.
@@ -19,7 +19,7 @@ integrates all 177.
   (inflation), borrowing abroad in foreign coin (the currency mismatch of Iceland in 2008, curriculum C11.08 case), capturing
   the regulators, a crisis of trust.
 - **Mentors:** the old Chancellor (macro); Maud is a witness at the Grand Audit, not a teacher. The Traveller's last tale.
-- **Seasons (working titles):** Spring "The King's ledger" · Summer "The Mint" · Autumn "Foreign coin" · Winter "The Grand
+- **Seasons (working titles; your outline sets how many and how long — the material decides):** Spring "The King's ledger" · Summer "The Mint" · Autumn "Foreign coin" · Winter "The Grand
   Audit". The Grand Audit is the whole game's exam: one case across every course, defended under challenge.
 - **The ending:** Vane falls, or you do. An option for Kyle (master plan §1): Vane and Edric were partners once.
 

@@ -7,6 +7,8 @@ lead reviews it against the master plan and the other chapters; Kyle approves it
 - **Question** the player carries all season:
 - **Answer** they assemble (the mystery's solution):
 - **The forced yes** (which easy answer from an earlier season is taken away, and what the player must now do instead):
+- **Span and play time:** how much game time the season covers and the expected real play time, with the reason (the ideas
+  need it). No fixed length: weeks or months of game time, whatever teaches best; later chapters take longer to play.
 
 ## 2. Core ideas (≤ 8), each tied to the curriculum
 | Id | Idea | Sessions (from `docs/curriculum-coverage.json`) | Needs (earlier ids) | The decision that teaches it (what the player DOES) | How a wrong answer costs them | How it is checked later |
@@ -18,7 +20,7 @@ any error or generic-draft status. A session you cannot teach correctly is a blo
 | Earlier id | Where it returns | In what new form (harder, combined, constrained) |
 
 ## 4. Week by week
-| Week | Days | Set piece | Choices | Surprise | Vane's move | Cutscene (≤ 25 s, the clue it carries) | Map change |
+| Stretch (week, fortnight, month…) | Days | Set piece | Choices | Surprise | Vane's move | Cutscene (≤ 25 s, the clue it carries) | Map change |
 
 ## 5. The finale
 Format (it must differ from the last season's), what it tests (every core idea once), pass rule, retake rule, what passing
