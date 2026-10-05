@@ -843,7 +843,9 @@
   }
   function restart() { Save.clearSlot(); location.search = ""; } // clears the open season only; profile and closed seasons stay
   // ---------- save (every morning and at each chapter step) ----------
-  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); } catch (e) {} }
+  let persistAsked = false; // Save.persist runs on the first save of a page load; the profile remembers a shown hint, so it shows once ever
+  function askPersist() { if (persistAsked) return; persistAsked = true; Save.persist().then(r => { if (r && r.hint) { (window.__hints = window.__hints || []).push(r.hint); toast(r.hint); } }).catch(() => {}); }
+  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); askPersist(); } catch (e) {} }
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
