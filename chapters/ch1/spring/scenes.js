@@ -80,6 +80,7 @@ window.Scenes = (function () {
         { label: "No.", then: [{ say: "duke", lines: ["No. How decisive. Edric said no to me once. Very kindly. It ended much the same.", "The offer stands until Midwinter. Offers do. It is people who expire."] }, { flag: ["vane", "refused"] }] },
         { label: "Tell me more.", then: [{ say: "duke", lines: ["The mortgage would be over the whole farm, you understand. Payable on demand.", "Demand being, of course, mine. A technicality. Partners trust one another."] }, { flag: ["vane", "asked"] }, { maud: "'Payable on demand.' Read that twice: a loan he can call in whenever he chooses is not a partnership, it is a leash with a handshake." }] },
         { label: "I'll think about it.", then: [{ say: "duke", lines: ["Take the winter. I shall be... around."] }, { flag: ["vane", "waiting"] }] }] },
+      { maud: "Ask three questions, and keep them apart: is it legal, is it ethical, is it smart? A contract can pass the first and fail the other two." }, // S2 naming pass (C12.02)
       { clue: 1 }] },
     { id: "maud_eve", who: "maud", from: 27, hint: "Maud is waiting at the hall. It's nearly time.", steps: [
       { say: "maud", lines: ["Tomorrow the books close. Then the Reeve's Court will ask you some questions. Short ones.", "You'll pass. That isn't why I'm worried.", "I'm worried because after the examination there's a letter, and I know what's in it, and I'd rather you'd had a longer spring."] },

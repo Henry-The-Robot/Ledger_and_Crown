@@ -81,7 +81,7 @@ window.Story = (function () {
   const ctx = {
     get s() { return G.s; }, S, tell, speak: (w, t, b) => GL.say(w, t, b),
     quiz: (q, v) => ask(q.text, q.answer, q.hints, q.spot, q.tol, q.docs ? q.docs.map(d => DOCS[d](v)) : q.docs, q.work, q.how),
-    calc: (name, v) => CALC[name](v), verb: (name, args, v, lazy) => VERB[name](args, v, lazy), remember: (k, x) => { st[k] = x; },
+    flag: (k, x) => { G.s.flags = G.s.flags || {}; G.s.flags[k] = x; }, calc: (name, v) => CALC[name](v), verb: (name, args, v, lazy) => VERB[name](args, v, lazy), remember: (k, x) => { st[k] = x; },
     keep: k => keep(k.id, k.term, k.line, k.example, k.num, k.from), addEx, pin, to, page, master: id => mastered(id),
   };
   const cut = id => window.Cutscene ? Cutscene.maybe(id) : Promise.resolve(null); // S5: a data cutscene (chapters/ch1/spring/cutscenes/), skipped in tests; never blocks the story
@@ -140,6 +140,13 @@ window.Story = (function () {
     // Edric's cash book, the three statements, Crane's offer
     cashFacts: () => { const s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1]; return { rows, niFmt: LV.fmt(last.ni), cashFmt: LV.fmt(last.cash), day: s.day }; },
     closeFacts: v => { const stm = v.stm, h = v.h, ch = stm.cf.change; return { net: stm.is.net, change: ch, changeTxt: (ch >= 0 ? "+" : "") + ch, target: h.lines.find(l => l.startsWith("cf:")) || "cf:cfo", hText: h.text, hTail: h.text.split(": ").pop(), upDown: ch >= 0 ? "up" : "down", absChange: Math.abs(ch), page4: PAGES[4] }; },
+    // S2: the cash conversion cycle from the player's own books (C2.09): receivable days = Receivables / Revenue x days, inventory days = Inventory / COGS x days, payable days = Payables / COGS x days, in whole days
+    cycleFacts: () => { const s = G.s, is = B.close(s).is, b = S.balanceSheet(s.bal), days = s.day; if (!(is.revenue > 0 && is.cogs > 0)) return { skip: true };
+      const dso = Math.round(b.ar / is.revenue * days), dio = Math.round(b.inv / is.cogs * days), dpo = Math.round(b.ap / is.cogs * days);
+      return { skip: false, days, revenue: is.revenue, cogs: is.cogs, ar: b.ar, inv: b.inv, ap: b.ap, dso, dio, dpo, ccc: dso + dio - dpo }; },
+    // S2: who is paid first (the liquidation waterfall): Crane's offer against what the farm owes; debts come first, the owner last
+    waterfallFacts: () => { const o = Endings.offer(G.s), debts = S.balanceSheet(G.s.bal).liab; return { price: o.price, debts, left: Math.max(0, o.price - debts), short: Math.max(0, debts - o.price), k: (G.s.day + o.price) % 3, day: G.s.day }; },
+    waterfallRight: v => { const right = v.c === (v.k + 1) % 3; return { right, verdict: right ? "Yes." : "No." }; },
     firstTap: v => ({ firstTap: v.misses === 0 }),
     offerFacts: v => { const o = Endings.offer(G.s); return { o, farm: farmName(), price: o.price, cash: o.cash, wages: o.wages, intro: v.first ? 0 : o.mercy ? 1 : 2, day: G.s.day }; },
   };
@@ -233,7 +240,7 @@ window.Story = (function () {
     to(8, n === 1 ? "duke8" : "duke9");
   }
   // after the first Market Day's floor bet (market.js): the notebook splits the cost from the real floor (curriculum foundation 5.3)
-  function keepFloor(alt, offer) { if (!G || !st) return; const cost = S.R.unitCost; keep("opportunity", "The real floor", "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.", `Day ${G.s.day}: Ashby offered ${offer} and the fair had paid ${alt}, so the floor is ${alt}, not ${cost}.`, `floor ${alt}, not ${cost}`, `Day ${G.s.day} · the fair`); }
+  function keepFloor(alt, offer) { if (!G || !st) return; const cost = S.R.unitCost; keep("opportunity", "The real floor", "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up. The seed is already bought, so its cost is sunk: it never decides the next sale.", `Day ${G.s.day}: Ashby offered ${offer} and the fair had paid ${alt}, so the floor is ${alt}, not ${cost}.`, `floor ${alt}, not ${cost}`, `Day ${G.s.day} · the fair`); }
 
   // Deposits are named unearned revenue (C1.01/C1.03) in the scene (game.js depositLesson) and in the notebook.
   function noteDeposit(o) {
@@ -358,7 +365,9 @@ window.Story = (function () {
       else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
       else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
       else if (st.stage === "run9" && d >= 16 && d < 22 && !st.pv && !revealed && await pvScene()) { /* played once, in week 3 */ }
+      else if (st.stage === "run9" && d >= 16 && d < 22 && st.pv && !st.cycle && !revealed) await play("cycle"); // S2: the cash conversion cycle, the morning after the present-value lesson
       else if (st.stage === "run9" && d >= 22 && !st.book) await cashBook(); // week 4: the cash book, Maud's last word
+      else if (st.stage === "run9" && d >= 23 && st.book && !st.waterfall) await play("waterfall"); // S2: who is paid first, Ezra's order of a sale
     });
   }
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run

@@ -113,6 +113,7 @@
       work: "At 6 you keep 6 − {cost} = {m6} a sack. {m6} ÷ 6 = 0.33, so {p6}%.", how: "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%." },
     { master: "gross" }, { master: "margin" },
     { tell: "Your cost floor, {cost}, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away." },
+    { tell: "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it." }, // S2 naming pass (C16.12: reservation point)
     { verb: "haggle", args: { open: 6, walk: 7, line: "Well, dear? 6 sacks. What do you want for them?" }, as: "deal" },
     { if: { not: "deal" }, then: [{ speak: "ashby", text: "Come back when you've thought it over." }, { end: 1 }] },
     { calc: "ch3Deal" },
@@ -295,6 +296,38 @@
       then: [{ keep: { id: "overtrading", term: "Overtrading", line: "Taking more orders than your Cash can carry: profit on paper, broke in fact. The gap grows with sales and only comes back when growth stops. Forecast before you say yes.", example: "Corvin's first order, {sacks} sacks: lowest Cash {lowClose} on day {lowDay} if taken, {delta|money} tied up. You chose: {choice}.", num: "Cash low {lowClose}, {delta|money} tied up", from: "Day {day} · Corvin's first order" } }, { to: [8, "page8"] }],
       else: [{ addEx: ["overtrading", "The double order, {sacks} sacks: lowest Cash {lowClose}, {delta|money} tied up (the first tied up {tied1|money}). You chose: {choice}."] },
         { pin: ["duke2", "Corvin's double order", "{delta|money} tied up (was {tied1|money})", "Day {day} · second order"] }, { to: [8, "tomas9"] }] },
+  ] };
+  // ---------- the cash conversion cycle (S2; C2.09): receivable, inventory and payable days from the player's own books, a day after the present-value lesson in week 3 ----------
+  R.cycle = { id: "cycle", steps: [
+    { calc: "cycleFacts" },
+    { if: "skip", then: [{ end: 1 }] },
+    { remember: ["cycle", true] },
+    { tell: "Your books can say it in days. Over {days} days you sold {revenue} and the grain you sold cost {cogs}." },
+    { tell: "Receivables {ar} ÷ Revenue {revenue} × {days} days = {dso} days: how long customers take to pay.", spot: ["h-ar"] },
+    { tell: "Inventory {inv} ÷ cost of goods sold {cogs} × {days} days = {dio} days: how long grain sits before it sells." },
+    { tell: "Payables {ap} ÷ {cogs} × {days} days = {dpo} days: how long Tomas lets you wait. That one is free credit.", spot: ["h-ap"] },
+    { quiz: "The cash conversion cycle is DSO + DIO − DPO. How many days is yours?", answer: "ccc", hints: ["Add the two lines that tie your coin up, then take away the days Tomas finances."], spot: null, tol: 0, docs: null,
+      work: "{dso} + {dio} − {dpo} = {ccc} days.", how: "Receivable days plus inventory days, minus payable days. Days that tie coin up count up; days a supplier finances count down." },
+    { tell: "{ccc} days pass between paying for seed and getting the coin back. Double your sales and the coin tied up in that gap doubles too, unless the days shrink." },
+    { keep: { id: "ccc", term: "Cash conversion cycle", line: "DSO + DIO − DPO: the days between paying for grain and getting the coin back. Receivables and inventory add days; a supplier's credit takes days away.", example: "Day {days}: receivables {dso} + inventory {dio} − payables {dpo} = {ccc} days.", num: "{ccc} days to cash", from: "Day {days} · your books" } },
+  ] };
+  // ---------- who is paid first (S2; the liquidation waterfall): a sale pays debts first and the owner last, with the farm's own numbers, in week 4 ----------
+  R.waterfall = { id: "waterfall", steps: [
+    { calc: "waterfallFacts" },
+    { speak: "ezra", text: "A sale is the same book read in order. Suppose Crane's offer of {price|money} were taken today.", buttons: ["Go on"] },
+    { speak: "ezra", text: "The farm owes {debts|money}: my loan, Tomas, and the Crown's writ. Debts are paid first, out of the sale.", buttons: ["Next"] },
+    { if: "short",
+      then: [{ speak: "ezra", text: "{price|money} does not cover {debts|money}. You would still owe {short|money}, and you, the owner, would be paid nothing.", buttons: ["Next"] }],
+      else: [{ speak: "ezra", text: "That leaves {left|money} for you, the owner, who is paid last.", buttons: ["Next"] }] },
+    { pick: "k", cases: [
+      [{ speak: "ezra", text: "When the sale money is shared out, who is paid first?", buttons: ["The owner, then the debts", "The debts, then the owner", "Whoever asks loudest"], as: "c" }],
+      [{ speak: "ezra", text: "When the sale money is shared out, who is paid first?", buttons: ["Whoever asks loudest", "The owner, then the debts", "The debts, then the owner"], as: "c" }],
+      [{ speak: "ezra", text: "When the sale money is shared out, who is paid first?", buttons: ["The debts, then the owner", "Whoever asks loudest", "The owner, then the debts"], as: "c" }]] },
+    { calc: "waterfallRight" },
+    { if: "right", then: [{ flag: ["debtsFirst", true] }], else: [{ flag: ["debtsFirst", false] }] },
+    { speak: "ezra", text: "{verdict} Debt is paid before equity. A sale price is not what the owner takes home.", buttons: ["Next"] },
+    { remember: ["waterfall", true] },
+    { keep: { id: "waterfall", term: "Debts are paid first", line: "In a sale, the money pays debt first and the owner last. A sale price is not what the owner takes home.", example: "Day {day}: a sale at {price|money} against {debts|money} of debts leaves {left|money}.", num: "{price|money} sale, {debts|money} owed", from: "Day {day} · Ezra's order" } },
   ] };
   // That night: Maud finds Edric's page (the midpoint turn): the same order every spring.
   R.page = { id: "page", steps: [
