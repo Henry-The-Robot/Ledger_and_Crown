@@ -39,4 +39,8 @@ Partly.
   cloud transcript but never reached the local session. That's why this file exists.
 
 ## Answer
-<!-- Coordinator writes here. -->
+**Closed by the local Lead session, 2026-10-05.** The Lead now runs locally and reaches Agent-System directly.
+- 1: re-filed as an Agent-System help ask to the coordinator (`python infra/help.py list --from lead:mba-game`).
+- 2a: `REVIEW-QUEUE.md` was empty; the Lead reviewed the open PRs itself (comments on #45–#52; #53 closed as a duplicate of #54).
+- 2b: done — both files carry a SUPERSEDED banner.
+- L4 (Spring deep dive): the local Lead owns it.

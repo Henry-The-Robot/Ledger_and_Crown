@@ -74,6 +74,9 @@ in the core (a platform PR), never patched in from the chapter.
   and push; the next run re-reviews. PRs that touch canon or plans (this README, any CHARTER or WORK-ORDER beyond ticking a
   status, the master plan, the story bible, the coverage map, season designs, outlines) or that need a release tag wait for
   the creative lead, and season designs for Kyle.
+- A season design is written first as `chapters/chN/<season>/DESIGN-DRAFT.md`. A draft is a working file, not canon:
+  the reviewer may merge it like any doc. Only `DESIGN.md` is canon; the creative lead renames the draft after Kyle
+  approves it (Lead decision 2026-10-05: one local/work PR carries all local work, so a canon file in it holds up code).
 - `master` is live (GitHub Pages). Unreleased chapters stay hidden behind data: a chapter the player has not reached does
   not load. Dev access only through `?dev=chN`.
 - A release is a version tag the creative lead makes after the quality gate in your CHARTER.
