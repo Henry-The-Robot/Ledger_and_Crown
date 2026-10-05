@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Golden story run</title></head><body><pre id="out">running</pre>
+<!-- Golden story run (platform P3). Plays the Spring story through the real UI with seed 3 (smoke-story.html?golden=1 is the driver) and compares EVERY dialogue box, every choice
+     taken, and every morning's books (a balance sheet and a hash of the whole journal) with tests/golden/ch1-spring/story-seed3.json. It must match byte for byte after a restructure.
+     Run: node tests/run-html.js tests/golden-story.html 120000          compare
+          node tests/run-html.js tests/golden-story.html?record=1 ...     print the new golden JSON (save it only when a PR says why Chapter 1 changed and its pack approves) -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms)), record = new URLSearchParams(location.search).has("record");
+(async () => { try {
+  const f = document.createElement("iframe"); f.style.cssText = "width:1280px;height:800px;border:0"; f.src = "smoke-story.html?golden=1"; document.body.appendChild(f); await new Promise(r => f.onload = r);
+  const w = f.contentWindow; let t0 = Date.now(); while (!/^RESULTS/.test(w.document.getElementById("out").textContent) && Date.now() - t0 < 110000) await sleep(300);
+  const smoke = w.document.getElementById("out").textContent, g = w.__golden;
+  out.push(`the story driver finished without a JS error or stall: ${/^RESULTS/.test(smoke) && /JS errors: 0 /.test(smoke) && !/TIMEOUT|FAIL/.test(smoke)}`);
+  const now = JSON.stringify({ steps: g.steps, mornings: g.mornings }, null, 0).replace(/","/g, '",\n"');
+  out.push(`recorded ${g.steps.length} dialogue boxes, choices and panels, and ${g.mornings.length} mornings`);
+  if (record) { document.getElementById("out").textContent = "RECORD\n" + now; return; }
+  const gold = await (await fetch("golden/ch1-spring/story-seed3.json")).text();
+  const same = gold.trim() === now.trim(); out.push(`matches tests/golden/ch1-spring/story-seed3.json byte for byte: ${same}`);
+  if (!same) { const a = now.split("\n"), b = gold.trim().split("\n"); let i = 0; while (i < a.length && a[i] === b[i]) i++; out.push(`first difference at line ${i + 1}:\n  now:    ${(a[i] || "(end)").slice(0, 200)}\n  golden: ${(b[i] || "(end)").slice(0, 200)}`.replace(/: false/g, ": no")); }
+} catch (e) { out.push("THROWN " + e.message); } document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); })();
+</script></body></html>

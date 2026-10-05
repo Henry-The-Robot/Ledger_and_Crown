@@ -10,8 +10,15 @@
 <script>
 const out = [], log = t => out.push(t), errs = [], P = new URLSearchParams(location.search), stopAt = P.get("stopAt");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// ?golden=1 (used by golden-story.html, platform P3): record every dialogue box, every choice and every morning's books, and make the page's one random call seeded
+const GOLD = P.has("golden") ? (window.__golden = { steps: [], mornings: [] }) : null, norm = x => String(x).replace(/\s+/g, " ").trim();
+const rec = (...a) => { if (GOLD) GOLD.steps.push(a.map(norm).join(" | ")); };
+const djb = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0; return h.toString(16); };
+const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+let lastDay = 0;
+function morning(w) { const s = w.G.s, b = w.Spring.balanceSheet(s.bal); if (!GOLD || s.day === lastDay) return; lastDay = s.day; GOLD.mornings.push([s.day, s.bal.cash, b.ar, b.inv, b.ap, b.loan, b.deposits, b.assets, b.liab, b.equity, s.sacks, s.seeds, s.journal.length, djb(JSON.stringify(s.journal))].join(",")); }
 function load(q) { return new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px";
-  f.onload = () => { f.contentWindow.addEventListener("error", e => errs.push(e.message)); res([f, f.contentWindow]); }; f.src = "../game.html" + q; document.getElementById("frames").appendChild(f); }); }
+  f.onload = () => { f.contentWindow.addEventListener("error", e => errs.push(e.message)); if (GOLD) f.contentWindow.Math.random = mulberry(12345); res([f, f.contentWindow]); }; f.src = "../game.html" + q; document.getElementById("frames").appendChild(f); }); }
 const vis = el => el && el.offsetParent !== null && getComputedStyle(el).display !== "none";
 // Editor pass: the longest run of dialogue boxes the player must click through without making a choice, per game day (a choice = 2+ buttons or a typed number)
 const runs = {}, runBoxes = {}; let run = 0, lastSig = "", cur = [], runDay = 0; // (a run ends when the game day changes: the bot-played days between story beats are free play)
@@ -21,22 +28,22 @@ function pump(w) { // do the one thing the screen is asking for; true if somethi
   const d = w.document, panel = d.getElementById("panel"), dlg = d.getElementById("dlg");
   const nf = d.getElementById("nfok"); if (nf) { nf.click(); named++; return true; } // WS6: name your farm (keeps the default)
   if (panel.style.display !== "none") {
-    const click = id => { const b = d.getElementById(id); if (b) { b.click(); return true; } };
-    if (d.getElementById("tlLow") && w.__tl) { d.getElementById("tlLow").value = w.__tl.low; d.getElementById("tlDay").value = w.__tl.day; tl++; return click("tlok"); } // WS3 timeline
+    const click = id => { const b = d.getElementById(id); if (b) { rec("panel", id, (d.getElementById("panelBody") || {}).textContent.slice(0, 160)); b.click(); return true; } };
+    if (d.getElementById("tlLow") && w.__tl) { rec("timeline", w.__tl.low, w.__tl.day); d.getElementById("tlLow").value = w.__tl.low; d.getElementById("tlDay").value = w.__tl.day; tl++; return click("tlok"); } // WS3 timeline
     if (click("tlok2") || click("tlok")) { tl++; run = 0; cur = []; return true; }
-    const pcl = d.querySelector("#panelBody .pclose"); if (pcl) { pcl.click(); return true; } // a reference panel opened by a "Later/Open the Ledger" lesson
+    const pcl = d.querySelector("#panelBody .pclose"); if (pcl) { rec("panel-close", d.getElementById("panelBody").textContent.slice(0, 160)); pcl.click(); return true; } // a reference panel opened by a "Later/Open the Ledger" lesson
     newDay(w); if (d.getElementById("rnext") && lastSig !== "rnext:" + d.getElementById("mline").textContent) { lastSig = "rnext:" + d.getElementById("mline").textContent; run++; cur.push("[panel] " + d.getElementById("mline").textContent.slice(0, 60)); const dy = w.G.s.day; if (run > (runs[dy] || 0)) { runs[dy] = run; runBoxes[dy] = cur.slice(); } }
     if (click("pgok") || click("rnext") || click("pclose")) return true;
-    const ins = d.querySelectorAll("#panelBody input.fc"); if (d.getElementById("bok")) { ins.forEach(x => x.value = x.dataset.ans); boards++; run = 0; cur = []; return click("bok"); }
+    const ins = d.querySelectorAll("#panelBody input.fc"); if (d.getElementById("bok")) { rec("board", [...ins].map(x => x.dataset.ans).join(",")); ins.forEach(x => x.value = x.dataset.ans); boards++; run = 0; cur = []; return click("bok"); }
     if (w.__pick) { const r = d.querySelector(`#cft tr[data-line="${w.__pick}"]`); if (r) { r.click(); picks++; run = 0; cur = []; return true; } }
     return false;
   }
   if (dlg.style.display === "flex") {
     const btns = [...dlg.querySelectorAll("button")].filter(b => !b.disabled), num = d.getElementById("num");
     { newDay(w); const sig = dlg.textContent; if (sig !== lastSig) { lastSig = sig; if (num || dlg.querySelectorAll("button").length >= 2) { run = 0; cur = []; } else { run++; cur.push(sig.replace(/\s+/g, " ").slice(0, 70)); const dy = w.G.s.day; if (run > (runs[dy] || 0)) { runs[dy] = run; runBoxes[dy] = cur.slice(); } } } }
-    if (num && w.__want !== undefined) { num.value = w.__want; typed++; btns[0].click(); return true; }
-    if (num) { const a = btns.find(b => /Accept/.test(b.textContent)); haggles++; (a || btns[0]).click(); return true; }
-    const pref = btns.find(b => /Offer \d+ \(half\)|^.?\d?Continue/.test(b.textContent)); (pref || btns[0]).click(); return true;
+    if (num && w.__want !== undefined) { rec("dlg", dlg.textContent, "type", w.__want); num.value = w.__want; typed++; btns[0].click(); return true; }
+    if (num) { const a = btns.find(b => /Accept/.test(b.textContent)); rec("dlg", dlg.textContent, "haggle", (a || btns[0]).textContent); haggles++; (a || btns[0]).click(); return true; }
+    const pref = btns.find(b => /Offer \d+ \(half\)|^.?\d?Continue/.test(b.textContent)); rec("dlg", dlg.textContent, "choose", (pref || btns[0]).textContent); (pref || btns[0]).click(); return true;
   }
   return false;
 }
@@ -44,7 +51,7 @@ async function drive(w, until) {
   const G = w.G, St = w.Story, seen = [];
   for (let i = 0; i < 20000; i++) {
     await sleep(4);
-    const stage = St.state.stage; if (seen[seen.length - 1] !== stage) seen.push(stage);
+    const stage = St.state.stage; if (seen[seen.length - 1] !== stage) seen.push(stage); morning(w);
     const D = w.document, n = +(P.get("n") || 1);
     if (stopAt && stage === stopAt && (P.has("pick") ? w.__pick : (D.getElementById("num") && w.__want !== undefined) || D.getElementById("bok"))) { if ((drive.hits = (drive.hits || 0) + 1) >= n) return { seen, stopped: true }; }
     if (until && until(stage)) return { seen };
