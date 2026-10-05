@@ -1,8 +1,7 @@
 # MAP — Chapter 1 (seed, 2026-10-04, v0.4.6; platform P3 moves these into `chapters/ch1/spring/` and rewrites this map)
 
 Read this instead of the code. Open a file only at the place named here.
-**Wiki pages so far:** [court](../../wiki/ch1/court.md) · [bug: stuck scene](../../wiki/ch1/bug-stuck-scene.md) ·
-[build log](../../wiki/ch1/LOG.md). Platform task W2 adds a page for every row below and links it here.
+**Wiki pages (one per row below):** [spring-settings](../../wiki/ch1/spring-settings.md) · [lessons-week1](../../wiki/ch1/lessons-week1.md) · [lessons-week2](../../wiki/ch1/lessons-week2.md) · [lessons-weeks3-4](../../wiki/ch1/lessons-weeks3-4.md) · [village-scenes](../../wiki/ch1/village-scenes.md) · [cast](../../wiki/ch1/cast.md) · [market-day](../../wiki/ch1/market-day.md) · [practice](../../wiki/ch1/practice.md) · [standing-orders](../../wiki/ch1/standing-orders.md) · [court](../../wiki/ch1/court.md) · [endings](../../wiki/ch1/endings.md) · [bug: stuck scene](../../wiki/ch1/bug-stuck-scene.md) · [build log](../../wiki/ch1/LOG.md). The lint (`node tools/wiki-lint.js`) fails a PR when a page points at code that moved.
 
 ## Spring — where each part lives
 | Part | File · entry points | Notes |
