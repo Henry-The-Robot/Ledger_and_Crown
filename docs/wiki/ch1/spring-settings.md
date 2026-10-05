@@ -3,8 +3,8 @@ title: Spring settings (the R constants)
 type: data
 pack: ch1
 season: spring
-files: [core/engine.js]
-symbols: [R, eventsFor, events, windows, corvin, duke, market, deposits, premium, crownDebt, bridgeMax, factorRate, frostOdds, upkeep]
+files: [core/engine.js, chapters/ch1/spring/season.js]
+symbols: [R, eventsFor, pricesFor, marketModel, events, windows, corvin, duke, market, deposits, premium, crownDebt, bridgeMax, factorRate, frostOdds, upkeep]
 concepts: []
 sessions: [C1.05, C1.01]
 tests: [tests/test-crown.js, tests/test-spine.js, tests/test-market.js, tests/test-offer.js, tests/test-deposits.js, tests/test-court.js, tests/test-dayloop.js]
