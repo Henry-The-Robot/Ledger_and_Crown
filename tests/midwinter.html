@@ -7,6 +7,6 @@ function run(policy, q) { return new Promise(res => { const f = document.createE
   f.onload = async () => { try { const w = f.contentWindow, d = w.document, errs = []; w.addEventListener("error", e => errs.push(e.message)); await sleep(300); w.G.closeDlg(); w.G.hidePanel();
     out.push(`${policy}: HUD has the Crown fund: ${/Toward the Crown/.test(d.getElementById("hud").textContent)}`);
     w.G.play(policy, 40); await sleep(100); const body = d.getElementById("panelBody").textContent;
-    out.push(`${policy}: outcome ${w.G.s.outcome}; Midwinter box: ${/If Midwinter were tomorrow/.test(body)}; verdict line: ${(body.match(/If Midwinter were tomorrow: ([^.]*\.)/) || [])[1]}; errors ${JSON.stringify(errs)}`); } catch (e) { out.push("EXCEPTION " + e.message); } f.remove(); res(); }; }); }
+    out.push(`${policy}: outcome ${w.G.s.outcome}; Midwinter box ${policy === "careful" ? "shown" : "hidden"}: ${policy === "careful" ? /If Midwinter were tomorrow/.test(body) : !/If Midwinter were tomorrow/.test(body)}; verdict line: ${(body.match(/If Midwinter were tomorrow: ([^.]*\.)/) || [])[1]}; errors ${JSON.stringify(errs)}`); } catch (e) { out.push("EXCEPTION " + e.message); } f.remove(); res(); }; }); }
 (async () => { await run("careful"); await run("reckless"); document.getElementById("out").textContent = "RESULTS\n" + out.join("\n"); })();
 </script></body></html>
