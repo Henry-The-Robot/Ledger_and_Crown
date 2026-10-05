@@ -19,7 +19,7 @@ map are built once, on the new core. One task per PR (`ch1/<topic>`) into `maste
 | S5 | **Five cutscenes** (data): Vane arrives (day 12); "It's only my name" (day 21); the night the pigs got in; Market Day opens (short, varies by week); Crane reads the seal. Plus **Spring's short opening** (≤ 8 s) for re-entry from the main menu. Each has a stable id. | Each ≤ 25 s (opening ≤ 8 s), skippable, in the journal. | WAITING |
 | S6 | **Hearts that unlock terms.** Visible trust; 3+ hearts unlock Ashby's deposits, Hobb paying in 7 days, Tomas's credit limit. | Bots unchanged; tests. | WAITING |
 | S7 | **Fill the iPad screen** at 1194 × 834 (no empty band). | Screens, portrait and landscape. | WAITING |
-| S8 | **Release candidate** for the creative lead's quality gate (CHARTER), then a fresh-player run. | Tag `v1.0-spring` after sign-off. Spring's golden runs re-recorded and frozen. | WAITING |
+| S8 | **Release candidate** for the creative lead's quality gate (CHARTER), then a fresh-player run. | Tag `v1.0-spring` after sign-off. Release note `docs/releases/v1.0-spring.md` written. Spring's golden runs re-recorded and frozen. | WAITING |
 
 ## Phase U — Summer (after S)
 | Id | Task | Status |
