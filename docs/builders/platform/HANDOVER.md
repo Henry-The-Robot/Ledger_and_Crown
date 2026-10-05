@@ -1,6 +1,8 @@
 # HANDOVER — Platform pack — updated 2026-10-04 by the platform builder (P1 session)
 
 ## State in one paragraph
+P2 (one version stamp) is built on `platform/version`, stacked on `platform/ci`: `version.js` holds the version, `tools/stamp.js` stamps every `?v=` (bump: `node tools/stamp.js 0.4.7`), `tests/test-version.js` fails on any differing tag. It also found `index.html`'s `style.css` had no `?v=`. Read the master plan (`docs/MASTER-PLAN.html`) this session: platform phase first (P1 to P12, W1, W2), then Spring final.
+
 P1 (CI) is built on branch `platform/ci`: a GitHub Actions workflow (`.github/workflows/ci.yml`, job `tests`) runs
 `node tests/run-all.js` and then every browser test page in real-time Chromium through `tests/run-html.js --all`.
 The runner now judges pages itself (a `: false` line, THROWN, a page error and so on fail it), because the pages only print
@@ -9,13 +11,13 @@ reckless farm; it now says "hidden: true") and `practice-ui.html` (it assumed a 
 exist, so it hides them). Not started: P2 onward.
 
 ## Live / branch state
-master = v0.4.6. Branch `platform/ci` (one PR). To prove CI fails on a broken test, a throwaway commit breaks one test, the
+master = v0.4.6. PR #45 `platform/ci` (P1) open; `platform/version` (P2) stacked on it: merge #45 first, then retarget the P2 PR to master. To prove CI fails on a broken test, a throwaway commit breaks one test, the
 run goes red, and the next commit reverts it (both stay in the PR history).
 
 ## Next 3 actions
-1. P2 — one version stamp (`version.js`, `tools/stamp.js`, a test).
-2. W1 — `tools/wiki-lint.js`, run in CI (add a step to `ci.yml`).
-3. W2 — seed the code wiki.
+1. W1 — `tools/wiki-lint.js`, run in CI (add a step to `ci.yml`).
+2. W2 — seed the code wiki.
+3. P3 — golden runs, then the restructure.
 
 ## Failure lesson
 - The browser test pages passed or failed by eye. A runner that only prints cannot gate a PR. Rule: every test page ends in

@@ -106,7 +106,8 @@
   <div id="travel"></div>
 </div>
 <div class="overlay" id="panel" style="display:none"><div class="modal" id="panelBody"></div></div>
-<!-- ?v= busts browser caches on every release (Safari otherwise mixes old scripts with a new page); bump it each release -->
+<!-- ?v= busts browser caches on every release (Safari otherwise mixes old scripts with a new page). Never edit it by hand: `node tools/stamp.js <version>` bumps version.js and stamps every tag. -->
+<script src="version.js?v=0.4.6"></script>
 <script src="endings.js?v=0.4.6"></script><!-- WS6: offer price, epilogues, unlocks (pure; resolves Spring/Bot lazily) -->
 <script src="codex.js?v=0.4.6"></script>
 <script src="engine.js?v=0.4.6"></script><script src="books.js?v=0.4.6"></script><script src="transcript.js?v=0.4.6"></script>
