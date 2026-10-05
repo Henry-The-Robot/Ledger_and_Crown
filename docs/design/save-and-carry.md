@@ -112,3 +112,15 @@ Left as is on purpose: `codex.js` `shuffle` (line 46, Speak the Word order) and 
 8. Browser (`tests/stability.html` updated): finished season survives "Start a new game" in `closed`, `profile` survives, a reload returns to the books.
 9. Heir record: `Save.heir()` validates against the schema and equals section 4's values.
 10. Every old v3 key still readable after migration (rollback safety).
+
+## Lead review (2026-10-05) — APPROVED with these changes; P4b builds the changed version
+1. **Season record vs chapter record.** Chapter 1 has four seasons. `profile.carry.ch1` is written only when Chapter 1
+   ends (Midwinter, after Winter). Each season's `closed[season]` holds `next`: the end state the following season reads
+   (same field shapes as the carry record). P4b writes `closed["ch1/spring"].next`; it does not write `profile.carry.ch1`.
+   The schema keeps `season`, so it validates both.
+2. **Canonical heir** is not the opening state: a Chapter 2 start with the Crown debt still unpaid contradicts the end of
+   Chapter 1. The heir = the careful bot's season at seed 0 (the golden run `careful@seed0`), `ending: "heir"`,
+   computed once by a tool and frozen as `tests/golden/heir-ch1-spring.json`. `Save.heir()` returns it. Re-freeze it
+   when a later season of Chapter 1 ships (the heir always reflects the latest finished season).
+3. **`stakes`** are numbers only (share 0 to 1); `0` = none. No booleans.
+4. Keep everything else, including the rollback blob, the try/catch rule and the left-alone `Math.random` calls.

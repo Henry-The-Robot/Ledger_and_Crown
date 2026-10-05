@@ -20,7 +20,9 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
   never merges canon (README, CHARTER, WORK-ORDER beyond a status tick, DESIGN.md, OUTLINE.md, master plan).
 
 ## Next 3 actions (Lead)
-1. Review the Builder's output: G1 `docs/design/save-and-carry.md` (+ schema) before P4b ends; U0a notes; U0b
+1. Review the Builder's output: G1 is DONE and reviewed (Lead section in `docs/design/save-and-carry.md`: season
+   record vs chapter carry, heir = careful@seed0 frozen, stakes numeric); check P4b follows it. U0a notes (done, not yet
+   reviewed); U0b
    `chapters/ch1/summer/DESIGN-DRAFT.md` (then send it to Kyle for approval via the manager). Merge #54 when it holds
    canon (the reviewer will not). Write the next cards (P6b… story.js chapters) when P6a lands.
 2. Spring deep dive (PLAN item L4): Haiku agents read the 15 Spring sessions + answers; compare with the teaching
