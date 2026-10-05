@@ -1,7 +1,9 @@
 # Code wiki index (one line per page; grouped by pack). Schema: `docs/wiki/README.md`.
 
 ## platform
-- (none yet — the platform pack seeds these in task W1)
+- [platform/tests-and-ci](platform/tests-and-ci.md) — system · the test runners and the CI check.
+- [platform/version-stamp](platform/version-stamp.md) — system · one version, stamped into every `?v=` tag.
+- [platform/wiki-lint](platform/wiki-lint.md) — system · the lint that keeps these pages true.
 
 ## ch1 — The Farm
 - [ch1/court](ch1/court.md) — system · the Reeve's Court: 9 claims from the player's books, press/present, pass 6, rotating retakes.

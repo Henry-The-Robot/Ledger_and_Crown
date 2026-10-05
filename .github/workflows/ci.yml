@@ -20,6 +20,8 @@ jobs:
           node-version: 22
       - name: Node tests
         run: node tests/run-all.js
+      - name: Wiki lint (pages must point at code that exists)
+        run: node tools/wiki-lint.js
       - name: Install Playwright and Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.54.2
