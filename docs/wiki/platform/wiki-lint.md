@@ -4,7 +4,7 @@ type: system
 pack: platform
 season: all
 files: [tools/wiki-lint.js, docs/wiki/coverage.json]
-symbols: [lint, parse, REQUIRED, thisFunctionDoesNotExist]
+symbols: [lint, parse, REQUIRED]
 concepts: []
 sessions: []
 tests: [tests/test-wiki-lint.js]
