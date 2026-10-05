@@ -110,6 +110,7 @@ resumed session reads it first).
 ## The packs
 | Pack | State (2026-10-04) | Folder |
 |---|---|---|
+| Lead | The Project Lead's handover (the whole game's state, roles, next actions, decisions) | `lead/` |
 | Platform | Phase P of the Chapter 1 work order builds it; its pack fills in as P lands | `platform/` |
 | 1 · The Farm | **Active.** The current builder (cloud session "MBA Game Cloud Builder") works here | `chapter-1/` |
 | 2 · The Town | Design tasks ready; opens when the creative lead says | `chapter-2/` |
