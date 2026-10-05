@@ -7,7 +7,7 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26;
   let VW = 320, VH = 200; // the view in map pixels: fixed on a desktop, sized to the screen on an iPad (see fit)
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
-  const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
+  const q = new URLSearchParams(location.search), SEASON = "ch1/spring"; // saves live in core/save.js (one versioned blob, lc_save_v4)
   // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
   const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
   if (TOUCH) document.body.classList.add("touch");
@@ -261,6 +261,8 @@
       <p><button class="btn alt" id="pz-intro" style="width:100%">Watch the opening</button></p>
       <p><button class="btn alt" id="pz-music" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-sound" style="width:100%"></button></p>
+      <p><button class="btn alt" id="pz-export" style="width:100%">Export my game</button></p>
+      <p><button class="btn alt" id="pz-import" style="width:100%">Import a saved game</button></p>
       <p><button class="btn alt" id="pz-feedback" style="width:100%">Copy feedback details</button></p>
       ${askSkip ? `<p><button class="btn alt" id="pz-skip" style="width:100%">Report a problem and skip this question</button></p><p class="hint">Use this only if the game seems broken. The lesson won't count as mastered, and Maud will bring it up again later. Copies feedback details too, so you can paste them to Kyle.</p>` : ""}
       <p class="hint">Today's progress since the morning save is lost if you restart or leave.</p></div>`;
@@ -271,6 +273,16 @@
     $("pz-restart").onclick = () => location.reload();
     $("pz-map").onclick = () => { save(); location.href = "index.html"; };
     $("pz-feedback").onclick = () => copyFeedback();
+    $("pz-export").onclick = async () => { // the code goes to the clipboard and to a .lcsave file download
+      try { save(); const code = await Save.exportCompressed();
+        try { await navigator.clipboard.writeText(code); } catch (e) {}
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" })); a.download = Save.fileName(); document.body.appendChild(a); a.click(); a.remove();
+        toast("Game exported: copied, and saved as a file."); } catch (e) { toast("Could not export."); } };
+    $("pz-import").onclick = async () => {
+      const code = prompt("Paste your saved-game code. This replaces the game on this device (a one-step backup is kept).");
+      if (!code) return; const r = await Save.parseCode(code); if (!r.ok) return toast(r.why);
+      const b = r.blob || {}, sl = b.slot; if (!confirm(sl ? `Load a game on day ${sl.s.day}, saved ${String(sl.savedAt).slice(0, 10)}?` : "Load this saved profile?")) return;
+      const w = await Save.import(code); toast(w.ok ? "Loaded. Reloading." : w.why); if (w.ok) setTimeout(() => { location.search = ""; }, 600); };
     const snd = () => { $("pz-sound").textContent = FX.sfxOn ? "🔔 Sound effects: on (tap to mute)" : "🔕 Sound effects: off (tap to turn on)"; $("pz-music").textContent = FX.musicOn ? "🎵 Music: on (tap to mute)" : "🎵 Music: off (tap to turn on)"; }; snd();
     $("pz-sound").onclick = () => { FX.setSfx(!FX.sfxOn); snd(); };
     $("pz-music").onclick = () => { FX.setMusic(!FX.musicOn); snd(); };
@@ -819,21 +831,22 @@
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
       document.querySelectorAll("#panelBody tr.ask").forEach(r => r.classList.remove("ask"));
-      if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length); localStorage.removeItem(SAVE);
+      if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length);
+        try { Save.closeSeason(SEASON, s, { examPassed: right === qs.length, score: right, attempts: 1 }); Save.clearSlot(); } catch (e) {} // freeze the season; the profile stays
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${right === qs.length ? "You know your own books. Good." : right ? "You know some of your books." : "You don't know your own books. That costs you."}<br>
           Summer terms: lend up to <b>${after.loanLimit}</b> at <b>${after.rateBp / 100}% a week</b> (spring: ${before.loanLimit} at ${before.rateBp / 100}%).</div>
           <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>${endBtn()}`; return wire(); }
       const qq = qs[i]; qq.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("ask")));
       ez.innerHTML = `<div class="ezq"><b>Ezra</b> <span class="hint">(${i + 1} of ${qs.length}; each answer moves your summer rate)</span><br>${qq.q} ${qq.ask}</div>` +
-        qq.options.slice().sort(() => Math.random() - .5).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
+        Save.shuffleSeeded(qq.options, s.seed, i).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
       ez.querySelectorAll(".choice").forEach(b => b.onclick = () => { const ok = b.dataset.o === qq.answer; if (ok) { right++; [qq.id].concat(qq.also || []).forEach(id => { const c = TR.master(id, s.day); if (c) toast(c === "mastered" ? `Mastered: ${TR.name(id)} ★` : `Transcript: ${TR.name(id)} (${c})`); }); }
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${ok ? "Just so." : `No. ${qq.answer}.`}</div><button class="btn gold" id="nx">Next</button>`; $("nx").onclick = () => { i++; next(); }; });
     }
     next();
   }
-  function restart() { localStorage.removeItem(SAVE); location.search = ""; }
+  function restart() { Save.clearSlot(); location.search = ""; } // clears the open season only; profile and closed seasons stay
   // ---------- save (every morning and at each chapter step) ----------
-  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { localStorage.setItem(SAVE, JSON.stringify({ s, story: Story.state, calm, usePtr, fairSeen })); } catch (e) {} }
+  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); } catch (e) {} }
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
@@ -921,11 +934,11 @@
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
-    const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
+    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? 1 + Math.floor(Math.random() * 2147483646) : 0 });
+      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in

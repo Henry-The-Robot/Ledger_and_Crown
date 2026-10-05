@@ -55,6 +55,21 @@
     return b;
   }
 
+  // The small stores (transcript, codex, unlocks, level, prestige, switches) still live in their own keys; they are the live copy.
+  // snapshot() folds them into profile before a freeze or an export; restoreStores() writes them back after an import.
+  const LIVE = { transcript: ["lc_transcript_v2", "j"], codex: ["lc_codex_v1", "j"], unlocks: ["lc_unlocks_v1", "j"], level: ["lc_level_v1", "s"], prestige: ["lc_prestige_v1", "n"] };
+  function snapshot(p) {
+    for (const f in LIVE) { const [k, t] = LIVE[f], raw = get(k); if (raw == null) continue;
+      if (t === "j") { const o = jparse(k); if (isObj(o)) p[f] = o; } else if (t === "n") p[f] = isFinite(+raw) ? +raw : 0; else p[f] = raw.replace(/^"|"$/g, ""); }
+    const sfx = get("lc_sfx"), mus = get("lc_music"), intro = get("lc_intro_seen");
+    if (sfx != null) p.settings.sfx = sfx === "1"; if (mus != null) p.settings.music = mus === "1"; if (intro != null) p.settings.introSeen = intro === "1";
+    return p;
+  }
+  function restoreStores(p) {
+    for (const f in LIVE) { const [k, t] = LIVE[f]; if (p[f] == null) continue; put(k, t === "j" ? JSON.stringify(p[f]) : String(p[f])); }
+    const st = p.settings || {}; put("lc_sfx", st.sfx === false ? "0" : "1"); put("lc_music", st.music === false ? "0" : "1"); if (st.introSeen) put("lc_intro_seen", "1");
+  }
+
   let cache = null;
   function load() {
     if (cache) return cache;
@@ -80,6 +95,7 @@
   function saveSlot(season, st) { return write({ slot: Object.assign({ season }, st) }); }
   // The season is over: freeze it into closed[season]. The profile is untouched. The slot clears only when the player leaves (clearSlot).
   function closeSeason(season, s, ctx) {
+    ctx = Object.assign({}, ctx); snapshot(load().profile); ctx.transcript = ctx.transcript || load().profile.transcript;
     const next = carryFrom(s, season, ctx);
     const rec = { closedAt: next.closedAt, outcome: s.outcome || "closed", seed: s.seed | 0, statements: next.statements, exam: { passed: !!(ctx && ctx.examPassed), score: ctx && ctx.score, attempts: ctx && ctx.attempts }, next };
     write({ closed: { [season]: rec } }); return rec;
@@ -100,11 +116,11 @@
   const unb64 = t => { const s = t.replace(/-/g, "+").replace(/_/g, "/"); const bin = typeof atob === "function" ? atob(s) : Buffer.from(s, "base64").toString("binary"); const o = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i); return o; };
   const utf8 = str => typeof TextEncoder !== "undefined" ? new TextEncoder().encode(str) : Uint8Array.from(Buffer.from(str, "utf8"));
   const unutf8 = bytes => typeof TextDecoder !== "undefined" ? new TextDecoder().decode(bytes) : Buffer.from(bytes).toString("utf8");
-  function exportCode() { const b = Object.assign({}, load()); delete b.bugReports; return "LC4U." + b64(utf8(JSON.stringify(b))); }
+  function exportCode() { const b = Object.assign({}, load()); snapshot(b.profile); delete b.bugReports; return "LC4U." + b64(utf8(JSON.stringify(b))); }
   async function pipe(bytes, stream) { const r = new Response(new Blob([bytes]).stream().pipeThrough(stream)); return new Uint8Array(await r.arrayBuffer()); }
   async function exportCompressed() {
     if (typeof CompressionStream === "undefined") return exportCode();
-    const b = Object.assign({}, load()); delete b.bugReports;
+    const b = Object.assign({}, load()); snapshot(b.profile); delete b.bugReports;
     return "LC4." + b64(await pipe(utf8(JSON.stringify(b)), new CompressionStream("deflate-raw")));
   }
   const fileName = () => `ledger-and-crown-${profile().id}-${clock().slice(0, 10).replace(/-/g, "")}.lcsave`;
@@ -130,7 +146,7 @@
     if (r.v3) { put(V3, JSON.stringify(r.v3)); put(KEY, "null"); cache = null; load(); return { ok: true }; }
     const b = r.blob; if (!Array.isArray(b.bugReports)) b.bugReports = []; if (!isObj(b.closed)) b.closed = {};
     if (!put(KEY, JSON.stringify(b))) return { ok: false, why: "Your browser would not store that save." };
-    cache = null; return { ok: true };
+    restoreStores(b.profile); cache = null; return { ok: true };
   }
   async function persist() {
     const p = profile(); let ok = false;

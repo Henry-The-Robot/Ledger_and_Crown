@@ -26,7 +26,8 @@
 </div>
 <script>
   try {
-    if (localStorage.getItem("lc_spring_save_v3")) {
+    const v4 = JSON.parse(localStorage.getItem("lc_save_v4") || "null"); // v4 wins; the v3 key stays after migration, so it counts only before one
+    if (v4 ? (v4.slot && v4.slot.s) : localStorage.getItem("lc_spring_save_v3")) {
       document.getElementById("contHint").style.display = "block";
       document.getElementById("playBtn").textContent = "Play / Continue";
     }
