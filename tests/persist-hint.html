@@ -12,7 +12,7 @@ const load = () => new Promise(res => { const f = document.createElement("iframe
     for (let i = 0; i < 5; i++) { w.G.save(); await sleep(60); }
     await sleep(300);
     const p = w.Save.profile().settings, n = (w.__hints || []).length;
-    out.push(`persisted this browser: ${p.persisted}`);
+    out.push(`storage persisted in this browser (info): ${p.persisted ? "yes" : "no"}`);
     out.push(`hint shown once on the first run (or never when persisted): ${p.persisted ? n === 0 : n === 1}`);
     out.push(`hint remembered in the profile: ${p.persisted ? true : p.hintShown === true}`);
     out.push(`hint text names Add to Home Screen: ${p.persisted ? true : /Add to Home Screen/.test(w.__hints[0])}`);
