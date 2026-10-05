@@ -20,7 +20,7 @@ Nothing here is needed to finish the season.
 ## Where
 | File · symbol | What |
 |---|---|
-| `chapters/ch1/spring/scenes.js` · `SC` (~7) | The scene list. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need(s)`, `hint`, `run(c)`. |
+| `chapters/ch1/spring/scenes.js` · `SC` (~7) | The scene list, now data (P6a): `RECORDS` with `steps`; `SC` adds `run(c)`. Format and player: `platform/scene-player`. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need` (a condition record), `hint`, `steps`. |
 | `chapters/ch1/spring/scenes.js` · `available(who, s)` (~115) | First scene for `who` that is not played, with `day >= from`, `day <= to` and `need(s)` true. Else `null`. |
 | `chapters/ch1/spring/scenes.js` · `pending(s)` (~119) | Count of scenes waiting now. |
 | `chapters/ch1/spring/scenes.js` · `CLUES` | 6. The number the player sees in "A clue: n of 6". |

@@ -15,56 +15,13 @@
 window.Story = (function () {
   const S = Spring, B = Books, TR = Transcript;
   let G, st = fresh();
-  const TITLES = ["", "The bailiff", "Harvest and the bakery", "First seed", "Hobb pays later", "Wages day", "Tomas's terms", "Ezra", "The Duke's steward", "Closing the books"];
-  // Edric's letters (#28): his voice is warm, rueful and a little funny; each one answers a question the player has just started to ask, and the last turns it into a mystery.
-  // Index 9 is WS6's midpoint page (found the night Corvin Vane brings his order); the scenes call letter(6), letter(7), letter(8) by index, so #28's order is kept.
-  const LETTERS = ["The first page", "Hobb's best customer", "Maud's calendars", "The Duke's grain", "The last page", "On the bailiff", "Bram's oven", "On patience", "The thing I signed", "The same kind of order"];
-  const WEEKS = [null,
-    { title: "The writ", line: "Rain, a gate, and a stranger with a ledger.", maud: "This week I'll show you. Watch the numbers." },
-    { title: "Promises", line: "Wages fall due, and the Duke's steward is coming.", maud: "This week I'll ask, not tell." },
-    { title: "The squeeze", line: "Everyone you promised now wants something.", maud: "This week I'll bet with you, not coach you." },
-    { title: "The reckoning", line: "Edric's last book, and the Crown's collector.", maud: "This week I'm silent unless the farm is in danger." },
-  ];
+  const L = window.Lessons || require("./lessons.js"), K = window.SceneKit || require("../../../core/scene.js");
+  const TITLES = L.TITLES, LETTERS = L.LETTERS, WEEKS = L.WEEKS, GOALS = L.GOALS; // the words of the story live in lessons.js (data)
   const weekOf = d => Math.min(4, Math.max(1, Math.ceil(d / 7)));
   const farmName = () => (st && st.farm) || "Thornfield";
-  const PAGES = [
-    "Spring. Best harvest in ten years. Sold every sack. So why is the chest always empty?",
-    "Hobb's my best customer. Pays like clockwork, fourteen days after. I'll be fine till then.",
-    "Maud keeps drawing me calendars of coin. I keep telling her: the Ledger shows a profit. She keeps looking at me the way you look at a man standing on a frozen pond, saying the ice is fine.",
-    "The Duke wants grain, more than I've ever grown. Ezra will lend me the seed money. It's the making of us. The steward says growth is the only safe harbour. He smiles a great deal. I should have counted his teeth.",
-    "Profit every year. Never once enough coin on wages day. If someone reads this: watch the chest, not the Ledger.",
-    "If you are reading this, Crane has found you first. Be civil. He is the only man in the Duke's employ who counts everything twice, and that is a rarer virtue than honesty. He will frighten you. He is frightened of nearly everything, which is why he is so careful.",
-    "Ashby would not take my money. Not a coin. So I gave her my name instead. A name is cheaper than money, I thought. I have since learned what it costs.",
-    "Ezra never lied to me. That was the trouble. His rate was always exactly what I deserved. Ask him about patience, and then ask yourself who you were being patient with.",
-    "I signed a paper I ought to have shown Maud. It is in the drawer with the seal I could not read. Ask Crane to read it. Ask Ezra whose name stands beneath mine. And please, whatever you do, do not let Ashby thank you for it.",
-    // WS6 (index 9): the midpoint page, found the night Corvin Vane brings his order. Numbers are the game's own constants (S.R.duke).
-    `Corvin Vane was here again with the Duke's order: ${S.R.duke.sacks} sacks at ${S.R.duke.price}, paid ${S.R.duke.terms} days after delivery. The same kind of order as last spring, and as the spring before. I sign, I borrow for seed, and by Midwinter I'm begging Ezra. I begin to think he counts on it.`,
-  ];
+  const PAGES = L.PAGES.map(t => K.fill(t, { dukeSacks: S.R.duke.sacks, dukePrice: S.R.duke.price, dukeTerms: S.R.duke.terms })); // the journal pages; page 9 names the Duke's order from the season's own constants
   function fresh() { return { ch: 1, stage: "intro", notebook: [], pages: [], pageDays: {}, clues: [], weeks: [], farm: "Thornfield" }; }
   function init(g, saved) { G = g; st = Object.assign(fresh(), saved || {}); goal(); }
-  // Objective text per stage ("Title: what to do"); the ribbon adds "Week N · <title>" in front (see goal()).
-  const GOALS = {
-    "intro": "The bailiff: walk with Crane and tap what the farm owns",
-    "harvest2": "Harvest: the three ripe plots are in the field (E, or tap Act)",
-    "tomas2": "First seed: buy seed from Tomas (east along the path, the green roof)",
-    "plant2": "First seed: plant your seed (E on tilled soil, then E again to water)",
-    "ashby3": "The bakery: agree a price with Widow Ashby (red roof)",
-    "ship3": "The bakery: ship Ashby's sacks from your shipping crate (by the house)",
-    "hobb4": "Hobb pays later: see Hobb at the mill",
-    "ship4": "Hobb pays later: ship Hobb's sacks from the crate",
-    "sleep5": "Wages day: sleep, and Maud will meet you in the morning",
-    "tomas6": "Tomas's terms: buy your next seed from Tomas on account",
-    "ezra7": "Ezra: ask the moneylender about a loan (purple roof)",
-    "sleep8": "The steward: run the farm and sleep; Corvin Vane comes to the well on day 12",
-    "duke8": "The steward: Corvin Vane is waiting by the well",
-    "page8": "The page: sleep, and Maud will show you what she found",
-    "sleep9": "The squeeze: run the farm and sleep; Corvin Vane returns on day 15",
-    "duke9": "The squeeze: Corvin Vane is back at the well",
-    "tomas9": "Tomas offers again: Ezra's rate has moved; see Tomas on account",
-    "run9": "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
-    "done": "Spring is closed. Your notebook (N) and case board have everything you learned.",
-  };
-  GOALS.sleep8now = "The steward: sleep; Corvin Vane comes to the well in the morning"; GOALS.sleep9now = "The squeeze: sleep; Corvin Vane returns to the well in the morning";
   const goalText = () => { const d = G && G.s ? G.s.day : 1; return (st.stage === "sleep8" && d >= 12 ? GOALS.sleep8now : st.stage === "sleep9" && d >= 15 ? GOALS.sleep9now : GOALS[st.stage]) || ""; };
   function goal() { const w = weekOf(G.s.day); G.goal(goalText(), st.ch, `${w === 0 ? "" : "Week " + w} · ${WEEKS[w].title}`); }
   function to(ch, stage) { if (window.Verbs) Verbs.parchClose(); /* a lesson page never outlives its stage */ st.ch = ch; st.stage = stage; G.s.quiet = ch <= 4; goal(); G.save(); }
@@ -117,275 +74,145 @@ window.Story = (function () {
     forecast: (n, title) => ({ label: "Open the cash forecast", open: () => G.board({ title, n, noClose: true, fill: [] }) }),
   };
 
-  // ---------- chapter 1: the bailiff (C1.01) — WS3 cold open: the `tag` verb builds the balance sheet, then one More/Less choice ----------
-  // Replaces the two typed sums (liabilities, equity). Every number comes from the opening balances (Spring.balanceSheet), never a literal.
-  async function ch1() {
-    const V = LV, W = G.world, b = S.balanceSheet(G.s.bal), s0 = G.s, cost = S.R.unitCost;
-    V.parchReset(); V.craneOn = true;
-    await GL.say("crane", "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me.", ["Walk with you"]);
-    const sackVal = s0.sacks * cost, cropPlots = () => s0.plots.filter(p => p.crop), cropVal = cropPlots().reduce((a, p) => a + p.crop.cost, 0);
-    G.toast("Crane taps the chest: Cash.");
-    const tagging = V.tag({
-      show: 1, hintAfter: window.__hintAfter,
-      targets: [
-        { id: "chest", tiles: [[W.CHEST.x, W.CHEST.y]], line: "Cash (the chest)", value: b.cash },
-        { id: "sacks", tiles: [[W.SACKS.x, W.SACKS.y], [W.CRATE.x, W.CRATE.y]], line: `Sacks: ${s0.sacks} at ${cost}`, value: sackVal },
-        { id: "crops", tiles: () => cropPlots().map(p => [p.x, p.y]), line: `Crops in the ground (${cropPlots().length} plots, at cost)`, value: cropVal },
-      ],
-      decoys: [
-        { tiles: [[W.FWELL.x, W.FWELL.y]], says: "That's the village's well. Not yours." },
-        { tiles: [[12, 3], [12, 2], [15, 3], [15, 2], [18, 4], [18, 3]], says: "The trees are the Duke's." },
-        { tiles: [[W.BOARD.x, W.BOARD.y], [W.BOARD.x, W.BOARD.y - 1]], says: "The notice board belongs to the village." },
-      ],
-    });
-    V.remark(`Cash, ${b.cash}.`); await V.wait(window.__fastVerbs ? 0 : 1600);
-    V.remark("Find the rest. Everything this farm owns.");
-    await tagging;
-    await V.countTotal("aTot", s0.bal.cash + sackVal + cropVal);
-    await GL.say("crane", "Now the other column, the one people prefer not to read. I brought the papers myself.", ["Show me"]);
-    V.pinRow("liab", "Ezra's note (the loan)", b.loan); await V.wait(window.__fastVerbs ? 0 : 700);
-    V.pinRow("liab", "The Crown's writ, due at Midwinter", b.crown); await V.wait(window.__fastVerbs ? 0 : 500);
-    await V.countTotal("lTot", b.liab);
-    const c = await GL.say("crane", "Before I stamp it, heir: do you own more than you owe, or less?", ["More", "Less"]);
-    V.P.eq = b.equity; V.parch();
-    await V.stamp(`Owner's equity ${V.fmt(b.equity)}`, `${b.assets.toLocaleString("en-US")} owned − ${b.liab.toLocaleString("en-US")} owed`);
-    const right = (c === 1) === (b.equity < 0);
-    await GL.say("crane", right ? "You have a head for it. That is not a compliment, heir; it is a diagnosis." : "Less. Much less, and I am required to say it plainly.", ["Next"]); // #28's voice
-    document.querySelectorAll(".vstamp").forEach(x => x.remove());
-    // WS6: the writ needs a name (item 10), and Crane makes his standing offer (M3, item 3), both while he's still standing in the yard
-    await GL.say("crane", "The writ requires a name for the land. Item: what shall I write?", ["Give it a name"]);
-    await nameFarm(); V.P.title = farmName(); V.parch();
-    await GL.say("crane", `Item: ${farmName()}. Entered on the writ, and not to be changed without a form.`, ["Next"]);
-    await craneOffer({ first: true });
-    if (G.s.over) return; // sold on day 1: the ending has been shown
-    V.craneOn = false;
-    await tell("That was Crane. Don't mind him: he counts everything twice because he's frightened of nearly everything.");
-    await tell(`What you own minus what you owe is yours, and yours is ${b.equity < 0 ? "below zero" : "thin"}. That's why we work.`);
-    await tell("Profit is an opinion. Cash is a fact."); // WS6: the theme, stated once, early
-    await page(5); // #28: Edric's letter "On the bailiff"
-    await tell("The far field's ripe. Harvest it (walk up, press E or tap Act) and Ashby the baker will buy.");
-    if (right) mastered("equation");
-    keep("equation", "Assets = Liabilities + Owner's equity", "What you own, minus what you owe, is yours. It can be below zero.", `Day 1: ${b.assets} = ${b.liab} + (${b.equity}).${right ? "" : " You guessed more; the page says less."}`);
-    V.parchClose(); to(1, "harvest2");
-  }
-  // ---------- chapter 2: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
-  async function ch2() {
-    const sc = S.R.seedCost, per = S.R.sacksPerPlot;
-    await GL.say("tomas", `My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is ${sc} a packet. One packet plants one plot; a plot gives ${per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman.`);
-    await tell("Let me buy the first three, so you can see where the coin goes.");
-    G.act(() => S.buySeeds(G.s, 3, false));
-    await tell(`Cash went down ${3 * sc} and Inventory went up ${3 * sc}: changed shape, not spent.<br>Seed only becomes a cost when the grain is sold.`, ["h-cash", "h-inv"]);
-    const inv0 = G.s.bal.inv;
-    await GL.say("tomas", "Six more?", [`Buy 6 packets for Cash (${6 * sc})`]);
-    G.act(() => S.buySeeds(G.s, 6, false));
-    keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −${6 * sc}, Inventory +${6 * sc} (${inv0} → ${G.s.bal.inv}).`);
-    st.planted0 = G.s.plots.filter(p => p.crop).length; to(3, "plant2");
-  }
-  // ---------- chapter 3: the bakery (C1.01, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
-  async function ch3() {
-    const cost = S.R.unitCost, pct = p => Math.round((p - cost) / p * 100);
-    const o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
-    await GL.say("ashby", "So you're Edric's heir. You've his chin and none of his luck, dear. I need six sacks for the ovens. Seven a sack, Cash on the nail.");
-    await tell(`Each sack cost you ${cost}: ${S.R.seedCost} of seed for ${S.R.sacksPerPlot} sacks, so at 7 you keep ${7 - cost} a sack. That's gross profit: ${7 - cost} out of every 7 is ${pct(7)}%, your margin.`, ["h-inv"]);
-    // The worked example goes in the notebook as it's shown, so the Try that follows can point to it.
-    keep("margin", "Gross profit & margin", "Price minus cost per sack is gross profit. Divide by the price: margin. Your cost floor is your cost per sack: below it you lose money (a sale you give up can raise the real floor later).",`Maud at 7: 7 − ${cost} = ${7 - cost} profit a sack; ${7 - cost} ÷ 7 = ${pct(7)}% margin.`);
-    // The floor is asked first, and it is used: it becomes the red walk-away line on the price track in the haggle.
-    await ask("Before you name a price: what's your cost floor? The lowest you'd take for a sack before it loses money.", cost, ["What did each sack cost you? Seed for a plot, divided by the sacks it gives."], null, 0, null, `A packet of seed is ${S.R.seedCost} and gives ${S.R.sacksPerPlot} sacks, so each sack cost ${cost}. Sell below ${cost} and you lose money.`, `Your cost floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money.`);
-    await GL.say("ashby", "Times are hard, dear. Would you take 6?");
-    await ask("Work it out before you answer. Your margin at 6, in %?", pct(6), ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], null, 1, [DOC.notebook], `At 6 you keep 6 − ${cost} = ${6 - cost} a sack. ${6 - cost} ÷ 6 = 0.33, so ${pct(6)}%.`, "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%.");
-    mastered("gross"); mastered("margin");
-    await tell(`Your cost floor, ${cost}, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away.`);
-    const deal = await GL.haggle(o, { open: 6, walk: 7, floor: cost, line: "Well, dear? 6 sacks. What do you want for them?" });
-    if (!deal) { await GL.say("ashby", "Come back when you've thought it over."); return; }
-    const price = deal.price;
-    await GL.say("ashby", `${price} it is. Ship them from your crate and I'll pay on the spot.`);
-    addEx("margin", `Your deal: Ashby, 6 sacks at ${price}: ${price - cost} a sack, ${pct(price)}% margin.`);
-    to(2, "ship3");
-  }
-  // ---------- chapter 4: Hobb pays later (C1.02: accounts receivable, accrual vs cash) ----------
-  async function ch4() {
-    const o = G.s.offers.find(x => x.who === "hobb") || S.addOffer(G.s, "hobb", 9, 9, 14, 5, 4); S.setPrice(G.s, o.id, 9);
-    await tell("Before you go in: know your cost floor. And listen for when he pays.");
-    await GL.say("hobb", `...Edric's heir. Hm. Nine sacks. I pay... fourteen days after delivery. Same as always. Same as your uncle.`);
-    await tell("Your uncle loved Hobb, and Hobb always paid. Eventually.");
-    const deal = await GL.haggle(o, { open: 8, walk: 9, floor: S.R.unitCost, line: "Nine sacks. Name your price; I'm not a charity." });
-    if (!deal) { await GL.say("hobb", "Suit yourself. The offer stands till tomorrow."); return; }
-    to(4, "ship4");
-  }
-  // WS3: the four typed sums become one bet with a delayed reveal. The player predicts the chest from the timeline (cards, no Cash line),
-  // stakes real coin, and is told the answer on the morning after Hobb pays: predicted vs actual, each difference named (Verbs.revealBet).
-  async function ch4b(order) {
-    const V = LV, v = order.value, inv = G.s.invoices.find(x => x.who === "hobb");
-    await tell(`The Ledger says you earned ${v} today: Revenue. Look at the chest: it didn't move.`, ["h-ni", "h-cash"]);
-    const arNow = S.balanceSheet(G.s.bal).ar;
-    await tell(arNow > v
-      ? `Hobb's ${v} joins your Accounts receivable: everything people owe you, ${arNow} in all. Hobb's part is due day ${inv.due}. Two books, and Edric only read one.`
-      : `The ${v} is your Accounts receivable now: Hobb owes it, due day ${inv.due}. Two books, and Edric only read one.`, ["h-ar", "coin"]);
-    const n = inv.due - G.s.day + 1, last = () => { const r = S.forecast(G.s, n); return r[r.length - 1]; };
-    const tl = { label: "Open the timeline", open: () => V.timeline({ mode: "show", n, hideLine: true, title: `Cash events, today to day ${inv.due}`, maud: "Every coin coming in and going out. I've hidden the Cash line: that's your job." }) };
-    const r = await V.bet({ prompt: `Five coin says you can't tell me what's in the chest the morning after Hobb pays (day ${inv.due + 1}), if you buy nothing more.`, docs: [tl, DOC.ledger],
-      how: "Cash now, plus every coin that comes in, minus every coin that goes out, up to that day. The timeline shows each one.", stake: { min: 0, max: 5 }, tol: 0, answer: () => last().close, reveal: { day: inv.due + 1 }, kind: "hobb",
-      explain: () => "Revenue counted the day you delivered; the coin came today. Two books." });
-    keep("ar", "Accounts receivable", "Revenue counts when you deliver; the Cash comes when they pay. In between, it's a receivable.", `Hobb: ${v} of Revenue on day ${G.s.day}, Cash on day ${inv.due}. You said ${r.guess}${r.stake ? ` and staked ${r.stake}` : ""}.`);
-    await page(1); to(5, "sleep5");
-  }
+  // ---------- the lessons are DATA (lessons.js); core/scene.js plays them (P6b). Below: the context a scene talks to (ctx), its formulas (CALC) and its game actions (VERB). ----------
+  // A formula takes the scene's variables and returns new ones; it may read or change the game, but it never writes a word a player reads except a short phrase (a verdict, a unit).
+  const play = (id, init) => K.play(L.BY[id], ctx, init);
+  const DOCS = { notebook: () => DOC.notebook, ledger: () => DOC.ledger, whatif: v => ({ label: "Open the what-if timeline", open: () => LV.timeline({ mode: "show", n: 14, extra: v.extra, tied: true, order: v.ord, title: v.title }) }) };
+  const ctx = {
+    get s() { return G.s; }, S, tell, speak: (w, t, b) => GL.say(w, t, b),
+    quiz: (q, v) => ask(q.text, q.answer, q.hints, q.spot, q.tol, q.docs ? q.docs.map(d => DOCS[d](v)) : q.docs, q.work, q.how),
+    calc: (name, v) => CALC[name](v), verb: (name, args, v, lazy) => VERB[name](args, v, lazy), remember: (k, x) => { st[k] = x; },
+    keep: k => keep(k.id, k.term, k.line, k.example, k.num, k.from), addEx, pin, to, page, master: id => mastered(id),
+  };
+  const lowOf = f => f.reduce((a, x) => x.close < a.close ? x : a);
+  const CALC = {
+    // chapter 1
+    ch1Facts: () => { const s0 = G.s, b = S.balanceSheet(s0.bal), cost = S.R.unitCost, plots = s0.plots.filter(p => p.crop);
+      return { b, cost, cash: b.cash, sacks: s0.sacks, sackVal: s0.sacks * cost, plots: plots.length, cropVal: plots.reduce((a, p) => a + p.crop.cost, 0), assets: b.assets, liab: b.liab, equity: b.equity, eqFmt: LV.fmt(b.equity), eqWord: b.equity < 0 ? "below zero" : "thin" }; },
+    ch1Right: v => { const right = (v.c === 1) === (v.b.equity < 0); return { right, guessNote: right ? "" : " You guessed more; the page says less." }; },
+    farm: () => ({ farm: farmName() }), over: () => ({ over: !!G.s.over }),
+    // chapter 2
+    ch2Facts: () => ({ sc: S.R.seedCost, per: S.R.sacksPerPlot, three: 3 * S.R.seedCost, six: 6 * S.R.seedCost }), inv0: () => ({ inv0: G.s.bal.inv }),
+    ch2After: () => ({ day: G.s.day, inv1: G.s.bal.inv, planted: G.s.plots.filter(p => p.crop).length }),
+    // chapters 3 and 4
+    ch3Setup: () => { const cost = S.R.unitCost, pc = p => Math.round((p - cost) / p * 100), o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
+      return { cost, pc, o, seedCost: S.R.seedCost, per: S.R.sacksPerPlot, m7: 7 - cost, p7: pc(7), m6: 6 - cost, p6: pc(6) }; },
+    ch3Deal: v => { const price = v.deal.price; return { price, pm: price - v.cost, pp: v.pc(price) }; },
+    ch4Setup: () => { const o = G.s.offers.find(x => x.who === "hobb") || S.addOffer(G.s, "hobb", 9, 9, 14, 5, 4); S.setPrice(G.s, o.id, 9); return { o, cost: S.R.unitCost }; },
+    ch4bFacts: v => { const val = v.order.value, inv = G.s.invoices.find(x => x.who === "hobb"), arNow = S.balanceSheet(G.s.bal).ar; return { v: val, inv, arNow, arBig: arNow > val, due: inv.due, n: inv.due - G.s.day + 1, revealDay: inv.due + 1 }; },
+    betFacts: v => ({ win: !!v.r.win, guess: v.r.guess, stake: v.r.stake, stakeTxt: v.r.stake ? ` and staked ${v.r.stake}` : "", day: G.s.day }),
+    // chapter 5 and the cost scene
+    ch5Setup: () => { const walked = !!G.s.walkedOff, low = lowOf(S.forecast(G.s, 14)); return { walked, walkedWages: G.s.walkedWages, lowDay: low.day, lowClose: low.close, lowNote: low.close < 60 ? "That's where Edric lived." : "Watch that dip.", walkNote: walked ? " Jory walked off on wages day." : "", day: G.s.day }; },
+    markupMargin: () => ({ m: Math.round(50 / 150 * 100) }),
+    costFacts: () => { const s = G.s, p = S.marketPrice(s.day, s), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return { skip: true };
+      const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1);
+      return { skip: false, p, cost, F, m, p1, m1, n0, n1, n0b: Math.round(n0 * 1.25), up: Math.round((n1 / n0 - 1) * 100), zero: m * n0 - F, cutPct: Math.round(2 / p * 100), dropPct: Math.round((1 - m1 / m) * 100), k: (s.day + F) % 3, day: s.day }; },
+    costRight: v => { const right = (v.c + v.k) % 3 === 2; return { right, verdict: right ? "Yes." : "Not quite." }; },
+    // the price of waiting
+    pvFacts: () => { const s = G.s, t = S.terms(s), room = t.loanLimit + s.bal.loan, real = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60 && Math.round(v.amount * S.R.factorRate) <= room).sort((a, b) => b.amount - a.amount)[0], inv = real || { who: null, amount: 100, due: s.day + 14 };
+      const got = Math.round(inv.amount * S.R.factorRate), days = inv.due - s.day, wk = days / 7, weekly = Math.round(got * t.rateBp / 10000), r = t.rateBp / 10000, who = real ? S.NAMES[inv.who].split(" ")[0] : "the neighbour";
+      return { real: !!real, amount: inv.amount, due: inv.due, days, got, fee: inv.amount - got, interest: Math.round(weekly * wk), implied: Math.round((Math.pow(inv.amount / got, 1 / wk) - 1) * 1000) / 10, worth: Math.round(inv.amount / Math.pow(1 + r, wk)), who, whoLow: real ? who : "a neighbour", ratePct: t.rateBp / 100, flip: (s.day + inv.amount) % 2 === 1, day: s.day }; },
+    pvRight: v => { const right = v.flip ? v.c === 0 : v.c === 1; return { right, verdict: right ? "Yes." : "No." }; },
+    // Tomas's terms (week 2) and again (week 3)
+    tvmSetup: () => { const t = S.terms(G.s), sc = S.R.seedCost, left = Math.floor((t.apLimit + G.s.bal.ap) / sc); return { t, sc, rate: t.rateBp / 100, left, disc: Math.round(S.R.discPct * 100), apDays: S.R.apDays, discDays: S.R.discDays, tvmRate: st.tvmRate, stuck: !t.apDays || left < 3 }; },
+    tvmSizes: v => { const small = Math.min(6, v.left), big = Math.min(9, v.left); return { small, big, smallCost: small * v.sc, bigCost: big * v.sc, bigOff: big <= small }; },
+    tvmPick: v => ({ n: v.c ? v.big : v.small }),
+    buyResult: v => ({ ok: !!v.r.ok, msg: v.r.msg }),
+    tvmBill: () => { const bill = G.s.bills[G.s.bills.length - 1]; return { bill, day0: G.s.day, billAmt: bill.amount, discBy: bill.discBy, billDisc: bill.disc, due: bill.due }; },
+    tvmAfter: v => { const F = tvmFacts(v.bill), took = v.r2.day <= v.bill.discBy;
+      return { F, took, right: F.cheaper === "even" || took === (F.cheaper === "early"), discX: F.discX, carryX: F.carryX, tookPhrase: took ? `You took ${F.discX} off.` : "You kept the Cash.",
+        cheaperPhrase: F.cheaper === "early" ? "paying early was cheaper" : F.cheaper === "wait" ? "waiting was cheaper" : "it was a dead heat", cheaperWord: F.cheaper === "early" ? "paying early" : F.cheaper === "wait" ? "waiting" : "neither",
+        tookWord: took ? "paid early" : "waited", tookKept: took ? "paid early" : "kept the Cash", flipWord: st.tvmRate !== v.rate ? "flipped" : "held" }; },
+    // Ezra
+    ezraSetup: () => { const t0 = S.terms(G.s); return { t0, rate0: t0.rateBp / 100 }; },
+    ezraRate: v => { const r = v.r; G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s), both = !!(r.okLow && r.okDay);
+      return { t, rate: t.rateBp / 100, both, verdict: both ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy.", low: r.low, lowDay: r.lowDay }; },
+    ezraKeep: v => ({ borrowInt: Math.round(v.borrowed * v.t.rateBp / 10000), day: G.s.day }),
+    // Corvin Vane
+    dukeSetup: () => { const o = G.s.offers.find(x => x.who === "duke"); if (!o) return { noOffer: true }; const D = S.R.duke, sacks = o.sacks;
+      return { noOffer: false, o, D, sacks, half: Math.round(sacks / 6) * 3, value: sacks * o.price, price: o.price, due: o.due, terms: D.terms, tookFirst: G.s.orders.some(x => x.who === "duke"), tied1: st.tied1 || 0 }; },
+    dukeBoard: v => { const V = LV, o = v.o, sacks = v.sacks, need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / S.R.sacksPerPlot) - G.s.seeds), extra = need * S.R.seedCost, low = lowOf(S.forecast(G.s, 14, extra)), ord = { sacks, price: o.price, due: o.due };
+      const base = V.rows({ n: 14, tied: true }), withO = V.rows({ n: 14, tied: true, extra, order: ord }), delta = withO[withO.length - 1].tied - base[base.length - 1].tied; // what this order ties up by the end of the window
+      return { need, extra, low, ord, delta, lowClose: low.close, lowDay: low.day, plural: need > 1 ? "s" : "", day: G.s.day }; },
+    dukeWise: v => ({ wise: v.low.close >= 0 ? v.c === 0 : v.c > 0, tellIdx: v.c === 0 && v.low.close < 0 ? 0 : v.c === 0 ? 1 : v.c === 1 ? 2 : 3, halfTied: Math.round(v.delta / 2), day: G.s.day }), // wise: matched the player's own board (Cash stays >= 0: taking it is right; below 0: half or decline)
+    dukeChoice: v => ({ choice: [`all ${v.sacks}`, "half", "to decline"][v.c] }),
+    // Edric's cash book, the three statements, Crane's offer
+    cashFacts: () => { const s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1]; return { rows, niFmt: LV.fmt(last.ni), cashFmt: LV.fmt(last.cash), day: s.day }; },
+    closeFacts: v => { const stm = v.stm, h = v.h, ch = stm.cf.change; return { net: stm.is.net, change: ch, changeTxt: (ch >= 0 ? "+" : "") + ch, target: h.lines.find(l => l.startsWith("cf:")) || "cf:cfo", hText: h.text, hTail: h.text.split(": ").pop(), upDown: ch >= 0 ? "up" : "down", absChange: Math.abs(ch), page4: PAGES[4] }; },
+    firstTap: v => ({ firstTap: v.misses === 0 }),
+    offerFacts: v => { const o = Endings.offer(G.s); return { o, farm: farmName(), price: o.price, cash: o.cash, wages: o.wages, intro: v.first ? 0 : o.mercy ? 1 : 2, day: G.s.day }; },
+  };
+  const VERB = {
+    ch1Open: () => { LV.parchReset(); LV.craneOn = true; },
+    ch1Tag: async (a, v) => { const V = LV, W = G.world, s0 = G.s, cropPlots = () => s0.plots.filter(p => p.crop); G.toast(a.toast);
+      const tagging = V.tag({
+        show: 1, hintAfter: window.__hintAfter,
+        targets: [
+          { id: "chest", tiles: [[W.CHEST.x, W.CHEST.y]], line: a.chest, value: v.b.cash },
+          { id: "sacks", tiles: [[W.SACKS.x, W.SACKS.y], [W.CRATE.x, W.CRATE.y]], line: a.sacks, value: v.sackVal },
+          { id: "crops", tiles: () => cropPlots().map(p => [p.x, p.y]), line: a.crops, value: v.cropVal },
+        ],
+        decoys: [
+          { tiles: [[W.FWELL.x, W.FWELL.y]], says: a.decoyWell },
+          { tiles: [[12, 3], [12, 2], [15, 3], [15, 2], [18, 4], [18, 3]], says: a.decoyTrees },
+          { tiles: [[W.BOARD.x, W.BOARD.y], [W.BOARD.x, W.BOARD.y - 1]], says: a.decoyBoard },
+        ],
+      });
+      V.remark(a.remarkCash); await V.wait(window.__fastVerbs ? 0 : 1600);
+      V.remark(a.remarkRest);
+      await tagging;
+      await V.countTotal("aTot", s0.bal.cash + v.sackVal + v.cropVal); },
+    ch1Liab: async (a, v) => { const V = LV, b = v.b; V.pinRow("liab", a.loan, b.loan); await V.wait(window.__fastVerbs ? 0 : 700); V.pinRow("liab", a.crown, b.crown); await V.wait(window.__fastVerbs ? 0 : 500); await V.countTotal("lTot", b.liab); },
+    ch1Stamp: async (a, v) => { const V = LV; V.P.eq = v.b.equity; V.parch(); await V.stamp(a.title, a.sub); },
+    clearStamp: () => { document.querySelectorAll(".vstamp").forEach(x => x.remove()); },
+    nameFarm: async () => { await nameFarm(); LV.P.title = farmName(); LV.parch(); },
+    craneOffer: (a) => craneOffer(a), craneOff: () => { LV.craneOn = false; }, parchClose: () => { LV.parchClose(); },
+    buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit)),
+    haggle: (a, v) => GL.haggle(v.o, { open: a.open, walk: a.walk, floor: v.cost, line: a.line }),
+    timeline: a => LV.timeline(a),
+    // WS3: the Hobb bet. The player predicts the chest from the timeline (cards, no Cash line), stakes real coin, and is told the answer on the morning after Hobb pays.
+    ch4bBet: (a, v) => { const V = LV, n = v.n, last = () => { const r = S.forecast(G.s, n); return r[r.length - 1]; };
+      const tl = { label: a.tlLabel, open: () => V.timeline({ mode: "show", n, hideLine: true, title: a.tlTitle, maud: a.tlMaud }) };
+      return V.bet({ prompt: a.prompt, docs: [tl, DOC.ledger], how: a.how, stake: { min: 0, max: 5 }, tol: 0, answer: () => last().close, reveal: { day: v.revealDay }, kind: "hobb", explain: () => a.explain }); },
+    markupBet: (a, v) => LV.bet({ prompt: a.prompt, docs: [DOC.notebook], how: a.how, stake: { min: 0, max: 2 }, tol: 1, answer: () => v.m, reveal: "now", kind: "markup", explain: () => a.explain }),
+    costScene: () => costScene(),
+    tvm: a => tvmScene(a.again),
+    tvmTimeline: (a, v, lazy) => { const bill = v.bill, note = day => day <= bill.discBy ? K.fill(lazy.early, Object.assign({}, v, { daysEarly: bill.due - day })) : K.fill(lazy.late, Object.assign({}, v, { payDay: day }));
+      return LV.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: a.title, footNote: note, maud: a.maud }); },
+    tvmSettle: (a, v) => { if (v.r2.paidNow) G.act(() => S.payBills(G.s)); else if (v.r2.day < v.bill.due) G.s.payPlan = { day: v.r2.day }; },
+    // The loan must actually arrive: Ezra's limit counts what you already owe, so only offer what he will lend, and if the engine refuses, say why and ask again (it used to fail silently).
+    loan: async (a, v, lazy) => { let borrowed = 0, intro = v.intro;
+      for (;;) {
+        const room = S.terms(G.s).loanLimit + G.s.bal.loan;
+        const c = await GL.say("ezra", room < 200 ? K.fill(lazy.short, Object.assign({}, v, { intro, roomShown: Math.max(0, room), owed: -G.s.bal.loan })) : intro, [{ label: a.buttons[0], disabled: room < 100 }, { label: a.buttons[1], disabled: room < 200 }, a.buttons[2]]);
+        if (c === 2) break; const amt = c ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
+        if (got.ok) { borrowed = amt; break; }
+        intro = K.fill(lazy.retry, { msg: got.msg });
+      }
+      return borrowed; },
+    timelineDuke: (a, v) => LV.timeline({ mode: "show", n: 14, extra: v.extra, tied: true, order: v.ord, title: a.title, maud: a.maud }),
+    dukeBet: (a, v) => LV.bet({ prompt: a.prompt, docs: [{ label: a.docLabel, open: () => LV.timeline({ mode: "show", n: 14, extra: v.extra, tied: true, order: v.ord, title: v.title }) }], how: a.how, stake: { min: 0, max: 3 }, tol: 0, answer: () => v.low.close, reveal: "now", kind: "duke2", explain: () => a.explain }),
+    dukeAct: (a, v) => { const o = v.o, D = v.D, c = v.c;
+      if (c === 1) { S.addOffer(G.s, "duke", v.half, o.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
+      else if (c === 0) G.act(() => S.accept(G.s, o.id)); else S.decline(G.s, o.id); },
+    cashBookPanel: (a, v) => new Promise(res => {
+      G.showPanel("page", `<div class="journal"><div class="hint">Edric's cash book, the second ledger</div><table class="stm" style="font-style:normal"><tr><th>End of</th><th>Ledger: profit</th><th>Chest: Cash cleared</th><th>Tied up in grain and unpaid invoices</th></tr>` +
+        v.rows.map(r => `<tr><td>day ${r.day}</td><td class="num">${LV.fmt(r.ni)}</td><td class="num">${LV.fmt(r.cash)}</td><td class="num">${LV.fmt(r.tied)}</td></tr>`).join("") +
+        `</table><p>Every spring the Ledger climbs and the chest does not. The difference sits in sacks and invoices nobody has paid for yet: Inventory plus Receivables, less what you still owe.</p><p class="sig">— E.</p></div><button class="btn gold" id="pgok">Keep it</button>`);
+      document.getElementById("pgok").onclick = () => { G.hidePanel(); res(); };
+    }),
+    reveal: a => GL.reveal(a.kind, a.text), pickLine: (a, v) => GL.pickLine(a.text, v.target, a.hints),
+    logPage4: () => { if (st.pages.indexOf(4) < 0) { st.pages.push(4); (st.pageDays = st.pageDays || {})[4] = G.s.day; } },
+    sell: (a, v) => sell(v.o),
+  };
+  const ch1 = () => play("ch1"), ch2 = () => play("ch2"), ch3 = () => play("ch3"), ch4 = () => play("ch4"), ch4b = order => play("ch4b", { order }), ch5 = () => play("ch5"), ch6 = () => play("ch6"), ch7 = () => play("ch7"), ch9t = () => play("ch9t");
+  const costScene = () => play("cost"), pvScene = () => play("pv"), tvmScene = again => play("tvm", { again: !!again }), dukeScene = n => play("duke", { n }), chPage = () => play("page"), cashBook = () => play("cashbook");
+  const craneOffer = opts => play("offer", { first: !!(opts && opts.first) }); // true when the player sold the farm
   // the bet's morning: runs whenever the story is free on or after the reveal day
   async function revealIfDue() { if (!G.s.bet || G.s.day < G.s.bet.revealDay) return; const r = await LV.revealBet(); if (r && r.win) { mastered("accrual"); mastered("ar"); } }
-  // ---------- chapter 5: wages day (C2.09: working capital, the cash forecast) ----------
-  // WS3: no warning beforehand (Kapur: struggle first). The engine decides at the day-7 sleep: if Cash can't cover wages a farmhand walks off.
-  async function ch5() {
-    const V = LV, walked = !!G.s.walkedOff;
-    await tell(walked ? `Jory walked off last night: ${G.s.walkedWages} in wages and the chest couldn't find them. The crops went unwatered. The Ledger said profit. The chest said no.`
-      : "Wages went out last night. Closer than the Ledger makes it look.", ["h-cash"]);
-    const f = S.forecast(G.s, 14), low = f.reduce((a, x) => x.close < a.close ? x : a);
-    await V.timeline({ mode: "show", n: 14, title: "Your next two weeks", maud: `Every coin coming and going, with Cash under it. The low point is day ${low.day}, Cash ${low.close}. ${low.close < 60 ? "That's where Edric lived." : "Watch that dip."}` });
-    // (the timeline above is something to read, not an answer, so it earns no mastery; the forecast Ezra asks for in chapter 7 does)
-    await GL.say("tomas", "I only mark up my seed 50%. Honest trade.");
-    const m = Math.round(50 / 150 * 100);
-    const r = await V.bet({ prompt: "Two coin says you can't tell me Tomas's margin on his seed. He marks it up 50%.", docs: [DOC.notebook], how: "Markup divides the profit by what the seed cost him. Margin divides the same profit by the price he sells at. If it cost him 100 and he sells at 150, the profit is 50.", stake: { min: 0, max: 2 }, tol: 1, answer: () => m, reveal: "now", kind: "markup",
-      explain: () => "Markup is profit ÷ cost, 50%. Margin is profit ÷ price, 50 ÷ 150 = 33%. Same sale, two numbers." });
-    if (r.win) mastered("margin");
-    keep("forecast", "Cash forecast", "Cash at the start + cash in − cash out, day by day. Profit doesn't pay wages; Cash does.", `Day ${G.s.day}: lowest Cash in two weeks ${low.close}, on day ${low.day}.${walked ? " Jory walked off on wages day." : ""} Markup 50% = margin ${m}%.`);
-    await costScene(); await page(2); to(6, "tomas6");
-  }
-  // ---------- fixed vs variable cost, break-even (C2.01, C2.02, C0.03): the first wages day names the two kinds of cost, then a price cut shows break-even jumping (audit 2026-10-04, foundation 2) ----------
-  async function costScene() {
-    const s = G.s, p = S.marketPrice(s.day, s), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return;
-    const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1), up = Math.round((n1 / n0 - 1) * 100);
-    await tell(`Two kinds of cost: <b>variable</b> (seed and grain, rising with every sack) and <b>fixed</b> (wages and interest, due every week whatever you sold). This week's fixed bill is <b>${F}</b>.`);
-    await tell(`A sack at ${p} leaves ${m} after its ${cost} of grain: its <b>contribution</b>. Break-even is the sacks whose contribution covers the fixed bill: ${F} ÷ ${m} = <b>${n0} sacks a week</b>.`);
-    await tell(`Put together: profit = contribution × sacks − fixed bill. At ${n0} sacks it is ${m} × ${n0} − ${F} = ${m * n0 - F}, about nothing.`);
-    const opts = [[`About ${n0} (a small cut changes little)`, false], [`About ${Math.round(n0 * 1.25)}`, false], [`About ${n1}`, true]], k = (s.day + F) % 3, order = opts.map((_, i) => opts[(i + k) % 3]);
-    const c = await GL.say("maud", `Suppose a rival like Grisby sets up and undercuts you: the going price falls to <b>${p1}</b>, a cut of ${Math.round(2 / p * 100)}%. How many sacks a week do you need to break even now?`, order.map(o => o[0]));
-    const right = order[c][1]; if (right) mastered("breakeven");
-    await tell(`${right ? "Yes." : "Not quite."} The contribution fell from ${m} to ${m1}, down ${Math.round((1 - m1 / m) * 100)}%, but the fixed bill did not move.`);
-    await tell(`So break-even rose from ${n0} to <b>${n1} sacks</b>, up ${up}%. A small price cut is a big cut in contribution, which is why a rival's undercut hurts more than it looks.`);
-    keep("breakeven", "Fixed, variable, break-even", "Variable costs rise with each sack. Fixed costs come every week whatever you sell. Break-even = fixed bill ÷ contribution per sack. A small price cut can double it.", `Day ${s.day}: fixed bill ${F}, contribution ${m} at ${p}: ${n0} sacks. At ${p1}: ${n1} sacks.`);
-  }
-  // ---------- the price of waiting (C0.01, C5.01): a promise due later is worth less today. Ezra's factoring price against his loan rate, on a real invoice (audit 2026-10-04, foundation 1) ----------
-  async function pvScene() {
-    // the largest invoice Ezra could actually fund (the Duke's 1,320 is too big for his loan limit, which used to skip the lesson); with none, a small illustrative invoice, so the lesson always plays once
-    const s = G.s, t = S.terms(s), room = t.loanLimit + s.bal.loan, real = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60 && Math.round(v.amount * S.R.factorRate) <= room).sort((a, b) => b.amount - a.amount)[0], inv = real || { who: null, amount: 100, due: s.day + 14 };
-    const got = Math.round(inv.amount * S.R.factorRate), fee = inv.amount - got, days = inv.due - s.day, wk = days / 7;
-    const weekly = Math.round(got * t.rateBp / 10000), interest = Math.round(weekly * wk), r = t.rateBp / 10000, implied = Math.round((Math.pow(inv.amount / got, 1 / wk) - 1) * 1000) / 10, worth = Math.round(inv.amount / Math.pow(1 + r, wk));
-    const who = real ? S.NAMES[inv.who].split(" ")[0] : "the neighbour"; st.pv = true;
-    await tell(`${real ? `${who} owes you <b>${inv.amount}</b>, due day ${inv.due}, ${days} days away.` : `Suppose a neighbour owed you <b>${inv.amount}</b>, due ${days} days from now.`} A promise due later is worth less than coin in hand, and Ezra has two prices for how much less.`);
-    const opts = [[`Sell the invoice to Ezra: ${got} today, ${fee} fee`, false], [`Borrow ${got} from Ezra and repay it when ${who} pays`, true]], k = (s.day + inv.amount) % 2, order = k ? opts.slice().reverse() : opts;
-    const c = await GL.say("maud", `Suppose you need ${got} in Cash today for wages. Which costs you less?`, order.map(o => o[0]));
-    const right = order[c][1]; if (right) mastered("tvm");
-    await tell(`${right ? "Yes." : "No."} Selling gives up <b>${fee}</b> to get the Cash ${days} days early, about <b>${implied}% a week</b>.`);
-    await tell(`Borrowing the same ${got} at ${t.rateBp / 100}% a week costs about <b>${interest}</b> over ${days} days. Same Cash, same wait, a much lower price of waiting.`);
-    await tell(`At Ezra's loan rate, ${inv.amount} due in ${days} days is worth about <b>${worth}</b> today. That is its <b>present value</b>: what the promise is worth in Cash now.`);
-    keep("tvm", "Present value of a promise","A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${real ? who : "a neighbour"}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
-    return true;
-  }
-  // ---------- chapter 6: Tomas's terms (week 2). Time value (C0.01, C5.01) beside payables (C1.01) — SEASON-1-REDESIGN.md §7 item 1 ----------
-  // Tomas: "2% off if you pay within 7 days". A discount for paying early is an interest rate: paying a week early costs the Cash you would
-  // otherwise hold for that week, and Ezra's weekly rate prices that Cash. Early is cheaper iff 2% > 98% x rate, i.e. rate < 204 bp.
-  // The rate comes from terms() THAT WEEK. Ezra's forecast scene lowers it, so in week 3 Tomas offers again and the answer can flip.
-  // `tvm` mastery is earned only here, and only when the player's choice matched the cheaper option.
   // one set of whole coins, the same the engine books: the discount Tomas actually gives (bill.disc) and a week of Ezra's interest on the Cash you'd keep
   const tvmFacts = bill => { const rate = S.terms(G.s).rateBp, discX = bill.disc, carryX = Math.round(bill.amount * (1 - S.R.discPct) * rate / 10000);
     return { rate, discX, carryX, cheaper: discX > carryX ? "early" : discX < carryX ? "wait" : "even" }; };
-  async function tvmScene(again) {
-    const V = LV, t = S.terms(G.s), sc = S.R.seedCost, rate = t.rateBp / 100, left = Math.floor((t.apLimit + G.s.bal.ap) / sc), disc = Math.round(S.R.discPct * 100);
-    if (!t.apDays || left < 3) { await GL.say("tomas", "I can't put more on your account while you owe me this much. Pay what I'm owed first.", ["Next"]); return false; }
-    if (again) await GL.say("tomas", `Seed again? Same terms: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
-    else await GL.say("tomas", `On account: the full bill in ${S.R.apDays} days, or ${disc}% off if you pay within ${S.R.discDays}.`, ["Next"]);
-    await tell(again ? `Ezra's rate was ${st.tvmRate}% a week when you last bought. Today it is ${rate}%. Same discount, different Cash. I won't say whether that changes the answer.`
-      : `A discount for paying early is an interest rate in disguise. Ezra charges ${rate}% a week for Cash. I won't say which is cheaper: buy, then move the bill and see.`, ["h-ap"]);
-    const small = Math.min(6, left), big = Math.min(9, left);
-    const c = await GL.say("tomas", "How many on account?", [`${small} packets (${small * sc})`, { label: `${big} packets (${big * sc})`, disabled: big <= small }]);
-    const r = G.act(() => S.buySeeds(G.s, c ? big : small, true));
-    if (!r.ok) { await GL.say("tomas", r.msg); return false; }
-    const bill = G.s.bills[G.s.bills.length - 1], day0 = G.s.day;
-    const note = day => day <= bill.discBy ? `Paying by day ${bill.discBy}: Tomas takes <b>${disc}% off</b> (${bill.disc}) for the Cash you hand over ${bill.due - day} days early. <b>Ezra's rate: ${rate}% a week.</b>` : `Paying on day ${day}: no discount, and the Cash stays with you. <b>Ezra's rate: ${rate}% a week.</b>`;
-    const r2 = await V.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: "When do you pay Tomas?", footNote: note,
-      maud: `Pay your Tomas bill (${bill.amount}) by day ${bill.discBy} and he takes ${disc}% off, a week early; Ezra sells a week of Cash for ${rate}%. Which is cheaper, given the Cash has to be there on day ${bill.due} either way?` });
-    const F = tvmFacts(bill), took = r2.day <= bill.discBy, right = F.cheaper === "even" || took === (F.cheaper === "early");
-    if (r2.paidNow) G.act(() => S.payBills(G.s)); else if (r2.day < bill.due) G.s.payPlan = { day: r2.day };
-    await tell(`${took ? `You took ${F.discX} off.` : "You kept the Cash."} A week of that Cash from Ezra at ${rate}% would cost ${F.carryX}, so ${F.cheaper === "early" ? "paying early was cheaper" : F.cheaper === "wait" ? "waiting was cheaper" : "it was a dead heat"}.`, ["h-ap"]);
-    if (!again) await tell("The rate is not fixed. Watch what it does.");
-    if (right) mastered("tvm"); // earned only here, only when the choice matched the cheaper option
-    const ex = `Day ${day0}: Tomas's ${disc}% (${F.discX}) vs Ezra's ${rate}% a week (${F.carryX}): ${F.cheaper === "early" ? "paying early" : F.cheaper === "wait" ? "waiting" : "neither"} was cheaper. You ${took ? "paid early" : "waited"}.`;
-    if (!again) {
-      keep("ap", "Accounts payable & trade credit", "What you owe a supplier. Free credit until the due day; paying early can buy a discount.", `Day ${day0}: seed bill ${bill.amount}, ${disc}% off by day ${bill.discBy} = ${bill.disc}; you ${took ? "paid early" : "kept the Cash"}.`, `owed ${bill.amount}, due day ${bill.due}`);
-      keep("tvm", "Money now vs money later (time value)", "A discount for paying early is an interest rate. Compare it with what the Cash would cost you, Ezra's weekly rate. Whichever is cheaper this week wins, and the answer can flip when the rate moves.", ex, `${disc}% vs ${rate}% a week`, `Day ${day0} · Tomas's terms`);
-      st.tvmRate = rate;
-    } else { addEx("tvm", ex); pin("tvm2", "Tomas offers again", `${disc}% vs ${rate}% a week`, `Day ${day0} · it ${st.tvmRate !== rate ? "flipped" : "held"}`); }
-    return true;
-  }
-  async function ch6() { if (await tvmScene(false)) to(7, "ezra7"); }
-  // ---------- chapter 7: Ezra (week 2; C0.01, C5.01: debt, interest, what lenders read) — the forecast scene is tagged `interest` ----------
-  async function ch7() {
-    const t0 = S.terms(G.s);
-    await GL.say("ezra", `Come in. Sit. You want coin; everyone does, eventually. My rate is ${t0.rateBp / 100}% a week. It is not a judgement, only a price. Show me your forecast first, and I shall see how much I believe it.`);
-    const r = await LV.timeline({ mode: "predict", n: 14, tol: 5, title: "Your forecast, for Ezra", maud: "Ezra: tell me your lowest coin in the next two weeks, and the day. Get both right (the coin within 5) and I will shave my rate." });
-    G.s.rateAdj = Math.min(100, 50 * ((r.okLow ? 1 : 0) + (r.okDay ? 1 : 0))); const t = S.terms(G.s);
-    if (r.okLow && r.okDay) { mastered("interest"); mastered("wc"); } // right = the lowest coin (within 5) and the day (time value is earned in Tomas's scene, not here)
-    // The loan must actually arrive: Ezra's limit counts what you already owe, so only offer what he will lend, and if the engine refuses, say why and ask again (it used to fail silently).
-    let borrowed = 0, intro = `The line says ${r.low} on day ${r.lowDay}. ${r.okLow && r.okDay ? "You know your coin." : r.okLow || r.okDay ? "Half right." : "Sloppy."} Your rate: ${t.rateBp / 100}% a week (was ${t0.rateBp / 100}%). How much?`;
-    for (;;) {
-      const room = S.terms(G.s).loanLimit + G.s.bal.loan;
-      const c = await GL.say("ezra", room < 200 ? `${intro} I will lend you up to ${Math.max(0, room)} more: you owe me ${-G.s.bal.loan}.` : intro, [{ label: "Borrow 100", disabled: room < 100 }, { label: "Borrow 200", disabled: room < 200 }, "Nothing today"]);
-      if (c === 2) break; const amt = c ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
-      if (got.ok) { borrowed = amt; break; }
-      intro = `${got.msg} How much, then?`;
-    }
-    keep("interest", "Interest", "The price of Cash now: the rate times the loan, every week. A forecast a lender can trust buys a lower rate.", `Ezra's rate went from ${t0.rateBp / 100}% to ${t.rateBp / 100}% a week after your forecast.${borrowed ? ` You borrowed ${borrowed}: ${Math.round(borrowed * t.rateBp / 10000)} interest a week.` : ""}`, `${t0.rateBp / 100}% → ${t.rateBp / 100}% a week`, `Day ${G.s.day} · Ezra's forecast`);
-    to(8, "sleep8");
-  }
-  // ---------- chapters 8 and 8b: Corvin Vane, the Duke's steward (week 2 midpoint, week 3 squeeze). C2.09 overtrading; case W.T. Grant. Maud asks, then bets; she doesn't show. ----------
-  // Escalation (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order (half of R.duke.sacks), day 15 a double order (R.duke.sacks). The timeline's second line
-  // (tied up in sacks and invoices) shows what each order does to the working capital. Mastery only if the choice matched the player's OWN board.
-  function arrive(n) { // Corvin's order n comes to the well (sizes and due dates: S.R.corvin)
-    const c = S.R.corvin[n - 1];
-    if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", c.sacks, S.R.duke.price, S.R.duke.terms, c.dueIn, 4);
-    to(8, n === 1 ? "duke8" : "duke9");
-  }
-  async function dukeScene(n) {
-    const V = LV, o = G.s.offers.find(x => x.who === "duke"); if (!o) { to(8, n === 1 ? "page8" : "tomas9"); return; }
-    const D = S.R.duke, sacks = o.sacks, half = Math.round(sacks / 6) * 3, value = sacks * o.price;
-    await GL.say("duke", n === 1 ? `You must be the heir! Corvin Vane, steward to His Grace, at the Duke's service, and yours. I bring the kind of opportunity that does not knock twice. His Grace wants ${sacks} sacks at ${o.price}: ${money(value)} of Revenue, delivered by day ${o.due}. He pays ${D.terms} days after delivery. Think what it could do for Thornfield.`
-      : `Corvin Vane again, heir. ${G.s.orders.some(x => x.who === "duke") ? "His Grace was delighted with the first." : "His Grace remembers the first, and that it went unanswered."} Now ${sacks} sacks, double: ${money(value)}, delivered by day ${o.due}, paid ${D.terms} days after.`);
-    if (n === 1) { await page(3); await tell("This is the order that killed your uncle; the steward calls it an opportunity. I call it a loan you make him, at no interest, in your own seed."); await tell("I won't tell you what to do. I'll ask."); }
-    const need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / S.R.sacksPerPlot) - G.s.seeds), extra = need * S.R.seedCost;
-    const f = S.forecast(G.s, 14, extra), low = f.reduce((a, x) => x.close < a.close ? x : a), ord = { sacks, price: o.price, due: o.due };
-    const base = V.rows({ n: 14, tied: true }), withO = V.rows({ n: 14, tied: true, extra, order: ord });
-    const delta = withO[withO.length - 1].tied - base[base.length - 1].tied; // what this order ties up by the end of the window
-    const title = need ? `What if: you take it and buy ${need} packet${need > 1 ? "s" : ""} of seed today (${extra})` : `What if: you take it. You already hold the seed, so nothing extra is bought today`;
-    await V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title, maud: n === 1 ? "Read your own board: Cash on top, and under it what is tied up in sacks and invoices." : `Last time ${money(st.tied1 || 0)} was tied up by this order. This time: ${money(delta)}.` });
-    let ans;
-    if (n === 1) ans = await ask("If you take it and buy the seed today, what's the lowest Cash in the next two weeks?", low.close, ["Look down the Cash line for the smallest number.", "A minus sign means the chest is empty before then."], null, 0,
-      [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }], `Reading the Cash line, the smallest number is ${low.close}, on day ${low.day}.`, "Open the timeline and read the Cash number under each day. The smallest is your lowest point; a minus number is smaller than any plus.");
-    else ans = await V.bet({ prompt: `Three coin says you can't tell me your lowest Cash in the next two weeks if you take all ${sacks}${need ? " and buy the seed today" : ""}.`, docs: [{ label: "Open the what-if timeline", open: () => V.timeline({ mode: "show", n: 14, extra, tied: true, order: ord, title }) }],
-      how: "Read the Cash number under each day of the what-if timeline. The smallest is the lowest point; a minus is below zero.", stake: { min: 0, max: 3 }, tol: 0, answer: () => low.close, reveal: "now", kind: "duke2", explain: () => `Cash bottoms at ${low.close} on day ${low.day}. The order ties up ${money(delta)} in sacks and invoices.` });
-    const c = await GL.say("duke", n === 1 ? "Well? Opportunities are like bread, heir. Best taken warm." : "Well? His Grace doesn't wait.", [`Take all ${sacks}`, `Offer ${half} (half)`, "Decline"]);
-    if (c === 1) { S.addOffer(G.s, "duke", half, o.price, D.terms, D.dueIn, 4); S.decline(G.s, o.id); G.act(() => S.accept(G.s, G.s.offers.find(x => x.who === "duke").id)); }
-    else if (c === 0) G.act(() => S.accept(G.s, o.id)); else S.decline(G.s, o.id);
-    const wise = low.close >= 0 ? c === 0 : c > 0; // matched the player's own board: Cash stays >= 0 -> taking it is right; below 0 -> half, decline (or factoring) is right
-    if (wise) mastered("overtrading");
-    if (n === 1) st.tied1 = delta;
-    await tell(c === 0 && low.close < 0 ? `Your own board says Cash goes to ${low.close}. Edric did the same. Borrow, or sell the invoice to Ezra for 85% (factoring), or it ends the same way.`
-      : c === 0 ? "Your board says you can carry it. Then carry it." : c === 1 ? `Half: ${half} sacks, and about ${money(Math.round(delta / 2))} less tied up. Growth you can't fund isn't growth.` : "Growth you can't fund isn't growth. Edric never learned that.");
-    const choice = [`all ${sacks}`, "half", "to decline"][c];
-    if (n === 1) keep("overtrading", "Overtrading", "Taking more orders than your Cash can carry: profit on paper, broke in fact. The gap grows with sales and only comes back when growth stops. Forecast before you say yes.", `Corvin's first order, ${sacks} sacks: lowest Cash ${low.close} on day ${low.day} if taken, ${money(delta)} tied up. You chose: ${choice}.`, `Cash low ${low.close}, ${money(delta)} tied up`, `Day ${G.s.day} · Corvin's first order`);
-    else { addEx("overtrading", `The double order, ${sacks} sacks: lowest Cash ${low.close}, ${money(delta)} tied up (the first tied up ${money(st.tied1 || 0)}). You chose: ${choice}.`); pin("duke2", "Corvin's double order", `${money(delta)} tied up (was ${money(st.tied1 || 0)})`, `Day ${G.s.day} · second order`); }
-    if (n === 1) to(8, "page8"); else to(8, "tomas9");
-  }
-  // after the first Market Day's floor bet (market.js): the notebook splits the cost from the real floor (curriculum foundation 5.3)
-  function keepFloor(alt, offer) { if (!G || !st) return; const cost = S.R.unitCost; keep("opportunity", "The real floor", "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.", `Day ${G.s.day}: Ashby offered ${offer} and the fair had paid ${alt}, so the floor is ${alt}, not ${cost}.`, `floor ${alt}, not ${cost}`, `Day ${G.s.day} · the fair`); }
-  async function ch9t() { await tvmScene(true); to(9, "run9"); } // week 3: Tomas offers again; Ezra's rate has moved, and the answer can flip
-  const ch8 = () => dukeScene(1), ch8b = () => dukeScene(2);
-  // That night: Maud finds Edric's page (the midpoint turn): the same order every spring.
-  async function chPage() {
-    await tell("I couldn't sleep. I went through Edric's desk, and there was a page under the lining.");
-    await page(9);
-    await tell("The same kind of order, every spring, from the same man. Edric didn't miscount: someone made sure the coin ran out.");
-    to(8, "sleep9");
-  }
-  // (Canon: Crane is NOT Vane's man. He carries Vane's offer as an instructed messenger, reluctantly; see craneOffer.)
-  // ---------- week 4 (item 6): Maud's last scene. Edric's cash book, the second ledger he kept and never read beside the first. ----------
   // Rows are rebuilt from the player's own journal at the end of each week (days 7, 14, 21 and today, once each): cumulative Net income (the Ledger), the Cash the farm's
   // operations cleared (the chest: not the opening chest, equipment or loans), and what is tied up in grain and unpaid invoices (Inventory + Receivables - Payables - Deposits).
   function cashBookRows(s) {
@@ -395,34 +222,17 @@ window.Story = (function () {
       rows.push({ day, cash, ni, tied: b.inv + b.ar + b.ap + b.deposits }); }
     return rows;
   }
-  async function cashBook() {
-    const V = LV, s = G.s, rows = cashBookRows(s), last = rows[rows.length - 1];
-    await tell("Edric kept a second book, a cash book of what the chest held week by week, and I never gave it to you until you could read it. He never read it beside the Ledger.");
-    await new Promise(res => {
-      G.showPanel("page", `<div class="journal"><div class="hint">Edric's cash book, the second ledger</div><table class="stm" style="font-style:normal"><tr><th>End of</th><th>Ledger: profit</th><th>Chest: Cash cleared</th><th>Tied up in grain and unpaid invoices</th></tr>` +
-        rows.map(r => `<tr><td>day ${r.day}</td><td class="num">${V.fmt(r.ni)}</td><td class="num">${V.fmt(r.cash)}</td><td class="num">${V.fmt(r.tied)}</td></tr>`).join("") +
-        `</table><p>Every spring the Ledger climbs and the chest does not. The difference sits in sacks and invoices nobody has paid for yet: Inventory plus Receivables, less what you still owe.</p><p class="sig">— E.</p></div><button class="btn gold" id="pgok">Keep it</button>`);
-      document.getElementById("pgok").onclick = () => { G.hidePanel(); res(); };
-    });
-    pin("cashbook", "Edric's cash book", `profit ${V.fmt(last.ni)}, Cash ${V.fmt(last.cash)}`, `Day ${s.day} · second ledger`, "book");
-    st.book = true;
-    await tell("From here I'm quiet; if the farm is in danger, you'll hear it from me. Otherwise it's your books and your argument.");
+  // the three statements, guided (closing the books): see the `close` record
+  const close = (stm, h) => play("close", { stm, h });
+  const ch8 = () => dukeScene(1), ch8b = () => dukeScene(2);
+  // (Canon: Crane is NOT Vane's man. He carries Vane's offer as an instructed messenger, reluctantly; see the `offer` record.)
+  function arrive(n) { // Corvin's order n comes to the well (sizes and due dates: S.R.corvin)
+    const c = S.R.corvin[n - 1];
+    if (!G.s.offers.some(o => o.who === "duke")) S.addOffer(G.s, "duke", c.sacks, S.R.duke.price, S.R.duke.terms, c.dueIn, 4);
+    to(8, n === 1 ? "duke8" : "duke9");
   }
-  // ---------- chapter 9: closing the books (C1.08), guided ----------
-  async function close(stm, h) { // the game shows the statements one at a time; the player finds where the cash went
-    await GL.reveal("is", `Your income statement: Revenue, minus the cost of what you sold, minus running costs. Net income ${stm.is.net}. Edric's always looked like this.`);
-    await GL.reveal("bs", `Your balance sheet, start and end: what you own and what you owe. Owner's equity moved by exactly your net income.`);
-    await GL.reveal("cf", `And the cash-flow statement: net income, then every place the Cash actually went. It ends at the change in Cash: ${stm.cf.change}.`);
-    const target = (h.lines.find(l => l.startsWith("cf:")) || "cf:cfo");
-    const misses = await GL.pickLine("Net income " + stm.is.net + ", Cash " + (stm.cf.change >= 0 ? "+" : "") + stm.cf.change + ". Click the line in the cash-flow statement where most of the difference went.", target,
-      ["Look at the brackets: they're Cash that left, or never came.", "The biggest bracketed number between Net income and Cash from operations."]);
-    if (misses === 0) { mastered("cfs"); mastered("statements"); } // right on the first tap
-    await GL.reveal("none", `${h.text}<br>That's what killed Edric: profit in the Ledger, the coin in other people's purses.`);
-    if (st.pages.indexOf(4) < 0) { st.pages.push(4); (st.pageDays = st.pageDays || {})[4] = G.s.day; }
-    await GL.reveal("none", `<span class="journal small">Edric's last page: “${PAGES[4]}”</span>`);
-    keep("statements", "The three statements", "Income statement: did you make a profit? Balance sheet: what you own and owe. Cash-flow statement: where the Cash went.", `Spring: net income ${stm.is.net}, Cash ${stm.cf.change >= 0 ? "up" : "down"} ${Math.abs(stm.cf.change)}. ${h.text.split(": ").pop()}`);
-    to(9, "done");
-  }
+  // after the first Market Day's floor bet (market.js): the notebook splits the cost from the real floor (curriculum foundation 5.3)
+  function keepFloor(alt, offer) { if (!G || !st) return; const cost = S.R.unitCost; keep("opportunity", "The real floor", "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.", `Day ${G.s.day}: Ashby offered ${offer} and the fair had paid ${alt}, so the floor is ${alt}, not ${cost}.`, `floor ${alt}, not ${cost}`, `Day ${G.s.day} · the fair`); }
 
   // Deposits are named unearned revenue (C1.01/C1.03) in the scene (game.js depositLesson) and in the notebook.
   function noteDeposit(o) {
@@ -464,18 +274,6 @@ window.Story = (function () {
   }
   // ---------- Crane's offer (M3): a standing buy-out. Price formula and its tests: endings.js, tests/test-offer.js ----------
   const money = v => Number(v).toLocaleString("en-US");
-  async function craneOffer(opts) { // opts.first: the day-1 scene; opts.mercy: Crane's visit when you are short for wages
-    opts = opts || {}; const E = Endings, o = E.offer(G.s), farm = farmName();
-    // Crane's voice: he is formal and pedantic, uses "Item:" only now and then as a list marker, and he delivers Corvin Vane's offer reluctantly, as an instructed messenger.
-    const intro = opts.first ? `I am instructed to convey an offer from Corvin Vane for ${farm}. Item: ${money(o.price)}, in coin, today. I do not recommend it.`
-      : o.mercy ? `Cash is ${money(o.cash)}, and ${money(o.wages)} of wages fall due. I am instructed to repeat the offer for ${farm} at a reduced ${money(o.price)}, and I still do not recommend it.`
-      : `Item: Corvin Vane's offer for ${farm} stands at ${money(o.price)}. I am obliged to say so.`;
-    const c = await GL.say("crane", intro, ["No. The farm stays.", `Sell ${farm} for ${money(o.price)}`]);
-    if (c === 0) { pin("offer", "Crane's offer", `${money(o.price)} now`, `Day ${G.s.day} · money now, farm later`); return false; }
-    const sure = await GL.say("maud", `That is ${money(o.price)} now, and the season ends here. Is it a fair price for ${farm}, or is it the price of being frightened?`, ["Keep the farm", "Sell. It's done."]);
-    if (sure === 0) return false;
-    await sell(o); return true;
-  }
   async function sell(o) {
     const s = G.s; s.sold = { price: o.price, day: s.day, mercy: o.mercy }; s.sold.so = Endings.soldOut(s, o.price);
     TR.use("tvm", false, s.day); TR.use("equation", false, s.day); // introduced, not credited: selling is not evidence of skill
@@ -565,5 +363,5 @@ window.Story = (function () {
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
   return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
+    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene, tables: { CALC, VERB } }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();

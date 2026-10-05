@@ -48,14 +48,10 @@
     const tree = (x, y, v) => { if (solid.has(key(x, y))) return; solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.tree[v % 3], x * T - 8, y * T - 28) }); };
     for (let x = 0; x < MW; x += 2) { tree(x, 0, x); tree(x + 1, MH - 1, x + 1); } for (let y = 1; y < MH - 1; y += 2) { tree(0, y, y); tree(MW - 1, y + 1, y); }
     [[15, 3], [18, 4], [20, 2], [12, 3], [2, 12], [2, 17], [8, 19], [12, 21], [22, 16], [21, 22], [26, 23], [46, 16], [44, 23], [30, 23], [16, 11], [19, 13], [47, 6], [2, 22], [5, 23]].forEach(([x, y], i) => tree(x, y, i));
-    [[10, 2], [21, 12], [23, 13], [36, 23], [40, 23], [15, 21], [45, 13], [11, 17], [29, 10]].forEach(([x, y]) => { solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.bush, x * T, y * T) }); });
-    solid.add(key(CRATE.x, CRATE.y)); props.push({ y: CRATE.y + 1, draw: () => blit(A.crate, CRATE.x * T, CRATE.y * T) });
-    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: () => drawWell(WELL) });
-    // WS3: the cold-open scene: the cash chest, sacks stacked by the crate, and a farm well (a decoy for the tag verb)
-    solid.add(key(CHEST.x, CHEST.y)); props.push({ y: CHEST.y + 1, draw: () => blit(A.chest, CHEST.x * T, CHEST.y * T) });
-    solid.add(key(SACKS.x, SACKS.y)); props.push({ y: SACKS.y + 1, draw: () => { blit(A.sack, SACKS.x * T, SACKS.y * T); blit(A.sack, SACKS.x * T + 4, SACKS.y * T - 5); blit(A.sack, SACKS.x * T - 3, SACKS.y * T + 2); } });
-    solid.add(key(FWELL.x, FWELL.y)); props.push({ y: FWELL.y + 1, draw: () => drawWell(FWELL) });
-    solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
+    // P8: the props that stand still are data (chapters/ch1/spring/props.js); core/map.js builds them and these sprites draw them. Order is the old push order (draw ties keep it).
+    MapProps.register("bush", p => blit(A.bush, p.x * T, p.y * T)); MapProps.register("crate", p => blit(A.crate, p.x * T, p.y * T)); MapProps.register("chest", p => blit(A.chest, p.x * T, p.y * T));
+    MapProps.register("sacks", p => { blit(A.sack, p.x * T, p.y * T); blit(A.sack, p.x * T + 4, p.y * T - 5); blit(A.sack, p.x * T - 3, p.y * T + 2); }); MapProps.register("well", p => drawWell(p)); MapProps.register("board", () => drawBoard());
+    MapProps.build(SpringProps, { solid, props, state: () => s, places: { CRATE, WELL, CHEST, SACKS, FWELL, BOARD } });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
     if (window.Market) { Market.stallTiles().forEach(([x, y]) => solid.add(key(x, y))); props.push({ y: Market.STALL.y, draw: () => Market.drawStall(ctx, cam, s, frame) }); } // WS7: your own Market Day stall on the square
   })();

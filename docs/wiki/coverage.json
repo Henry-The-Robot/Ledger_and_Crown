@@ -12,6 +12,8 @@
       "core/music.js",
       "core/art.js",
       "core/intro.js",
+      "core/cutscene.js",
+      "core/scene.js",
       "core/bot.js",
       "core/codex.js",
       "tools/stamp.js",
@@ -23,6 +25,7 @@
     ],
     "ch1": [
       "chapters/ch1/spring/story.js",
+      "chapters/ch1/spring/lessons.js",
       "chapters/ch1/spring/scenes.js",
       "chapters/ch1/spring/cast.js",
       "chapters/ch1/spring/court.js",
