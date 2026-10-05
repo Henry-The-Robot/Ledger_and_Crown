@@ -1,0 +1,109 @@
+{
+ "v": 1,
+ "season": "ch1/spring",
+ "ending": "heir",
+ "cash": 8,
+ "debts": [
+  {
+   "to": "ezra",
+   "amount": 100,
+   "rateBp": 250,
+   "callable": false
+  },
+  {
+   "to": "crown",
+   "amount": 1250,
+   "rateBp": 0,
+   "callable": false
+  }
+ ],
+ "stakes": {
+  "mill": 0,
+  "bakery": 0
+ },
+ "relations": {
+  "maud": 2,
+  "crane": 4,
+  "ezra": 4,
+  "ashby": 4,
+  "hobb": 4,
+  "jory": 4,
+  "tomas": 4
+ },
+ "flags": {
+  "examPassed": false
+ },
+ "transcript": {},
+ "statements": {
+  "is": {
+   "revenue": 0,
+   "cogs": 0,
+   "gross": 0,
+   "upkeep": 180,
+   "dep": 0,
+   "fines": 0,
+   "losses": 16,
+   "opex": 196,
+   "operating": -196,
+   "interest": 12,
+   "factoring": 0,
+   "net": -208
+  },
+  "start": {
+   "cash": 200,
+   "ar": 0,
+   "inv": 96,
+   "equipNet": 0,
+   "assets": 296,
+   "ap": 0,
+   "loan": 100,
+   "crown": 1250,
+   "deposits": 0,
+   "liab": 1350,
+   "equity": -1054,
+   "ni": 0,
+   "currentAssets": 296,
+   "currentLiab": 1350
+  },
+  "end": {
+   "cash": 8,
+   "ar": 0,
+   "inv": 80,
+   "equipNet": 0,
+   "assets": 88,
+   "ap": 0,
+   "loan": 100,
+   "crown": 1250,
+   "deposits": 0,
+   "liab": 1350,
+   "equity": -1262,
+   "ni": -208,
+   "currentAssets": 88,
+   "currentLiab": 1350
+  },
+  "cf": {
+   "net": -208,
+   "dep": 0,
+   "dAR": 0,
+   "dInv": -16,
+   "dAP": 0,
+   "dDep": 0,
+   "cfo": -192,
+   "cfoDirect": -192,
+   "capex": 0,
+   "cfi": 0,
+   "borrowed": 0,
+   "repaid": 0,
+   "cff": 0,
+   "change": -192,
+   "cashStart": 200,
+   "cashEnd": 8,
+   "reconciles": true
+  },
+  "day": 28,
+  "outcome": "closed",
+  "balanced": true
+ },
+ "seed": 0,
+ "closedAt": "2026-01-01T00:00:00.000Z"
+}
