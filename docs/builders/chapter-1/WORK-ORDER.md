@@ -24,5 +24,5 @@ map are built once, on the new core. One task per PR (`ch1/<topic>`) into `maste
 ## Phase U — Summer (after S)
 | Id | Task | Status |
 |---|---|---|
-| U0 | Fill `docs/builders/SEASON-DESIGN-TEMPLATE.md` for Summer from the master plan §4, reading every Summer session in `docs/curriculum-coverage.json` (`home` = `1SU`) with its answers → PR of `chapters/ch1/summer/DESIGN.md`. It must include **Summer's opening animation** (the first season opening after Spring's) and its cutscene list (master plan §13). The creative lead reviews; Kyle approves. **No Summer code before approval.** | WAITING |
+| U0 | Fill `docs/builders/SEASON-DESIGN-TEMPLATE.md` for Summer from the master plan §4, reading every Summer session in `docs/curriculum-coverage.json` (`home` = `1SU`) with its answers → PR of `chapters/ch1/summer/DESIGN.md`. It must include **Summer's opening animation** (the first season opening after Spring's) and its cutscene list (master plan §13). The creative lead reviews; Kyle approves. **No Summer code before approval.** | GO (docs only, Lead 2026-10-05; split into cards U0a curriculum notes `chapters/ch1/summer/CURRICULUM-NOTES.md`, then U0b this design) |
 | U1+ | Written by the creative lead after U0 is approved. | — |
