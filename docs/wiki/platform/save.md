@@ -3,51 +3,52 @@ title: Save and browser storage
 type: system
 pack: platform
 season: all
-files: [core/game.js, core/transcript.js, core/codex.js, chapters/ch1/spring/endings.js, core/fx.js, core/intro.js]
-symbols: [SAVE, save, restart, review, start, KEY, LEVEL_KEY, PKEY, store]
+files: [core/save.js, core/game.js, core/transcript.js, core/codex.js, chapters/ch1/spring/endings.js, core/fx.js, core/intro.js]
+symbols: [KEY, V3, MIGRATED, MAX_CODE, load, write, saveSlot, closeSeason, clearSlot, newSeed, shuffleSeeded, carryFrom, migrate, snapshot, restoreStores, parseCode, importCode, exportCode, exportCompressed, persist, heir, restart, review, save, start]
 concepts: []
 sessions: []
-tests: [tests/smoke-story.html, tests/stability.html, tests/never-stuck.html]
+tests: [tests/test-save.js, tests/smoke-story.html, tests/stability.html, tests/never-stuck.html]
 links: [platform/game-ui, platform/transcript, platform/codex, platform/sound, platform/opening]
 updated: 2026-10-05
 ---
 
 ## What it does
-The game keeps all player data in `localStorage`. There is no server. The season save is one JSON blob; every other store is a small separate key.
+`core/save.js` keeps all player data in one versioned blob, `lc_save_v4`, in `localStorage`. There is no server.
+The design is `docs/design/save-and-carry.md`; the carry record schema is `docs/design/carry-record.schema.json`.
+The blob is `{v, profile, slot, closed, bugReports}`.
+- `profile`: never deleted. Id, rngSeed, games, level, prestige, settings, transcript, codex, unlocks, carry.
+- `slot`: the open season (`{season, s, story, calm, usePtr, fairSeen, savedAt}`), or null.
+- `closed`: one frozen record per finished season, kept forever. Its `next` field is the carry record.
 
 ## Where
-| Key | Written by | Holds |
-|---|---|---|
-| `lc_spring_save_v3` | `core/game.js` · `save()` | `{s, story, calm, usePtr, fairSeen}`: the whole engine state, story state and a few UI counters. |
-| `lc_transcript_v2` | `core/transcript.js` · `store` | Concept evidence per id: `{ev: [{day, kind, real}]}`. |
-| `lc_codex_v1` | `core/codex.js` | Concept state (felt, named), hits and next-due time. |
-| `lc_level_v1` | `core/codex.js` · `setLevel` | Guide level; default "apprentice". |
-| `lc_prestige_v1` | `core/codex.js` · `addPrestige` | A number; read at new game as a Cash bonus. |
-| `lc_unlocks_v1` | `chapters/ch1/spring/endings.js` · `unlock` | Ending unlocks, kept across games. |
-| `lc_sfx`, `lc_music` | `core/fx.js` · `save` | "1" or "0" switches. `lc_sound` is the old one-switch key, read only. |
-| `lc_intro_seen` | `core/intro.js` · `end` | "1" once the opening ends or is skipped. |
-| `lc_bug_reports` | `core/game.js` (`pauseMenu`) | Array of `{at, day, stage, question, expected}`; `feedbackText` reads the last five. |
+| Function (`core/save.js`) | Job |
+|---|---|
+| `load`, `write` | Read the blob (migrating v3 once); merge a patch and keep `lc_save_v4_prev` for one-step rollback. |
+| `saveSlot`, `clearSlot` | The open season. `core/game.js` · `save()` calls `saveSlot`; `restart()` calls `clearSlot`. |
+| `closeSeason`, `carryFrom` | Freeze a finished season into `closed[season]` and build its carry record. `review()` calls it. |
+| `newSeed`, `shuffleSeeded` | Seeds from the profile (`rngSeed + games`); `?seed=N` wins. Review options shuffle by seed and question index. |
+| `migrate` | v3 key `lc_spring_save_v3` and the small stores into v4. Old keys are never deleted. |
+| `snapshot`, `restoreStores` | The small stores (transcript, codex, unlocks, level, prestige, switches) stay live in their own keys. These two fold them into the profile and back. |
+| `exportCode`, `exportCompressed`, `parseCode`, `importCode` | `LC4U.` plain or `LC4.` deflate-raw codes. Over 1 MB or wrong version is refused with a plain reason. |
+| `persist` | Asks the browser to keep storage; returns an iPad "Add to Home Screen" hint when refused. |
+| `heir` | The canonical heir (`tests/golden/heir-ch1-spring.json`, made by `tools/freeze-heir.js`). |
+
+Small stores (`lc_transcript_v2`, `lc_codex_v1`, `lc_level_v1`, `lc_prestige_v1`, `lc_unlocks_v1`, `lc_sfx`, `lc_music`, `lc_intro_seen`, `lc_bug_reports`) keep their own writers.
 
 ## Data and state
-- `save()` runs only in story games, and not in `?fast` runs unless `?savetest` is set. It is called at each morning (`doSleep`), at `closeBooks`, on "Save and quit", and at story steps through `G.save`.
-- `start()` reads the save. An unfinished game offers Continue or Start a new game. A finished season returns to the books and the ending.
-- Every store is wrapped in try/catch, so a blocked `localStorage` leaves the game playable but unsaved.
-
-## Where the save is deleted
-- `review()` removes it when Ezra's questions end.
-- `restart()` removes it, then reloads without a query string.
-- "Restart today" in the pause menu only reloads, so it returns to this morning's save.
+- `save()` runs only in story games, and not in `?fast` runs unless `?savetest` is set. It runs each morning, at `closeBooks`, on "Save and quit" and at story steps.
+- `start()` reads `Save.slot()`. An unfinished game offers Continue or Start a new game.
+- Every storage call is in try/catch, so a blocked `localStorage` leaves the game playable but unsaved.
 
 ## Invariants
-- A save made by this build must load in this build (`tests/stability.html`).
-- The key name is the only version marker.
+- A save made by this build loads in this build (`tests/stability.html`, `tests/test-save.js`).
+- A finished season is never deleted. Only the slot clears.
+- The carry record validates against the schema (`tests/test-save.js`).
 
 ## How to change it safely
-- Add a field to the blob only with a default in `start()`'s `begin` (`sv.calm || 0` is the pattern).
-- Never rename a key without a migration; old players lose progress.
+- Add a profile field with a default in `emptyProfile`. Bump `v` only with a migration.
+- Never delete an old key in the same release that migrates it.
 
-## Known issues (task P4 fixes these)
-- The save is unversioned. The key says `v3`, but the blob has no version field and no migration.
-- The save is deleted when the season ends, so the finished season is lost after the review.
-- No other store has a version, except the suffix in its key.
-- `lc_intro_seen` is written but no game code reads it; `Intro.wanted` ignores it.
+## Known issues
+- `lc_intro_seen` is written but `Intro.wanted` ignores it.
+- The small stores have no version of their own; `snapshot` copies them as they are.

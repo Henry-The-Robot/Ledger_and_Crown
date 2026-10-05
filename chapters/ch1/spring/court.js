@@ -245,7 +245,7 @@ window.Court = (function () {
   function fromGame(o) {
     const s = o.s, S = window.Spring, st = o.Story && o.Story.state, inv = (s.invoices || []).map(v => ({ who: S.NAMES[v.who] ? S.NAMES[v.who].split(" ")[0] : "", amount: v.amount, due: v.due }));
     return Object.assign({}, o, { statements: o.st || window.Books.close(s), clues: ((st && st.clues) || []).map(c => ({ id: c.id, term: c.term, number: c.num == null || c.num === "" ? null : c.num, source: c.from })), flags: s.flags || {}, trust: s.trust || {}, farm: (st && st.farm) || "Thornfield",
-      seed: o.seed != null ? o.seed : hash((st && st.farm || "") + ":" + s.day), facts: { invoices: inv, ratePct: S.terms(s).rateBp / 100, market: S.marketPrice(Math.min(s.day, 28)), bill: S.weekBills(s) },
+      seed: o.seed != null ? o.seed : hash((st && st.farm || "") + ":" + s.day), facts: { invoices: inv, ratePct: S.terms(s).rateBp / 100, market: S.marketPrice(Math.min(s.day, 28), s), bill: S.weekBills(s) },
       letter: o.letter || (st && o.Story.letter ? () => o.Story.letter(8) : null) });
   }
   async function run(o) {

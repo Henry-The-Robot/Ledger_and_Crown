@@ -250,7 +250,7 @@ window.Story = (function () {
   }
   // ---------- fixed vs variable cost, break-even (C2.01, C2.02, C0.03): the first wages day names the two kinds of cost, then a price cut shows break-even jumping (audit 2026-10-04, foundation 2) ----------
   async function costScene() {
-    const s = G.s, p = S.marketPrice(s.day), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return;
+    const s = G.s, p = S.marketPrice(s.day, s), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return;
     const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1), up = Math.round((n1 / n0 - 1) * 100);
     await tell(`Two kinds of cost: <b>variable</b> (seed and grain, rising with every sack) and <b>fixed</b> (wages and interest, due every week whatever you sold). This week's fixed bill is <b>${F}</b>.`);
     await tell(`A sack at ${p} leaves ${m} after its ${cost} of grain: its <b>contribution</b>. Break-even is the sacks whose contribution covers the fixed bill: ${F} ÷ ${m} = <b>${n0} sacks a week</b>.`);

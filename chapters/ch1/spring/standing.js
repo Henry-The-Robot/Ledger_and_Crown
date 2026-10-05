@@ -12,7 +12,7 @@ window.Standing = (function () {
   const state = s => (s.standing = s.standing || { seen: {}, well: 0, off: 0, log: [] });
   // the day's contracts (those you have already taken or passed are left out)
   function today(s, opts) {
-    const day = s.day; if (day < MIN_DAY || day > MAX_DAY) return []; const st = state(s), mp = S.marketPrice(day), out = [], n = 1 + (hash(day + ":n") % 3 === 0 ? 1 : 0);
+    const day = s.day; if (day < MIN_DAY || day > MAX_DAY) return []; const st = state(s), mp = S.marketPrice(day, s), out = [], n = 1 + (hash(day + ":n") % 3 === 0 ? 1 : 0);
     for (let k = 0; k < n; k++) {
       const h = hash(day + ":" + k), who = BUYERS[h % BUYERS.length], kind = KINDS[(h >> 3) % KINDS.length], sid = "so" + day + "-" + k;
       let sacks = 6 + 3 * ((h >> 6) % 4), price, terms, dueIn = 5 + ((h >> 9) % 4);
@@ -26,7 +26,7 @@ window.Standing = (function () {
   }
   // the numbers the check puts on the table, all from the player's own state
   function facts(s, o) {
-    const R = S.R, cost = R.unitCost, floor = S.traderPrice(s.day), have = s.sacks + S.sacksComing(s), short = Math.max(0, S.committed(s) + o.sacks - have), packets = Math.ceil(short / R.sacksPerPlot), seed = packets * R.seedCost;
+    const R = S.R, cost = R.unitCost, floor = S.traderPrice(s.day, s), have = s.sacks + S.sacksComing(s), short = Math.max(0, S.committed(s) + o.sacks - have), packets = Math.ceil(short / R.sacksPerPlot), seed = packets * R.seedCost;
     const arrive = o.due + (o.terms || 0), cashAfter = s.bal.cash - seed, week = S.weekBills(s);
     return { cost, price: o.price, margin: Math.round((o.price - cost) / o.price * 100), floor, packets, seed, cashAfter, week, arrive, late: arrive > R.days, terms: o.terms || 0, sacks: o.sacks };
   }

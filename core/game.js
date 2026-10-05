@@ -30,8 +30,8 @@
   NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
-  const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
-    abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
+  const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day, s) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
+    abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day, s) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
   const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 7 }; // beside the road (the path runs along y=8), not on it
   const CHEST = { x: 5, y: 7 }, SACKS = { x: 10, y: 7 }, FWELL = { x: 13, y: 7 }; // WS3 (see Story.ch1: the tag verb's targets and decoys)
@@ -384,7 +384,7 @@
   }
   // ---------- the notice board: market outlook and a small decision on some days ----------
   function noticeBoard() {
-    const o = S.marketOutlook(s), now = S.marketPrice(s.day), n = S.notice(s), top = o.slice().sort((a, b) => b.price - a.price)[0];
+    const o = S.marketOutlook(s), now = S.marketPrice(s.day, s), n = S.notice(s), top = o.slice().sort((a, b) => b.price - a.price)[0];
     const arrow = p => p > now ? " ▲" : p < now ? " ▼" : "";
     const tip = !top ? "" : top.price > now ? `Prices are heading up: ${top.price} by day ${top.day}. Grain you don't have to ship before then could fetch more.` : top.price < now ? "Prices are slipping. Better to ship what you've promised and not hold surplus." : "Prices hold steady.";
     const text = `<b>Village notices</b><br>Going price today: <b>${now}</b> a sack.<br>${o.length ? o.map(x => `Day ${x.day}: ${x.price}${arrow(x.price)}`).join(" · ") : "The season is nearly over."}<br><i>${tip}</i>${n ? `<br><br><b>${n.title}</b><br>${n.text}` : ""}`;
@@ -690,7 +690,7 @@
     const fund = S.crownFund(s).net, pct = Math.max(0, Math.min(100, Math.round(fund / S.R.crownDebt * 100)));
     $("hudmain").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? `<span class="rainw"> · rain</span><span class="rainic"> ☔</span>` : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
       `<span class="wood" id="h-fund"><span class="k"><span class="kl">Toward the </span>Crown</span><span class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="${S.R.crownDebt}" aria-valuenow="${fund}"><i style="width:${pct}%"></i></span><b class="v">${fund} / ${S.R.crownDebt}</b></span>`;
-    $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
+    $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day, s) + (s.day > 1 ? (S.marketPrice(s.day, s) > S.marketPrice(s.day - 1, s) ? " ▲" : S.marketPrice(s.day, s) < S.marketPrice(s.day - 1, s) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>` + (storyOn ? `<button type="button" class="wood" id="casebtn">Case board (${Story.state.clues.length})</button>` : ""); // WS6: the case board button
