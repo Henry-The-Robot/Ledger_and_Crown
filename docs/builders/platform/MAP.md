@@ -1,5 +1,7 @@
 # MAP — Platform (seed, 2026-10-04; the restructure P3 rewrites it)
 
+**Wiki pages (one per row below):** [engine](../../wiki/platform/engine.md) · [books](../../wiki/platform/books.md) · [game-ui](../../wiki/platform/game-ui.md) · [save](../../wiki/platform/save.md) · [transcript](../../wiki/platform/transcript.md) · [codex](../../wiki/platform/codex.md) · [verbs](../../wiki/platform/verbs.md) · [sound](../../wiki/platform/sound.md) · [opening](../../wiki/platform/opening.md) · [bots](../../wiki/platform/bots.md) · [art](../../wiki/platform/art.md) · [tests-and-ci](../../wiki/platform/tests-and-ci.md) · [version-stamp](../../wiki/platform/version-stamp.md) · [wiki-lint](../../wiki/platform/wiki-lint.md).
+
 Today there is no `core/` folder: core and Spring content are mixed in the root. Where things are now:
 
 | What | Where | Notes |
