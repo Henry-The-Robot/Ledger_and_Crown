@@ -42,6 +42,10 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
 ## Decisions made and why (newest first)
+- 2026-10-05: Kyle: "proceed as planned but push the builder to deliver more faster". Cards now run T1 → P4b → P5 →
+  P6a → P6b → P7 → P8 → S7 (iPad fill + v0.4.7, first visible change) → S5; PLAN.json `speed_note` (loop to budget,
+  one critic round, tests+goldens+lint gate); P6 story port is one card; U0b waits on curriculum fixes (C4.01-03,
+  C7.01, C8) routed via the coordinator, who was also asked for a 30-min Builder cadence.
 - 2026-10-05: the Lead merged the platform stack itself (merge commits, bottom-up). Why: all six reviewed, CI green,
   the ch1 WORK-ORDER says the creative lead merges, and the reviewer's 2-PR cap would have idled the Builder 3 days.
 - 2026-10-05: season designs are drafted as `DESIGN-DRAFT.md` (not canon; reviewer may merge); the Lead renames to

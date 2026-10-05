@@ -27,7 +27,7 @@ async function runPage(browser, file, wait, srv) {
     const r = await runPage(b, path.resolve(args[0]), +(args[1] || 60000), srv); console.log(r.text); if (r.errs.length) console.log("page errors:", r.errs.slice(0, 5)); failed = r.bad.length ? 1 : 0;
   } else {
     const wait = +(args[1] || 90000), filter = args[2] ? new RegExp(args[2]) : null, dir = __dirname;
-    const files = fs.readdirSync(dir).filter(f => f.endsWith(".html") && !f.startsWith("shot-") && (!filter || filter.test(f))) // shot-*.html are screenshot drivers, not tests.sort();
+    const files = fs.readdirSync(dir).filter(f => f.endsWith(".html") && !f.startsWith("shot-") && (!filter || filter.test(f))).sort(); // shot-*.html are screenshot drivers, not tests
     for (const f of files) { const r = await runPage(b, path.join(dir, f), wait, srv); const ok = !r.bad.length; if (!ok) failed++;
       console.log((ok ? "ok   " : "FAIL ") + f + ` (${(r.ms / 1000).toFixed(1)}s)` + (ok ? "" : "\n       " + r.bad.slice(0, 4).map(l => l.slice(0, 220)).join("\n       "))); }
     console.log(`\n${files.length - failed} of ${files.length} pages passed`);
