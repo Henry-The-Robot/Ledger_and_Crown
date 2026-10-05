@@ -233,12 +233,18 @@ if (typeof document !== "undefined") (function (root) {
 
   function open() {
     const s = G.s;
-    if (st) return;
+    if (st || opening) return;
     M.settleBet(s);
     if (!M.isDay(s.day, s)) return G.say("maud", `Market Day is on days 7, 14 and 21, and today is day ${s.day}: bring grain you can spare.`, ["Close"]);
     if (history(s).some(f => f.day === s.day)) return G.say("maud", "You've had your fair today. The next one is the next 7th day.", ["Close"]);
     if (!s.sacks) return G.say("maud", "The barn is empty, so there is nothing for the stall: come back with sacks you can spare.", ["Close"]);
     s.market = s.market || { fairs: [], named: false, bet: null };
+    const cs = window.Cutscene && Cutscene.maybe("market-open-" + Math.min(3, Math.ceil(s.day / 7))); // S5: a short opening that changes by week (skipped in tests and sandbox)
+    if (cs) { opening = true; return cs.then(() => { opening = false; if (!st) openStall(s); }); }
+    openStall(s);
+  }
+  let opening = false;
+  function openStall(s) {
     const pl = G.pl, T = G.T; pl.x = STALL.x * T + 8; pl.y = (STALL.y + 1) * T + 12; pl.dir = "up"; pl.target = null;
     const barn = s.sacks, committed = S.committed(s), spare = Math.max(0, barn - committed);
     st = { phase: "setup", price: S.marketPrice(s.day, s), bring: Math.min(barn, Math.max(spare, Math.min(barn, 12)), 18), barn, committed, spare, f: null, rec: null, hourT: 0, fast: false, evs: null, bet: null, last: 0, cash0: s.bal.cash };

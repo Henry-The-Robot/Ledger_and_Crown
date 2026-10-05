@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><title>iPad fill</title></head><body><pre id="out">running</pre>
+<!-- S7: on an iPad the map canvas fills the screen with no empty band, in landscape (1194 x 834) and portrait (834 x 1194), and the tap targets stay 44 px.
+     The iframe is the screen: its inner size is what the game's fit() reads. ?touch=1 puts the game in iPad mode. Run: node tests/run-html.js tests/ipad-fill.html -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+function load(w, h) { return new Promise(res => { const f = document.createElement("iframe"); f.style.cssText = `width:${w}px;height:${h}px;border:0;display:block`; f.src = "../game.html?sandbox&new=1&touch=1&intro=0"; document.body.appendChild(f); f.onload = () => res(f); }); }
+(async () => { try {
+  for (const [name, w, h] of [["landscape 1194x834", 1194, 834], ["portrait 834x1194", 834, 1194], ["iPad Pro 11 landscape 1180x820", 1180, 820]]) {
+    const f = await load(w, h), win = f.contentWindow, d = win.document, errs = []; win.addEventListener("error", e => errs.push(e.message)); await sleep(400); win.G.closeDlg(); win.G.hidePanel(); win.dispatchEvent(new win.Event("resize")); await sleep(100);
+    const r = d.getElementById("c").getBoundingClientRect(), de = d.documentElement;
+    out.push(`${name}: canvas covers the width (${Math.round(r.left)} to ${Math.round(r.right)} of ${w}): ${r.left <= 0.5 && r.right >= w - 2}`);
+    out.push(`${name}: canvas covers the height (${Math.round(r.top)} to ${Math.round(r.bottom)} of ${h}): ${r.top <= 0.5 && r.bottom >= h - 2}`);
+    out.push(`${name}: no more than one scale step too big (over by ${Math.round(r.right - w)} x ${Math.round(r.bottom - h)}): ${r.right - w <= 4 && r.bottom - h <= 4}`);
+    out.push(`${name}: the page does not scroll: ${de.scrollWidth <= w + 4 && de.scrollHeight <= h + 4}`);
+    const mb = d.getElementById("menubtn"), mr = mb && mb.getBoundingClientRect();
+    out.push(`${name}: the menu button is on screen and 44 px tall (${mr && Math.round(mr.height)}): ${!!mr && mr.height >= 44 && mr.left >= 0 && mr.right <= w && mr.top >= 0}`);
+    const wood = [...d.querySelectorAll("#hud .wood")].map(x => x.getBoundingClientRect().height); out.push(`${name}: the top-bar numbers are 44 px tall: ${wood.length > 0 && Math.min(...wood) >= 44}`);
+    out.push(`${name}: errors: ${JSON.stringify(errs)}`); f.remove();
+  }
+ } catch (e) { out.push("EXCEPTION " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

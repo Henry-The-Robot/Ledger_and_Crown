@@ -13,6 +13,7 @@
       "core/art.js",
       "core/intro.js",
       "core/cutscene.js",
+      "core/map.js",
       "core/scene.js",
       "core/bot.js",
       "core/codex.js",

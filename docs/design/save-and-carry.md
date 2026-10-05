@@ -124,3 +124,18 @@ Left as is on purpose: `codex.js` `shuffle` (line 46, Speak the Word order) and 
    when a later season of Chapter 1 ships (the heir always reflects the latest finished season).
 3. **`stakes`** are numbers only (share 0 to 1); `0` = none. No booleans.
 4. Keep everything else, including the rollback blob, the try/catch rule and the left-alone `Math.random` calls.
+
+## Lead review of P4b (`core/save.js`, 2026-10-05) — sound core; three MAJOR integration gaps (card P4c)
+Good: one versioned blob; a migration that never deletes old keys; rollback blob; every store call guarded; seeded new
+games and review order; export/import with plain and compressed codes; the heir frozen from careful@seed0; 25+ node
+checks that can fail (`tests/test-save.js`). Accepted deviation: the small stores (transcript, codex, unlocks, level,
+prestige, switches) stay live in their old keys; `snapshot()` folds them in at freeze/export and `restoreStores()` writes
+them back on import. That is lower risk than rewriting five modules now.
+1. **MAJOR:** the season freezes only inside Ezra's review (`core/game.js:831`), so "again" or a reload loses it.
+   Freeze when the closing books first show.
+2. **MAJOR:** `exam.passed` and `flags.examPassed` come from Ezra's review, not the Court (`court.js` ~261). Use the
+   Court's result.
+3. **MAJOR:** `Save.persist()` is never called, so the iPad hint never shows.
+4. MINOR: `load()` ignores `lc_save_v4_prev` when `lc_save_v4` is corrupt. 5. MINOR: import accepts any slot shape.
+5. Note: `Save.heir()` returns null in the browser (it reads the file through `require`). This is fine until Chapter 2
+   loads it; then ship the heir as a script.

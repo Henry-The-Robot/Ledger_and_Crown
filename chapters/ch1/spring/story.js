@@ -84,6 +84,7 @@ window.Story = (function () {
     calc: (name, v) => CALC[name](v), verb: (name, args, v, lazy) => VERB[name](args, v, lazy), remember: (k, x) => { st[k] = x; },
     keep: k => keep(k.id, k.term, k.line, k.example, k.num, k.from), addEx, pin, to, page, master: id => mastered(id),
   };
+  const cut = id => window.Cutscene ? Cutscene.maybe(id) : Promise.resolve(null); // S5: a data cutscene (chapters/ch1/spring/cutscenes/), skipped in tests; never blocks the story
   const lowOf = f => f.reduce((a, x) => x.close < a.close ? x : a);
   const CALC = {
     // chapter 1
@@ -348,10 +349,11 @@ window.Story = (function () {
       const d = G.s.day, e0 = epoch;
       if (window.Scenes && Scenes.morning) await Scenes.morning({ G, st, S, day: d }); // HOOK: village scenes from another PR (cast.js / scenes.js); nothing is built here
       if (e0 !== epoch) throw STALE; // the valve fired while a village scene waited
+      if (d === S.eventDay(G.s, "pigs") + 1) await cut("pigs-night"); // S5: the morning after the pigs' night
       if (st.stage === "sleep5" && d >= 8) await ch5();
       const revealed = !!(G.s.bet && d >= G.s.bet.revealDay); // the bet's reveal is already a run of four boxes: the present-value lesson waits for the next morning
       if (revealed) await revealIfDue();
-      if (st.stage === "sleep8" && d >= 12) { arrive(1); await tell("Corvin Vane is in the square, in a grey cloak and gloves on a warm day, asking for you by name. Mind his smile: it is paid for by someone."); } // the midpoint: day 12 (#28's description of Vane)
+      if (st.stage === "sleep8" && d >= 12) { arrive(1); await cut("vane-arrives"); await tell("Corvin Vane is in the square, in a grey cloak and gloves on a warm day, asking for you by name. Mind his smile: it is paid for by someone."); } // the midpoint: day 12 (#28's description of Vane)
       else if (st.stage === "page8") await chPage();
       else if (st.stage === "sleep9" && d >= 15) { arrive(2); await tell("The steward is back at the well, with a thicker roll of paper."); }
       else if (weekOf(d) === 3 && st.ch >= 8 && st.mercy !== 3 && G.s.bal.cash < S.weekBills(G.s)) { st.mercy = 3; await craneOffer({ mercy: true }); } // Crane visits when Cash can't cover the pay-day
@@ -363,5 +365,5 @@ window.Story = (function () {
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
   return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
-    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene, tables: { CALC, VERB } }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
+    testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene, tables: { CALC, VERB }, cut }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();

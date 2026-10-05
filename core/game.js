@@ -563,7 +563,7 @@
         if (storyOn && sc.card) Story.pin("scene_" + sc.id, sc.card[0], sc.card[1], `Day ${s.day} · ${Cast.short(sc.who)}`, "scene"); else toast(`A clue: ${s.clues} of ${Scenes.CLUES}`); },
       trust: (who, d) => { if (s.trust[who] != null) s.trust[who] = Math.max(0, Math.min(10, s.trust[who] + d)); if (d > 0) toast(`${Cast.name(who).split(",")[0]} trusts you more ♥`); },
       letter: async i => { if (storyOn) await Story.letter(i); else await page(Story.PAGES[i], Story.LETTERS[i]); } };
-    try { await sc.run(c); } finally { hud(); save(); }
+    try { if (storyOn && sc.cutscene) await Story.cut(sc.cutscene); await sc.run(c); } finally { hud(); save(); } // S5: a scene may name a cutscene that plays first (scenes.js `cutscene`)
   }
   function crate() {
     const opts = S.openOrders(s).sort((a, b) => a.due - b.due).map(o => [`Ship ${o.sacks} to ${S.NAMES[o.who]} (due day ${o.due})`,
@@ -895,8 +895,9 @@
   // A desktop shows a fixed 320x200 view in whole-pixel steps. An iPad scales in half steps and then shows as much MAP as the screen holds, so the game
   // fills the whole screen in either orientation instead of floating in a letterbox.
   function fit() {
-    const base = Math.min(innerWidth / 320, innerHeight / 200), sc = Math.max(2, TOUCH ? Math.floor(base * 2) / 2 : Math.floor(base));
-    VW = TOUCH ? Math.min(MW * T, Math.max(320, Math.floor(innerWidth / sc))) : 320; VH = TOUCH ? Math.min(MH * T, Math.max(200, Math.floor(innerHeight / sc))) : 200;
+    // S7: on an iPad the map must also be big enough to fill the screen the other way (the map is 800 x 416, so a portrait iPad needs a bigger scale, and a narrower view, or a band is left empty).
+    const base = Math.min(innerWidth / 320, innerHeight / 200), fill = Math.ceil(Math.max(innerWidth / (MW * T), innerHeight / (MH * T)) * 2) / 2, sc = Math.max(2, TOUCH ? Math.max(Math.floor(base * 2) / 2, fill) : Math.floor(base));
+    VW = TOUCH ? Math.min(MW * T, Math.max(160, Math.ceil(innerWidth / sc))) : 320; VH = TOUCH ? Math.min(MH * T, Math.max(160, Math.ceil(innerHeight / sc))) : 200; // ceil: the canvas covers the screen, the few pixels over are clipped
     if (cv.width !== VW) cv.width = VW; if (cv.height !== VH) cv.height = VH;
     cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px";
   }

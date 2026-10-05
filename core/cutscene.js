@@ -4,7 +4,7 @@
 //   def = { id, w, h, shots: [{ name, dur, mood, cues: [[t, sfx], ...], draw?: (t, d) => void, layers?: [layer, ...] }],
 //           lines: [{ id, shot, at, dur, who, dir, text }], gate?: html, seenKey?: string, setup?: ctx => void }
 //   layer = { op: "rect"|"oval"|"text"|"sprite", ..., at?: [t0, t1], fadeIn?: s, slide?: { dx, dy, over: [t0, t1] } }   t in seconds into the shot
-//     rect { x, y, w, h, c }  oval { x, y, rx, ry, c }  text { s, x, y, size, c, align? }  sprite { name (a key of Art), x, y, k }
+//     rect { x, y, w, h, c }  oval { x, y, rx, ry, c }  text { s, x, y, size, c, align? }  sprite { name (a path in Art, e.g. "chest" or "people.crane.down.0"), x, y, k }
 //   Cutscene.register(def) · play(idOrDef, opts) -> Promise({ how, said, fired }) · replay(id, opts) · journal() · timeline(def) · cuesUpTo(def, t) · validate(def) · manifest(def)
 (function () {
   "use strict";
@@ -36,7 +36,7 @@
     if (l.op === "rect") { ctx.fillStyle = l.c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(l.w), Math.round(l.h)); }
     else if (l.op === "oval") { ctx.fillStyle = l.c; ctx.beginPath(); ctx.ellipse(x, y, l.rx, l.ry, 0, 0, 7); ctx.fill(); }
     else if (l.op === "text") { ctx.font = `bold ${l.size}px monospace`; ctx.fillStyle = l.c; ctx.textAlign = l.align || "left"; ctx.fillText(l.s, Math.round(x), Math.round(y)); ctx.textAlign = "left"; }
-    else if (l.op === "sprite") { const spr = window.Art && Art[l.name]; if (spr) ctx.drawImage(spr, Math.round(x), Math.round(y), Math.round(spr.width * l.k), Math.round(spr.height * l.k)); }
+    else if (l.op === "sprite") { const spr = l.name.split(".").reduce((o, k) => o && o[k], window.Art); if (spr && spr.width) ctx.drawImage(spr, Math.round(x), Math.round(y), Math.round(spr.width * l.k), Math.round(spr.height * l.k)); }
     ctx.globalAlpha = 1;
   }
   function frame(def, t) { // draw the whole cutscene at time t (also used by tests and screenshots)
@@ -82,8 +82,12 @@
     frame(def, 0); if (go) go.onclick = start; if (opts.autostart || !go) start(); if (go) setTimeout(() => go.isConnected && go.focus({ preventScroll: true }), 30);
     return promise;
   }
+  // a story cutscene plays unless this is a test or sandbox run (?fast, ?sandbox) or ?cuts=0; the opening has its own rule (Intro.wanted)
+  const wanted = q => { q = q || new URLSearchParams(location.search); return !(q.has("fast") || q.has("sandbox") || q.get("cuts") === "0"); };
+  // play a registered cutscene if one exists and is wanted: returns its Promise, or null when nothing plays (so a caller can carry on at once). A missing cutscene never blocks the story.
+  const maybe = (id, opts) => { try { return REG[id] && typeof document !== "undefined" && document.body && wanted() ? play(id, Object.assign({ autostart: true }, opts)) : null; } catch (e) { return null; } };
   const api = {
-    register: def => { REG[def.id] = def; return def; }, get: id => REG[id], play, replay: (id, opts) => play(id, opts), journal, timeline, cuesUpTo, validate, manifest, frame: (def, t) => frame(def, t),
+    wanted, maybe, register: def => { REG[def.id] = def; return def; }, get: id => REG[id], play, replay: (id, opts) => play(id, opts), journal, timeline, cuesUpTo, validate, manifest, frame: (def, t) => frame(def, t),
     setVoice: (base, ext) => { voiceBase = base || null; if (ext) voiceExt = ext; }, end: how => end(how || "skipped"), get active() { return active; }, get state() { return st; }, ease, prog,
   };
   if (typeof window !== "undefined") window.Cutscene = api;

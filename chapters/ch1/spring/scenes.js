@@ -61,14 +61,14 @@ window.Scenes = (function () {
         { label: "What do you think he signed?", then: [{ say: "maud", lines: ["A guarantee. I think. He had a weakness for standing behind people. I don't know whose."] }] },
         { label: "Then we find out.", then: [{ say: "maud", lines: ["Mm. Now you sound like him. Let's hope it ends better."] }] }] },
       { flag: ["maudConfessed", true] }, { trust: ["maud", 2] }] },
-    { id: "ashby_guarantee", who: "ashby", from: 21, card: ["Edric stood surety for Ashby", "“It's only my name.”"], hint: "Ashby has gone quiet over the dough.", steps: [
+    { id: "ashby_guarantee", who: "ashby", from: 21, cutscene: "only-my-name", card: ["Edric stood surety for Ashby", "“It's only my name.”"], hint: "Ashby has gone quiet over the dough.", steps: [
       { say: "ashby", lines: ["Put the sack down, dear. I've been wondering how to say this since the day you walked in.", "When Bram died, the bakery was in debt. A sum I couldn't have paid in ten years. The Crown's collector came, polite as a hearse. Your uncle was in the shop that day.", "He didn't say a word. He walked to the collector's table and signed. 'Surety,' he called it. 'It's only my name, Ashby. It costs nothing.'", "It cost him everything, didn't it? I didn't know until the bailiff came for your farm. I've put an extra loaf in every order since, to try to balance it. You never noticed the loaves."] },
       { ask: "ashby", text: "Her ring is off its ribbon and in her fist.", options: [
         { label: "It was his choice.", then: [{ say: "ashby", lines: ["Kind, dear. Wrong. But kind."] }] },
         { label: "How much was it?", then: [{ say: "ashby", lines: ["Most of what the Crown says you owe. I never knew the sum. He never told me. That was the worst of him: he never told anyone."] }] },
         { label: "I'll find a way to pay it.", then: [{ say: "ashby", lines: ["Don't you dare. If you carry that I'll have to carry you. Bake with me, dear. That's all I want."] }] }] },
       { letter: 6 }, { flag: ["guarantee", true] }, { clue: 1 }, { trust: ["ashby", 3] }] },
-    { id: "crane_seal", who: "crane", from: 23, at: [32, 10], card: ["Vane's mark on the seal", "Crown sold your debt"], need: { flag: "craneSeal" }, hint: "Crane is by the well again. He has a paper.", steps: [
+    { id: "crane_seal", who: "crane", from: 23, at: [32, 10], cutscene: "crane-seal", card: ["Vane's mark on the seal", "Crown sold your debt"], need: { flag: "craneSeal" }, hint: "Crane is by the well again. He has a paper.", steps: [
       { say: "crane", lines: ["Item: a copy of the writ. It is a copy I should not have made, and I made it.", "The second seal. A man in the counting-house once taught me to read the small ones. It is a note-buyer's mark, and it means the Crown sold your debt, heir, to someone."] },
       { ask: "crane", text: "He holds the paper at arm's length, as if it might go off.", options: [
         { label: "To whom?", then: [{ say: "crane", lines: ["The mark is Corvin Vane's. It is a small mark; Vane has never been a man for large ones."] }] },
