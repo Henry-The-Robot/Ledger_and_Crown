@@ -19,7 +19,18 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 - **Daily PR reviewer** = task `curiosity` (Sonnet, 09:40): merges clean Normal PRs, **max 2 PRs a run, oldest first**;
   never merges canon (README, CHARTER, WORK-ORDER beyond a status tick, DESIGN.md, OUTLINE.md, master plan).
 
-## Next 3 actions (Lead)
+## START HERE (2026-10-05 ~12:10 PT): fresh Lead session
+0. `python infra/help.py list --to lead:mba-game --open` FIRST, every session, and again before stopping (missed 8
+   asks for 2.7 h on 10-05). Self Review: `reflections/2026-10-05/lead-mba-game.md` (honesty 14/14).
+1. **Full-game decomposition** (Kyle via coordinator 093910 + 094455, manager 114426): the end state first, then
+   100+ cards, chapters 1-3 in full, `skills/plan-doc.md` (now Roadmap), with `overlap_ok_when` for 2 Builders. Each card:
+   one verb, <= 3 files, 20-50 min, check = `projects/mba-game/tools/check.py` (pushed + CI green + a file/text
+   condition). 42 cards exist (29 new small ones, R0 first).
+2. R0 green → read the P6-S5 diff, then merge the local/work PR (it holds canon) → v0.4.7 reaches Kyle's iPad.
+   Screenshots from the live site at 1194×834.
+3. Accept or redo the weak-check cards (T1..S5) once CI is green. P6a/P6b goldens stay unverified until then.
+
+## Next 3 actions (Lead, older)
 1. Review the Builder's output: G1 is DONE and reviewed (Lead section in `docs/design/save-and-carry.md`: season
    record vs chapter carry, heir = careful@seed0 frozen, stakes numeric); check P4b follows it. U0a notes (done, not yet
    reviewed); U0b

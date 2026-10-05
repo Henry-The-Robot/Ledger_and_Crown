@@ -2,6 +2,11 @@
 
 **How to bump the version** (one command, never by hand): `node tools/stamp.js 0.4.7` writes the version into `version.js` and stamps every `?v=` in `game.html` and `index.html` (and the visible "v0.4.7" on the title page). `node tools/stamp.js --check` lists any tag that differs; `tests/test-version.js` and CI fail on a mismatch. Adding a script tag? Add it, then run `node tools/stamp.js`. The creative lead makes the release tag.
 
+## v0.4.9: what Summer needs
+- **Your cash conversion cycle, in days** (week 3, the day after the present-value lesson): receivable days, inventory days and payable days from your own books, then you work out the cycle.
+- **Who is paid first** (week 4, Ezra): Crane's offer against what the farm owes. Debts come first, the owner last. Your answer is saved for Summer.
+- Three short naming passes inside existing scenes: your walk-away point (best alternative, less its cost), sunk cost (the seed already bought), and legal / ethical / smart (Vane's "partnership").
+
 ## v0.4.8: Spring's cutscenes
 - **Five short cutscenes** play at story beats, each skippable: Corvin Vane arrives (day 12), "It's only my name" (Ashby, day 21+), the night the pigs got in, Crane reads the seal (day 23+), and a Market Day opening that changes in weeks 1, 2 and 3. A short Spring opening is ready for the main menu (not wired yet).
 - Every cutscene you have seen is kept in a journal on your device.

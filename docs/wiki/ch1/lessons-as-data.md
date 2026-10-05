@@ -7,7 +7,7 @@ files: [chapters/ch1/spring/lessons.js, chapters/ch1/spring/story.js, core/scene
 symbols: [RECORDS, CALC, VERB, ctx, play, tvmFacts, cashBookRows]
 concepts: []
 sessions: []
-tests: [tests/test-story-trace.js, tests/test-scene.js, tests/test-t3b.js]
+tests: [tests/test-story-trace.js, tests/test-scene.js, tests/test-t3b.js, tests/test-s2.js]
 links: [platform/scene-player, ch1/lessons-week1, ch1/lessons-week2, ch1/lessons-weeks3-4, ch1/endings]
 updated: 2026-10-05
 ---
@@ -21,7 +21,7 @@ Every lesson chapter of Spring is a record in `lessons.js`: ch1 to ch9, the cost
 ## Where
 | File · symbol | Job |
 |---|---|
-| `chapters/ch1/spring/lessons.js` · `RECORDS`, `BY` | The 20 records. Words only. |
+| `chapters/ch1/spring/lessons.js` · `RECORDS`, `BY` | The 22 records. Words only. `cycle` (S2, week 3: receivable, inventory and payable days from the player's own books, C2.09) and `waterfall` (S2, week 4: Ezra's order of a sale, debts first and the owner last; sets flag `debtsFirst`). |
 | `chapters/ch1/spring/story.js` · `ctx` | What a scene calls: `tell`, `speak`, `quiz`, `keep`, `pin`, `to`, `page`, `master`, `calc`, `verb`. |
 | `chapters/ch1/spring/story.js` · `CALC`, `VERB` | Formulas and game actions. A record names them. |
 | `chapters/ch1/spring/story.js` · `craneOffer`, `tvmScene`, `costScene`, `pvScene`, `dukeScene` | One-line wrappers: `play(id, start variables)`. They keep the old API. |
@@ -34,6 +34,9 @@ Every lesson chapter of Spring is a record in `lessons.js`: ch1 to ch9, the cost
 ## How to change it safely
 - A text change: edit `lessons.js`, re-record with `node tests/test-story-trace.js --record`, and read the golden diff.
 - A new formula goes in `CALC`; never write a sentence in a formula, except a short phrase (a verdict word).
+
+## S2 naming passes (each checked against its session)
+Walk-away point = best alternative less what it costs to take it (`ch3`, C16.12). Sunk cost: the seed already bought never decides the next sale (`keepFloor`, C7.07). Legal, ethical and smart are three questions (`vane_offer` aside in `scenes.js`, C12.02). **Anchoring is not named**: C7.07 says it is not in its text (TODO for the Lead). The cycle uses whole days: Receivables ÷ Revenue × days so far, Inventory ÷ COGS × days, Payables ÷ COGS × days (C2.09).
 
 ## Known issues
 - `V.craneOn = true` writes to the `LV` proxy, not to `Verbs` (the old code did the same). It has no effect. Kept so the port stays identical.

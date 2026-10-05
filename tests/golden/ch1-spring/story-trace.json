@@ -662,6 +662,13 @@
     null
    ],
    [
+    "say",
+    "maud",
+    "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it.",
+    null,
+    null
+   ],
+   [
     "haggle",
     "ashby",
     {
@@ -3892,6 +3899,422 @@
    }
   ]
  },
+ "week 3 cash cycle / policy 0": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 3 · The squeeze"
+   ],
+   [
+    "say",
+    "maud",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Receivables 324 ÷ Revenue 1098 × 17 days = 5 days: how long customers take to pay.",
+    null,
+    [
+     "h-ar"
+    ]
+   ],
+   [
+    "say",
+    "maud",
+    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    null,
+    [
+     "h-ap"
+    ]
+   ],
+   [
+    "ask",
+    "maud",
+    "The cash conversion cycle is DSO + DIO − DPO. How many days is yours?",
+    16,
+    [
+     "Add the two lines that tie your coin up, then take away the days Tomas finances."
+    ],
+    null,
+    0,
+    null,
+    "5 + 17 − 6 = 16 days.",
+    "Receivable days plus inventory days, minus payable days. Days that tie coin up count up; days a supplier finances count down."
+   ],
+   [
+    "say",
+    "maud",
+    "16 days pass between paying for seed and getting the coin back. Double your sales and the coin tied up in that gap doubles too, unless the days shrink.",
+    null,
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Cash conversion cycle (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Cash conversion cycle"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "line": "DSO + DIO − DPO: the days between paying for grain and getting the coin back. Receivables and inventory add days; a supplier's credit takes days away.",
+     "example": "Day 17: receivables 5 + inventory 17 − payables 6 = 16 days."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "num": "16 days to cash",
+     "from": "Day 17 · your books",
+     "day": 17,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true
+   },
+   "game": {
+    "day": 17,
+    "cash": 281,
+    "bal": {
+     "cash": 281,
+     "ar": 324,
+     "inv": 496,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -1098,
+     "cogs": 504,
+     "upkeep": 90,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 11,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {},
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 4,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "ashby",
+      81,
+      17
+     ],
+     [
+      "hobb",
+      243,
+      28
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
+ "week 4 who is paid first / policy 0": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 4 · The reckoning"
+   ],
+   [
+    "say",
+    "ezra",
+    "A sale is the same book read in order. Suppose Crane's offer of 300 were taken today.",
+    [
+     "Go on"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "The farm owes 1,730: my loan, Tomas, and the Crown's writ. Debts are paid first, out of the sale.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "300 does not cover 1,730. You would still owe 1,430, and you, the owner, would be paid nothing.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "When the sale money is shared out, who is paid first?",
+    [
+     "The debts, then the owner",
+     "Whoever asks loudest",
+     "The owner, then the debts"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "Yes. Debt is paid before equity. A sale price is not what the owner takes home.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Debts are paid first (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Debts are paid first"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "line": "In a sale, the money pays debt first and the owner last. A sale price is not what the owner takes home.",
+     "example": "Day 23: a sale at 300 against 1,730 of debts leaves 0."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "num": "300 sale, 1,730 owed",
+     "from": "Day 23 · Ezra's order",
+     "day": 23,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true,
+    "book": true
+   },
+   "game": {
+    "day": 23,
+    "cash": 291,
+    "bal": {
+     "cash": 291,
+     "ar": 1563,
+     "inv": 76,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -2580,
+     "cogs": 1104,
+     "upkeep": 135,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 19,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {
+     "debtsFirst": true
+    },
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 5,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [
+     [
+      "hobb",
+      18,
+      9,
+      28
+     ]
+    ],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "hobb",
+      243,
+      28
+     ],
+     [
+      "duke",
+      1320,
+      50
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
  "week 4 cash book / policy 0": {
   "log": [
    [
@@ -4684,7 +5107,7 @@
     {
      "id": "opportunity",
      "term": "The real floor",
-     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.",
+     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up. The seed is already bought, so its cost is sunk: it never decides the next sale.",
      "example": "Day 9: Ashby offered 7 and the fair had paid 8, so the floor is 8, not 4."
     }
    ],
@@ -5717,6 +6140,13 @@
     "say",
     "maud",
     "Your cost floor, 4, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it.",
     null,
     null
    ],
@@ -8941,6 +9371,422 @@
    }
   ]
  },
+ "week 3 cash cycle / policy 1": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 3 · The squeeze"
+   ],
+   [
+    "say",
+    "maud",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Receivables 324 ÷ Revenue 1098 × 17 days = 5 days: how long customers take to pay.",
+    null,
+    [
+     "h-ar"
+    ]
+   ],
+   [
+    "say",
+    "maud",
+    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    null,
+    [
+     "h-ap"
+    ]
+   ],
+   [
+    "ask",
+    "maud",
+    "The cash conversion cycle is DSO + DIO − DPO. How many days is yours?",
+    16,
+    [
+     "Add the two lines that tie your coin up, then take away the days Tomas finances."
+    ],
+    null,
+    0,
+    null,
+    "5 + 17 − 6 = 16 days.",
+    "Receivable days plus inventory days, minus payable days. Days that tie coin up count up; days a supplier finances count down."
+   ],
+   [
+    "say",
+    "maud",
+    "16 days pass between paying for seed and getting the coin back. Double your sales and the coin tied up in that gap doubles too, unless the days shrink.",
+    null,
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Cash conversion cycle (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Cash conversion cycle"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "line": "DSO + DIO − DPO: the days between paying for grain and getting the coin back. Receivables and inventory add days; a supplier's credit takes days away.",
+     "example": "Day 17: receivables 5 + inventory 17 − payables 6 = 16 days."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "num": "16 days to cash",
+     "from": "Day 17 · your books",
+     "day": 17,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true
+   },
+   "game": {
+    "day": 17,
+    "cash": 281,
+    "bal": {
+     "cash": 281,
+     "ar": 324,
+     "inv": 496,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -1098,
+     "cogs": 504,
+     "upkeep": 90,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 11,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {},
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 4,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "ashby",
+      81,
+      17
+     ],
+     [
+      "hobb",
+      243,
+      28
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
+ "week 4 who is paid first / policy 1": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 4 · The reckoning"
+   ],
+   [
+    "say",
+    "ezra",
+    "A sale is the same book read in order. Suppose Crane's offer of 300 were taken today.",
+    [
+     "Go on"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "The farm owes 1,730: my loan, Tomas, and the Crown's writ. Debts are paid first, out of the sale.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "300 does not cover 1,730. You would still owe 1,430, and you, the owner, would be paid nothing.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "When the sale money is shared out, who is paid first?",
+    [
+     "The debts, then the owner",
+     "Whoever asks loudest",
+     "The owner, then the debts"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "No. Debt is paid before equity. A sale price is not what the owner takes home.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Debts are paid first (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Debts are paid first"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "line": "In a sale, the money pays debt first and the owner last. A sale price is not what the owner takes home.",
+     "example": "Day 23: a sale at 300 against 1,730 of debts leaves 0."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "num": "300 sale, 1,730 owed",
+     "from": "Day 23 · Ezra's order",
+     "day": 23,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true,
+    "book": true
+   },
+   "game": {
+    "day": 23,
+    "cash": 291,
+    "bal": {
+     "cash": 291,
+     "ar": 1563,
+     "inv": 76,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -2580,
+     "cogs": 1104,
+     "upkeep": 135,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 19,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {
+     "debtsFirst": false
+    },
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 5,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [
+     [
+      "hobb",
+      18,
+      9,
+      28
+     ]
+    ],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "hobb",
+      243,
+      28
+     ],
+     [
+      "duke",
+      1320,
+      50
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
  "week 4 cash book / policy 1": {
   "log": [
    [
@@ -9743,7 +10589,7 @@
     {
      "id": "opportunity",
      "term": "The real floor",
-     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.",
+     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up. The seed is already bought, so its cost is sunk: it never decides the next sale.",
      "example": "Day 9: Ashby offered 7 and the fair had paid 8, so the floor is 8, not 4."
     }
    ],
@@ -10850,6 +11696,13 @@
     "say",
     "maud",
     "Your cost floor, 4, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it.",
     null,
     null
    ],
@@ -14084,6 +14937,422 @@
    }
   ]
  },
+ "week 3 cash cycle / policy 2": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 3 · The squeeze"
+   ],
+   [
+    "say",
+    "maud",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Receivables 324 ÷ Revenue 1098 × 17 days = 5 days: how long customers take to pay.",
+    null,
+    [
+     "h-ar"
+    ]
+   ],
+   [
+    "say",
+    "maud",
+    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    null,
+    null
+   ],
+   [
+    "say",
+    "maud",
+    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    null,
+    [
+     "h-ap"
+    ]
+   ],
+   [
+    "ask",
+    "maud",
+    "The cash conversion cycle is DSO + DIO − DPO. How many days is yours?",
+    16,
+    [
+     "Add the two lines that tie your coin up, then take away the days Tomas finances."
+    ],
+    null,
+    0,
+    null,
+    "5 + 17 − 6 = 16 days.",
+    "Receivable days plus inventory days, minus payable days. Days that tie coin up count up; days a supplier finances count down."
+   ],
+   [
+    "say",
+    "maud",
+    "16 days pass between paying for seed and getting the coin back. Double your sales and the coin tied up in that gap doubles too, unless the days shrink.",
+    null,
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Cash conversion cycle (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Cash conversion cycle"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "line": "DSO + DIO − DPO: the days between paying for grain and getting the coin back. Receivables and inventory add days; a supplier's credit takes days away.",
+     "example": "Day 17: receivables 5 + inventory 17 − payables 6 = 16 days."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "ccc",
+     "term": "Cash conversion cycle",
+     "num": "16 days to cash",
+     "from": "Day 17 · your books",
+     "day": 17,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true
+   },
+   "game": {
+    "day": 17,
+    "cash": 281,
+    "bal": {
+     "cash": 281,
+     "ar": 324,
+     "inv": 496,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -1098,
+     "cogs": 504,
+     "upkeep": 90,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 11,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {},
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 4,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "ashby",
+      81,
+      17
+     ],
+     [
+      "hobb",
+      243,
+      28
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
+ "week 4 who is paid first / policy 2": {
+  "log": [
+   [
+    "goal",
+    "Run the farm to the end of spring (day 28), close the books, then face the Reeve's Court",
+    9,
+    "Week 4 · The reckoning"
+   ],
+   [
+    "say",
+    "ezra",
+    "A sale is the same book read in order. Suppose Crane's offer of 300 were taken today.",
+    [
+     "Go on"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "The farm owes 1,730: my loan, Tomas, and the Crown's writ. Debts are paid first, out of the sale.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "300 does not cover 1,730. You would still owe 1,430, and you, the owner, would be paid nothing.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "When the sale money is shared out, who is paid first?",
+    [
+     "The debts, then the owner",
+     "Whoever asks loudest",
+     "The owner, then the debts"
+    ],
+    null
+   ],
+   [
+    "say",
+    "ezra",
+    "Yes. Debt is paid before equity. A sale price is not what the owner takes home.",
+    [
+     "Next"
+    ],
+    null
+   ],
+   [
+    "toast",
+    "Maud's notebook: Debts are paid first (N)"
+   ],
+   [
+    "toast",
+    "Pinned to the case board: Debts are paid first"
+   ]
+  ],
+  "end": {
+   "ch": 9,
+   "stage": "run9",
+   "notebook": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "line": "In a sale, the money pays debt first and the owner last. A sale price is not what the owner takes home.",
+     "example": "Day 23: a sale at 300 against 1,730 of debts leaves 0."
+    }
+   ],
+   "pages": [],
+   "pageDays": {},
+   "clues": [
+    {
+     "id": "waterfall",
+     "term": "Debts are paid first",
+     "num": "300 sale, 1,730 owed",
+     "from": "Day 23 · Ezra's order",
+     "day": 23,
+     "kind": "lesson"
+    }
+   ],
+   "farm": "Thornfield",
+   "extra": {
+    "pv": true,
+    "book": true
+   },
+   "game": {
+    "day": 23,
+    "cash": 291,
+    "bal": {
+     "cash": 291,
+     "ar": 1563,
+     "inv": 76,
+     "equip": 0,
+     "accdep": 0,
+     "ap": -180,
+     "loan": -300,
+     "crown": -1250,
+     "capital": 1054,
+     "revenue": -2580,
+     "cogs": 1104,
+     "upkeep": 135,
+     "depreciation": 0,
+     "fines": 0,
+     "losses": 68,
+     "interest": 19,
+     "factoring": 0,
+     "deposits": 0
+    },
+    "flags": {
+     "debtsFirst": true
+    },
+    "trust": {
+     "maud": 2,
+     "ezra": 4,
+     "ashby": 10,
+     "hobb": 4,
+     "tomas": 4,
+     "duke": 5,
+     "mira": 4,
+     "abbey": 4,
+     "pell": 4,
+     "pedlar": 4
+    },
+    "over": false,
+    "outcome": null,
+    "offers": [
+     [
+      "hobb",
+      18,
+      9,
+      28
+     ]
+    ],
+    "bills": [
+     {
+      "id": 10,
+      "amount": 180,
+      "due": 24,
+      "discBy": 17,
+      "disc": 4,
+      "late": false
+     }
+    ],
+    "invoices": [
+     [
+      "hobb",
+      243,
+      28
+     ],
+     [
+      "duke",
+      1320,
+      50
+     ]
+    ],
+    "rateAdj": 0,
+    "seeds": 0,
+    "quiet": false
+   }
+  },
+  "mastery": [
+   {
+    "id": "equation",
+    "name": "Assets = Liabilities + Owner's equity",
+    "level": "unseen"
+   },
+   {
+    "id": "accrual",
+    "name": "Accrual vs cash",
+    "level": "unseen"
+   },
+   {
+    "id": "margin",
+    "name": "Margin vs markup",
+    "level": "unseen"
+   },
+   {
+    "id": "breakeven",
+    "name": "Break-even",
+    "level": "unseen"
+   },
+   {
+    "id": "opportunity",
+    "name": "Opportunity cost (the real floor)",
+    "level": "unseen"
+   },
+   {
+    "id": "tvm",
+    "name": "Interest & the time value of money",
+    "level": "unseen"
+   },
+   {
+    "id": "wc",
+    "name": "Working capital",
+    "level": "unseen"
+   },
+   {
+    "id": "ev",
+    "name": "Expected value & ruin",
+    "level": "unseen"
+   }
+  ]
+ },
  "week 4 cash book / policy 2": {
   "log": [
    [
@@ -14876,7 +16145,7 @@
     {
      "id": "opportunity",
      "term": "The real floor",
-     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up.",
+     "line": "Your cost is the floor only until a better sale exists. Then the floor is the best sale you give up. The seed is already bought, so its cost is sunk: it never decides the next sale.",
      "example": "Day 9: Ashby offered 7 and the fair had paid 8, so the floor is 8, not 4."
     }
    ],

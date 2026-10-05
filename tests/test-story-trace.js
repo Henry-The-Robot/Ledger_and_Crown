@@ -3,7 +3,7 @@
 // Run: node tests/test-story-trace.js        Re-record (only for an agreed text change): node tests/test-story-trace.js --record
 global.window = global; const fs = require("fs"), path = require("path");
 const S = require("../core/engine.js"); global.Spring = S; global.Books = require("../core/books.js"); global.Transcript = require("../core/transcript.js"); global.Endings = require("../chapters/ch1/spring/endings.js");
-const FILE = path.join(__dirname, "golden/ch1-spring/story-trace.json");
+const Bot = require("../core/bot.js"), FILE = path.join(__dirname, "golden/ch1-spring/story-trace.json");
 let LOG = [], POLICY = 0, N = 0;
 const safe = x => JSON.parse(JSON.stringify(x, (k, v) => { if (typeof v === "function") { try { return "fn:" + JSON.stringify(v()); } catch (e) { return "fn"; } } return v; }));
 const rec = (...a) => LOG.push(safe(a));
@@ -37,6 +37,8 @@ let Story;
 function snap() { const st = Story.state, s = G.s; return safe({ ch: st.ch, stage: st.stage, notebook: st.notebook, pages: st.pages, pageDays: st.pageDays, clues: st.clues, farm: st.farm, extra: { pv: st.pv, tvmRate: st.tvmRate, tied1: st.tied1, book: st.book, mercy: st.mercy, planted0: st.planted0 },
   game: { day: s.day, cash: s.bal.cash, bal: s.bal, flags: s.flags, trust: s.trust, over: s.over, outcome: s.outcome, offers: s.offers.map(o => [o.who, o.sacks, o.price, o.due]), bills: s.bills, invoices: s.invoices.map(v => [v.who, v.amount, v.due]), payPlan: s.payPlan, rateAdj: s.rateAdj, seeds: s.seeds, quiet: s.quiet } }); }
 const mastery = () => safe(Transcript.core());
+// a game with real sales and bills: the careful bot plays `n` days on a sandbox game, and its state replaces the mock game's (a story game sells nothing until the lessons run)
+const played = (g, n) => { const t = S.newGame({ story: false }); for (let d = 1; d <= n; d++) { Bot.careful.day(t); S.sleep(t); } Object.keys(g.s).forEach(k => delete g.s[k]); Object.assign(g.s, t); };
 // scenarios: [name, setup(G, st), act()]
 const SC = [
   ["ch1 bailiff", (g, st) => { st.stage = "intro"; }, () => Story.start()],
@@ -60,6 +62,8 @@ const SC = [
   ["squeeze arrives", (g, st) => { g.s.day = 15; st.ch = 8; st.stage = "sleep9"; }, () => Story.after("morning")],
   ["week 3 mercy", (g, st) => { g.s.day = 17; st.ch = 9; st.stage = "run9"; st.pv = true; g.s.bal.cash = 3; }, () => Story.after("morning")],
   ["week 3 present value", (g, st) => { g.s.day = 17; st.ch = 9; st.stage = "run9"; g.s.invoices.push({ id: 7, who: "hobb", amount: 90, due: 30 }); g.s.bal.ar = 90; }, () => Story.after("morning")],
+  ["week 3 cash cycle", (g, st) => { played(g, 16); st.ch = 9; st.stage = "run9"; st.pv = true; }, () => Story.after("morning")],
+  ["week 4 who is paid first", (g, st) => { played(g, 22); st.ch = 9; st.stage = "run9"; st.pv = true; st.cycle = true; st.book = true; }, () => Story.after("morning")],
   ["week 4 cash book", (g, st) => { g.s.day = 22; st.ch = 9; st.stage = "run9"; st.pv = true; }, () => Story.after("morning")],
   ["cost scene", (g, st) => { g.s.day = 7; }, () => Story.testScene("cost")],
   ["pv scene", (g, st) => { g.s.day = 10; }, () => Story.testScene("pv")],
