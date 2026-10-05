@@ -62,7 +62,7 @@ Nothing here is needed to finish the season.
 - The court reads the flags `hobbExt`, `guarantee`, `vane`, `craneVane` and `maudConfessed` (`ch1/court`). Rename none of them.
 
 ## Known issues
-- `chapters/ch1/spring/story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `chapters/ch1/spring/scenes.js` does not export `morning`. The call is skipped.
+- `chapters/ch1/spring/story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `chapters/ch1/spring/scenes.js` does not export `morning`. The call is skipped. This is a guarded hook for platform task P6: keep it (Lead decision 2026-10-05).
 - `Scenes.pending` has no caller in the game's `.js` files (grep, 2026-10-05).
 
 ## History

@@ -1,4 +1,4 @@
-// Spring at Thornfield — season engine. Pure JS, no DOM: runs in the browser and under node (test-engine.js).
+// Spring at Thornfield — season engine. Pure JS, no DOM: runs in the browser and under node (tests/test-crown.js, test-spine.js).
 // Built from poc/harvest-engine.js (every action posts; every view derives from the postings), re-parameterized
 // to days and upgraded to a true general journal: each posting is a set of debit (+) / credit (-) lines that must
 // sum to zero, so Assets = Liabilities + Owner's equity holds after every transaction (curriculum C1.01; the
@@ -258,7 +258,7 @@
     const weeks = Math.floor(R.days / 7) - Math.floor((s.day - 1) / 7), saved = R.sprinklerSaving * weeks, dep = R.depPerWeek * weeks;
     return { weeks, saved, dep, profit: saved - dep, cash: saved - R.sprinklerCost, paybackWeeks: Math.ceil(R.sprinklerCost / R.sprinklerSaving), life: R.sprinklerCost / R.depPerWeek };
   }
-  // The Crown's 1,000 is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
+  // The Crown's 1,250 (R.crownDebt) is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
   // what you'd be counting on. Promises (Pell's pig share) are shown apart: they are hoped for, not owned.
   function crownFund(s) {
     const b = balanceSheet(s.bal), hoped = sum((s.promises || []).map(p => p.amount));

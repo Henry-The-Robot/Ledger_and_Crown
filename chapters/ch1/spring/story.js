@@ -168,7 +168,7 @@ window.Story = (function () {
     keep("equation", "Assets = Liabilities + Owner's equity", "What you own, minus what you owe, is yours. It can be below zero.", `Day 1: ${b.assets} = ${b.liab} + (${b.equity}).${right ? "" : " You guessed more; the page says less."}`);
     V.parchClose(); to(1, "harvest2");
   }
-  // ---------- chapter 3: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
+  // ---------- chapter 2: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
   async function ch2() {
     const sc = S.R.seedCost, per = S.R.sacksPerPlot;
     await GL.say("tomas", `My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is ${sc} a packet. One packet plants one plot; a plot gives ${per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman.`);
@@ -181,7 +181,7 @@ window.Story = (function () {
     keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −${6 * sc}, Inventory +${6 * sc} (${inv0} → ${G.s.bal.inv}).`);
     st.planted0 = G.s.plots.filter(p => p.crop).length; to(3, "plant2");
   }
-  // ---------- chapter 2: the bakery (C1.04, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
+  // ---------- chapter 3: the bakery (C1.04, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
   async function ch3() {
     const cost = S.R.unitCost, pct = p => Math.round((p - cost) / p * 100);
     const o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
@@ -315,7 +315,7 @@ window.Story = (function () {
     return true;
   }
   async function ch6() { if (await tvmScene(false)) to(7, "ezra7"); }
-  // ---------- chapter 7: Ezra (week 2; C1.06, C5.01: debt, interest, what lenders read) — the forecast scene is tagged `interest` ----------
+  // ---------- chapter 7: Ezra (week 2; C0.01, C5.01: debt, interest, what lenders read) — the forecast scene is tagged `interest` ----------
   async function ch7() {
     const t0 = S.terms(G.s);
     await GL.say("ezra", `Come in. Sit. You want coin; everyone does, eventually. My rate is ${t0.rateBp / 100}% a week. It is not a judgement, only a price. Show me your forecast first, and I shall see how much I believe it.`);

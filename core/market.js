@@ -14,7 +14,7 @@
 //   in a hurry   2 of 8  reserve = going price + 4        buys 1
 // A buyer who can't pay shows 'hesitated' when the price is 1 over their reserve (a coin less would have won them) and
 // 'too dear' when it is 2+ over. Grisby (the rival, from day 14) sets his price after seeing yours at the start of each hour:
-// he undercuts by 1 when you are above the going price, otherwise holds at it. Thrifty villagers who see both buy the
+// he undercuts by 2 when you are above the going price, otherwise holds at it. Thrifty villagers who see both buy the
 // cheaper (ties stay with you); comfortable and hurried villagers don't comparison-shop.
 // Sales post to the books through the engine's own journal (Cash, Revenue, Cost of goods sold), so the statements tie out.
 (function (root) {
