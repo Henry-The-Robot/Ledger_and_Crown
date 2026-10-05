@@ -1,5 +1,8 @@
 # Season 1 redesign — "The Uncle's Ledger" rebuilt (v1.0, 2026-10-03, creative lead)
 
+> **Superseded (2026-10-05)** by the master plan (`docs/MASTER-PLAN.html`) and the Chapter 1 pack
+> (`docs/builders/chapter-1/`). Kept for history; do not build from it.
+
 **What this file is:** the new story structure and new gameplay for Spring (Season 1). Supersedes the chapter table in
 `STORY-year-one.md` for Spring. Inputs: Kyle's playtests, `reviews/critical-pass-v0.3-2026-10-02.md`,
 `research/player-critic-gaps-2026-10-03.md` (§6), `reviews/curriculum-foundation-2026-10-03.md` (§7).

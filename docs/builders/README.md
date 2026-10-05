@@ -31,7 +31,10 @@ The platform (shared core) has its own pack: `docs/builders/platform/` with the 
 2. Read the pack you were given: `CHARTER.md`, then `TASK-PLAN.md` if its status is `open`, then `HANDOVER.md`, then
    `MAP.md`, then `WORK-ORDER.md`. For a fix, open the wiki page(s) MAP.md links for that system, then only the code
    lines they name.
-3. Do the first unblocked task in WORK-ORDER.md (or the fix you were asked for). Finish it to its "Done means". One task per PR.
+3. Take your task from the Lead's cards: `python infra/plan_cards.py next mba-game` in the Agent System (cards live in
+   `projects/mba-game/PLAN.json`; the card names the WORK-ORDER row it builds, and that row's "Done means" is the bar).
+   Before the platform stack (PRs #45–#52) reaches your checkout, a pack's WORK-ORDER may still show a built task as GO:
+   the cards win. Finish the task to its "Done means". One task per PR.
 4. Before you stop: update the wiki pages your work touched (and add a `bug` page for a non-trivial fix), add a line to
    the chapter's `docs/wiki/chN/LOG.md` per merged PR, update `MAP.md` if anything moved, and rewrite `HANDOVER.md`.
    Commit and push, even when the task is unfinished.
@@ -53,9 +56,9 @@ For a fix in another chapter: "…working on Chapter 1, to fix <thing>". The ses
 ## What lives where (so a change touches one pack)
 | Area | Paths | Pack | Rule |
 |---|---|---|---|
-| **Platform** (shared core) | `core/` after the restructure; today: `engine.js`, `game.js`, `verbs.js`, `books.js`, `transcript.js`, `fx.js`, `music.js`, `art.js`, `intro.js`, `ui.css`, `style.css`, `verbs.css`, `game.html`, `index.html`, `tools/`, `.github/`, `tests/run-*.js` | `platform/` | Only in a `platform/<topic>` PR. Nothing chapter-specific goes in core. |
-| Chapter content | `chapters/chN/` (season data, lessons, scenes, cutscenes, map props, claims, tests) | `chapter-N/` | Only in a `chN/<topic>` PR. Never edit another chapter's folder in the same PR. |
-| Spring today | `story.js`, `scenes.js`, `cast.js`, `court.js`, `market.js`, `practice.js`, `standing.js`, `endings.js`, `codex.js` | `chapter-1/` | They move into `chapters/ch1/` and `core/` during the restructure (platform P3). |
+| **Platform** (shared core) | `core/` (engine, game, verbs, books, transcript, fx, music, art, intro, bot, codex, market, and the shared CSS), `game.html`, `index.html`, `version.js`, `tools/`, `.github/`, `tests/run-*.js` | `platform/` | Only in a `platform/<topic>` PR. Nothing chapter-specific goes in core. |
+| Chapter content | `chapters/chN/<season>/` (season data, lessons, scenes, cutscenes, map props, claims, tests) | `chapter-N/` | Only in a `chN/<topic>` PR. Never edit another chapter's folder in the same PR. |
+| Spring today | `chapters/ch1/spring/`: `story.js`, `scenes.js`, `cast.js`, `court.js`, `practice.js`, `standing.js`, `endings.js`, `story.css`, `court.css` | `chapter-1/` | Moved by platform P3 (PR #52). `core/market.js` and `core/engine.js` still hold Spring's numbers until P5 moves them to `chapters/ch1/spring/season.js` (Lead decision 2026-10-05: Market Day is a core system every season reuses; its prices are season data). |
 | Canon and plans | `docs/builders/README.md`, every `CHARTER.md`, every `WORK-ORDER.md`, `docs/MASTER-PLAN.html`, `docs/STORY-BIBLE.md`, `docs/curriculum-coverage.json` | Creative lead | Propose changes in your HANDOVER |
 
 The split matters even with one builder: a session fixing Chapter 1 should never need to understand Chapter 2, and a
@@ -71,6 +74,9 @@ in the core (a platform PR), never patched in from the chapter.
   and push; the next run re-reviews. PRs that touch canon or plans (this README, any CHARTER or WORK-ORDER beyond ticking a
   status, the master plan, the story bible, the coverage map, season designs, outlines) or that need a release tag wait for
   the creative lead, and season designs for Kyle.
+- A season design is written first as `chapters/chN/<season>/DESIGN-DRAFT.md`. A draft is a working file, not canon:
+  the reviewer may merge it like any doc. Only `DESIGN.md` is canon; the creative lead renames the draft after Kyle
+  approves it (Lead decision 2026-10-05: one local/work PR carries all local work, so a canon file in it holds up code).
 - `master` is live (GitHub Pages). Unreleased chapters stay hidden behind data: a chapter the player has not reached does
   not load. Dev access only through `?dev=chN`.
 - A release is a version tag the creative lead makes after the quality gate in your CHARTER.
@@ -108,11 +114,11 @@ For a task longer than 3 phases or 30 minutes, also keep `TASK-PLAN.md` (phases 
 resumed session reads it first).
 
 ## The packs
-| Pack | State (2026-10-04) | Folder |
+| Pack | State (2026-10-05) | Folder |
 |---|---|---|
 | Lead | The Project Lead's handover (the whole game's state, roles, next actions, decisions) | `lead/` |
-| Platform | Phase P of the Chapter 1 work order builds it; its pack fills in as P lands | `platform/` |
-| 1 · The Farm | **Active.** The current builder (cloud session "MBA Game Cloud Builder") works here | `chapter-1/` |
+| Platform | **Active.** P1–P3 built (PRs #45–#52); P4 next. The local Builder (Sonnet task `game-builder`) works here | `platform/` |
+| 1 · The Farm | Summer design (U0) runs now as docs only; Spring polish (S1–S8) waits for platform P8 | `chapter-1/` |
 | 2 · The Town | Design tasks ready; opens when the creative lead says | `chapter-2/` |
 | 3 · The Province | Dormant until Chapter 1 Autumn is designed | `chapter-3/` |
 | 4 · The Kingdom | Dormant until Chapter 2 is designed | `chapter-4/` |
