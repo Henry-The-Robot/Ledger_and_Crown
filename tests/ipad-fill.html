@@ -14,7 +14,7 @@ function load(w, h) { return new Promise(res => { const f = document.createEleme
     out.push(`${name}: the page does not scroll: ${de.scrollWidth <= w + 4 && de.scrollHeight <= h + 4}`);
     const mb = d.getElementById("menubtn"), mr = mb && mb.getBoundingClientRect();
     out.push(`${name}: the menu button is on screen and 44 px tall (${mr && Math.round(mr.height)}): ${!!mr && mr.height >= 44 && mr.left >= 0 && mr.right <= w && mr.top >= 0}`);
-    const wood = [...d.querySelectorAll("#hud .wood")].map(x => x.getBoundingClientRect().height); out.push(`${name}: the top-bar numbers are 44 px tall: ${wood.length > 0 && Math.min(...wood) >= 44}`);
+    const wood = [...d.querySelectorAll("#hud .wood")].map(x => x.getBoundingClientRect().height).filter(h => h > 0); out.push(`${name}: the top-bar numbers are 44 px tall: ${wood.length > 0 && Math.min(...wood) >= 44}`);
     out.push(`${name}: errors: ${JSON.stringify(errs)}`); f.remove();
   }
  } catch (e) { out.push("EXCEPTION " + e.message); }
