@@ -1,0 +1,8 @@
+{
+  "_": "Which source files each wiki page set must cover (docs/wiki/README.md, 'Lint'). `strict: false` = an unnamed file is a warning; W2 flips it to true. P3 (the restructure) replaces these paths with chapters/ch1/ and core/.",
+  "strict": false,
+  "packs": {
+    "platform": ["engine.js", "game.js", "verbs.js", "books.js", "transcript.js", "fx.js", "music.js", "art.js", "intro.js", "bot.js", "codex.js", "tools/stamp.js", "tools/wiki-lint.js", "version.js", "tests/run-all.js", "tests/run-html.js", ".github/workflows/ci.yml"],
+    "ch1": ["story.js", "scenes.js", "cast.js", "court.js", "market.js", "practice.js", "standing.js", "endings.js"]
+  }
+}
