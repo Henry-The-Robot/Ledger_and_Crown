@@ -1,5 +1,5 @@
 // Standing orders: deterministic, 1-2 a day, a mix of good and trap orders, the verdict names what is wrong, and taking the good ones keeps the books whole. Run: node tests/test-standing.js
-global.window = global; const S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; const Bot = require("../bot.js"); require("../standing.js"); const St = window.Standing;
+global.window = global; const S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; const Bot = require("../core/bot.js"); require("../chapters/ch1/spring/standing.js"); const St = window.Standing;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 // deterministic, 1-2 a day on days 3-26 only
 { const s = S.newGame({ story: false }), days = {}; let bad = 0; for (let d = 1; d <= 28; d++) { s.day = d; const a = St.today(s), b = St.today(s); days[d] = a; if (JSON.stringify(a) !== JSON.stringify(b)) bad++; }

@@ -3,7 +3,7 @@
 //   node tests/test-golden-bots.js            compare with the recorded file
 //   node tests/test-golden-bots.js --record   rewrite it (only when a PR says why Chapter 1's books changed and the Chapter 1 pack approves)
 const fs = require("fs"), path = require("path");
-const S = require("../engine.js"), Bot = require("../bot.js"), FILE = path.join(__dirname, "golden", "ch1-spring", "bots.json");
+const S = require("../core/engine.js"), Bot = require("../core/bot.js"), FILE = path.join(__dirname, "golden", "ch1-spring", "bots.json");
 const SEEDS = [0, 3], BOTS = ["careful", "overtrader", "reckless", "noDuke", "sprinkler", "spender"];
 const hash = str => { let h = 5381; for (let i = 0; i < str.length; i++) h = (h * 33 + str.charCodeAt(i)) >>> 0; return h.toString(16); };
 function season(botName, seed) {

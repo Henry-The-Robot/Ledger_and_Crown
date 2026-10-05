@@ -1,13 +1,14 @@
 // Editor pass checks (work order item 6). Maud speaks in at most two sentences a box; no scene or conversation runs more than four boxes without a choice; Crane stays in "Item:" voice.
 // The live run (tests/smoke-story.html) reports the longest choiceless run per day of the real story. Run: node tests/test-editor.js [--list]
-global.window = global; const fs = require("fs"), path = require("path"), S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../transcript.js"); global.Verbs = {}; global.Endings = require("../endings.js");
-require("../cast.js"); require("../scenes.js"); require("../practice.js"); if (fs.existsSync(path.join(__dirname, "../standing.js"))) require("../standing.js");
+global.window = global; const fs = require("fs"), path = require("path"), S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../core/transcript.js"); global.Verbs = {}; global.Endings = require("../chapters/ch1/spring/endings.js");
+require("../chapters/ch1/spring/cast.js"); require("../chapters/ch1/spring/scenes.js"); require("../chapters/ch1/spring/practice.js"); if (fs.existsSync(path.join(__dirname, "../chapters/ch1/spring/standing.js"))) require("../chapters/ch1/spring/standing.js");
 const C = window.Cast, SC = window.Scenes, LIST = process.argv.includes("--list");
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const sent = x => x.replace(/\$\{[^}]*\}/g, "N").replace(/<[^>]+>/g, " ").replace(/\d\.\d/g, "d").replace(/e\.g\./g, "eg").split(/(?<=[.?!])\s+(?=[A-Z"“'‘(])/).filter(s => s.trim().length > 2);
 const STR = "(`(?:[^`\\\\]|\\\\.)*`|\"(?:[^\"\\\\]|\\\\.)*\")";
 // ---- 1. Maud's boxes in source (every call that makes Maud speak) ----
-{ const files = ["story.js", "scenes.js", "game.js", "verbs.js", "market.js", "practice.js", "standing.js", "court.js", "engine.js"].filter(f => fs.existsSync(path.join(__dirname, "..", f)));
+{ const files = ["chapters/ch1/spring/story.js", "chapters/ch1/spring/scenes.js", "core/game.js", "core/verbs.js", "core/market.js", "chapters/ch1/spring/practice.js", "chapters/ch1/spring/standing.js", "chapters/ch1/spring/court.js", "core/engine.js"];
+  files.forEach(f => { if (!fs.existsSync(path.join(__dirname, "..", f))) throw new Error("test-editor: " + f + " is missing; update this list after a move (a silent filter once let this test pass on nothing)"); });
   const re = new RegExp("(?:\\btell\\(|G\\.say\\(\"maud\",\\s*|\\bsayP\\(\"maud\",\\s*|\\bsay\\(\"maud\",\\s*|c\\.maud\\(|\\bmaud:\\s*|who: \"maud\", text:\\s*|G\\.dlg\\(\\{ who: \"maud\", text:\\s*|ask\\(\"maud\",\\s*|G\\.ask\\(\"maud\",\\s*)" + STR, "g"), bad = [];
   for (const f of files) fs.readFileSync(path.join(__dirname, "..", f), "utf8").split("\n").forEach((ln, i) => { let m; re.lastIndex = 0; while ((m = re.exec(ln))) { const n = sent(m[1].slice(1, -1)).length; if (n > 2) bad.push(`${f}:${i + 1} [${n}] ${m[1].slice(1, 70)}`); } });
   if (LIST) bad.forEach(b => console.log("   " + b)); ok(bad.length === 0, `every Maud box in the source is at most two sentences (${bad.length} over)`); }

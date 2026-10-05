@@ -3,7 +3,7 @@ title: Endings, Crane's offer and epilogues
 type: system
 pack: ch1
 season: spring
-files: [endings.js, story.js, game.js]
+files: [chapters/ch1/spring/endings.js, chapters/ch1/spring/story.js, core/game.js]
 symbols: [offer, soldOut, ending, epilogue, unlock, unlocked, opCash, daysInGap, UNLOCKS, MIN_PRICE, MERCY_FLOOR, MERCY_SHARE, showEnding, sell, craneOffer, testEnding, closeBooks]
 concepts: [tvm, equation]
 sessions: [C0.01, C1.01]
@@ -20,17 +20,17 @@ Sold out, Seized, Bridged or Free. Each ending shows an epilogue card and unlock
 ## Where
 | File · symbol | What |
 |---|---|
-| `endings.js` · `offer(s)` (~26) | `{price, base, mercy, daysInGap, equity, earned, cash, wages}`. |
-| `endings.js` · `opCash(s)`, `daysInGap(s)` | Cash cleared by operations. Days in the next 14 where the forecast Cash is below zero. |
-| `endings.js` · `soldOut(s, price)` (~34) | The numbers for the sold epilogue: what the farm earns (Cash, else profit), equity, and how many springs the price equals. |
-| `endings.js` · `ending(s)` (~39) | `sold`, `seized`, `bridged` or `free`. |
-| `endings.js` · `epilogue(kind, ctx)` (~45) | 3-4 lines from game state, a title, and the unlock. |
-| `endings.js` · `UNLOCKS`, `unlock(kind)`, `unlocked()` | One letter or page per ending. Saved across games in `localStorage` (`lc_unlocks_v1`). |
-| `story.js` · `craneOffer(opts)` (~466) | The scene. Three variants: first (day 1), mercy, standing. Two confirms (Crane, then Maud). |
-| `story.js` · `sell(o)` (~478) | Records `s.sold`, sets `s.over` and `outcome = "sold"`, then `showEnding("sold")`. Gives `tvm` and `equation` as introduced only, never as evidence. |
-| `story.js` · `showEnding(kind, opts)` (~486) | The card: epilogue lines, the offer against earnings (sold), the unlock, and buttons (Play again, Case board, Close). |
-| `story.js` · `testEnding(kind)` | The `?ending=` test hook. Works on a copy. Saves nothing. |
-| `game.js` · `closeBooks()` (~789) | The "How it ends" button calls `Story.showEnding(Endings.ending(s))`. |
+| `chapters/ch1/spring/endings.js` · `offer(s)` (~26) | `{price, base, mercy, daysInGap, equity, earned, cash, wages}`. |
+| `chapters/ch1/spring/endings.js` · `opCash(s)`, `daysInGap(s)` | Cash cleared by operations. Days in the next 14 where the forecast Cash is below zero. |
+| `chapters/ch1/spring/endings.js` · `soldOut(s, price)` (~34) | The numbers for the sold epilogue: what the farm earns (Cash, else profit), equity, and how many springs the price equals. |
+| `chapters/ch1/spring/endings.js` · `ending(s)` (~39) | `sold`, `seized`, `bridged` or `free`. |
+| `chapters/ch1/spring/endings.js` · `epilogue(kind, ctx)` (~45) | 3-4 lines from game state, a title, and the unlock. |
+| `chapters/ch1/spring/endings.js` · `UNLOCKS`, `unlock(kind)`, `unlocked()` | One letter or page per ending. Saved across games in `localStorage` (`lc_unlocks_v1`). |
+| `chapters/ch1/spring/story.js` · `craneOffer(opts)` (~466) | The scene. Three variants: first (day 1), mercy, standing. Two confirms (Crane, then Maud). |
+| `chapters/ch1/spring/story.js` · `sell(o)` (~478) | Records `s.sold`, sets `s.over` and `outcome = "sold"`, then `showEnding("sold")`. Gives `tvm` and `equation` as introduced only, never as evidence. |
+| `chapters/ch1/spring/story.js` · `showEnding(kind, opts)` (~486) | The card: epilogue lines, the offer against earnings (sold), the unlock, and buttons (Play again, Case board, Close). |
+| `chapters/ch1/spring/story.js` · `testEnding(kind)` | The `?ending=` test hook. Works on a copy. Saves nothing. |
+| `core/game.js` · `closeBooks()` (~789) | The "How it ends" button calls `Story.showEnding(Endings.ending(s))`. |
 
 ### The offer price
 `price = max(150, round(300 + max(0, opCash)/2 - 10 * daysInGap))`.
@@ -55,7 +55,7 @@ The offer ignores book equity on purpose: equity is what the books say, not what
 - Selling is not credited as skill in the transcript.
 
 ## How to change it safely
-- Change the formula in `endings.js` and its comment block together. Update `formula` in `test-offer.js`.
+- Change the formula in `chapters/ch1/spring/endings.js` and its comment block together. Update `formula` in `test-offer.js`.
 - `ending()` order matters: `sold` first, then insolvent, then the Crown verdict.
 - Epilogue numbers come from `crownFund` and `R`. Never write a literal.
 - Add an ending: a `T` entry in `epilogue`, an `UNLOCKS` entry, and a branch in `ending`.

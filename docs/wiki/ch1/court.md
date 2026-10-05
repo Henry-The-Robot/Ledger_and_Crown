@@ -3,7 +3,7 @@ title: The Reeve's Court (Spring finale and exam)
 type: system
 pack: ch1
 season: spring
-files: [court.js, court.css, game.js]
+files: [chapters/ch1/spring/court.js, chapters/ch1/spring/court.css, core/game.js]
 symbols: [BUILDERS, POOLS, build, hearing, letterPage, endScene, teaser, closeBooks]
 concepts: [equation, cfs, ar, inventory, margin, breakeven, opportunity, tvm, wc, ev, accrual, overtrading]
 sessions: [C1.01, C1.02, C1.08, C16.01, C0.08, C2.02, C5.01, C0.06, C2.09]
@@ -21,12 +21,12 @@ seal, Vane's offer comes due, and the Summer teaser.
 ## Where
 | File · symbol | What |
 |---|---|
-| `court.js` · `BUILDERS` (~37) | One builder per claim. Each returns `null` when its premise doesn't fit these books. Fields: `text`, `press`, `reveal`, `hint`, `right(card)`, `rightLabel`, `maud`, `crane`. |
-| `court.js` · `POOLS` (~132) | One pool per Season 1 core idea (8); a sitting draws one claim per pool, plus `guarantee` (or `callable`). |
-| `court.js` · `build(o)` (~134) | Picks the 9 claims for a sitting. `attempt` rotates pool variants and the numbers in hypothetical claims. |
-| `court.js` · `hearing(o, attempt)` (~168) | The play loop: press, present, patience, Crane's and Ezra's testimony. |
-| `court.js` · `letterPage`, `endScene`, `teaser`, `run` (~216–251) | After a pass: the letter, the seal, `vaneFinal`, the Summer teaser. |
-| `game.js` · `closeBooks` (~789) | Calls `Court.run({statements, clues, flags, trust, seed, farm, facts, letter})` (~806). |
+| `chapters/ch1/spring/court.js` · `BUILDERS` (~37) | One builder per claim. Each returns `null` when its premise doesn't fit these books. Fields: `text`, `press`, `reveal`, `hint`, `right(card)`, `rightLabel`, `maud`, `crane`. |
+| `chapters/ch1/spring/court.js` · `POOLS` (~132) | One pool per Season 1 core idea (8); a sitting draws one claim per pool, plus `guarantee` (or `callable`). |
+| `chapters/ch1/spring/court.js` · `build(o)` (~134) | Picks the 9 claims for a sitting. `attempt` rotates pool variants and the numbers in hypothetical claims. |
+| `chapters/ch1/spring/court.js` · `hearing(o, attempt)` (~168) | The play loop: press, present, patience, Crane's and Ezra's testimony. |
+| `chapters/ch1/spring/court.js` · `letterPage`, `endScene`, `teaser`, `run` (~216–251) | After a pass: the letter, the seal, `vaneFinal`, the Summer teaser. |
+| `core/game.js` · `closeBooks` (~789) | Calls `Court.run({statements, clues, flags, trust, seed, farm, facts, letter})` (~806). |
 | standalone | `game.html?court=1` runs a careful-bot season straight into the Court. |
 
 ## Data and state

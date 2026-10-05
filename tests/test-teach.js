@@ -1,5 +1,5 @@
 // The teaching and stakes layer: books preview, emergency loan, post-mortem, notices, frost pile-up. Run: node tests/test-teach.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 // --- preview

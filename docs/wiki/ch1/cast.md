@@ -3,7 +3,7 @@ title: The cast (voices, greetings, topics, chat menu)
 type: system
 pack: ch1
 season: spring
-files: [cast.js, game.js]
+files: [chapters/ch1/spring/cast.js, core/game.js]
 symbols: [WHO, greet, topics, locked, short, chat, hash]
 concepts: []
 sessions: []
@@ -20,13 +20,13 @@ Voices are written down in `docs/STORY-BIBLE.md`.
 ## Where
 | File · symbol | What |
 |---|---|
-| `cast.js` · `WHO` (~6) | One entry per person: `name`, `look`, `habit`, `mantra`, `voice`, `greet[]`, optional `low[]`, `rich[]`, `rain[]`, and `topics[]`. |
-| `cast.js` · `greet(who, s)` (~114) | Picks a line from weather and chest first, else from `greet[]`. Never repeats the last line. |
-| `cast.js` · `topics(who, s)` (~122) | Topics the player may ask now. Each has `id`, `label`, `lines`, optional `need`. Adds `heard`. |
-| `cast.js` · `locked(who, s)` (~127) | How many topics are still locked. |
-| `cast.js` · `short(id)`, `name(id)` | Short name for clue cards ("Maud"). Full name. |
-| `game.js` · `chat(who, note)` (~540) | The menu. See below. |
-| `game.js` · `maud()` (~513), `ezra()`, `tomas()` | Their own menus, which call `chat(who)` for "Ask about something else". |
+| `chapters/ch1/spring/cast.js` · `WHO` (~6) | One entry per person: `name`, `look`, `habit`, `mantra`, `voice`, `greet[]`, optional `low[]`, `rich[]`, `rain[]`, and `topics[]`. |
+| `chapters/ch1/spring/cast.js` · `greet(who, s)` (~114) | Picks a line from weather and chest first, else from `greet[]`. Never repeats the last line. |
+| `chapters/ch1/spring/cast.js` · `topics(who, s)` (~122) | Topics the player may ask now. Each has `id`, `label`, `lines`, optional `need`. Adds `heard`. |
+| `chapters/ch1/spring/cast.js` · `locked(who, s)` (~127) | How many topics are still locked. |
+| `chapters/ch1/spring/cast.js` · `short(id)`, `name(id)` | Short name for clue cards ("Maud"). Full name. |
+| `core/game.js` · `chat(who, note)` (~540) | The menu. See below. |
+| `core/game.js` · `maud()` (~513), `ezra()`, `tomas()` | Their own menus, which call `chat(who)` for "Ask about something else". |
 
 ### The cast
 `maud`, `crane`, `ashby`, `hobb`, `tomas`, `ezra`, `duke` (Corvin Vane), and the visitors `pell`, `pedlar`, `mira`, `abbey`.
@@ -36,7 +36,7 @@ Voices are written down in `docs/STORY-BIBLE.md`.
 2. Otherwise `greet[]` is indexed by day and a hash of the name, so a day always gives the same line.
 3. It never returns the line it said last.
 
-### How `chat` runs (`game.js`)
+### How `chat` runs (`core/game.js`)
 1. List `Cast.topics(who, s)` not yet heard.
 2. Show the greeting. A buyer with no offer today adds "isn't buying today".
 3. Menu: topic labels, then `Deal: ...` rows from `Standing.today(s)` for that buyer, then Leave.
@@ -60,7 +60,7 @@ A topic's `need` can be `{trust}`, `{flag}` or `{day}`. The module changes no bo
 - Add a topic to `WHO[x].topics`. Keep each line one idea. Give `need` a flag only if a scene sets it.
 - Keep the voice. Crane numbers sentences rarely. Hobb pauses. Tomas sells in superlatives.
 - Never put a number in a line that the engine owns. Use the scene or the notice board.
-- A new person needs a `WHO` entry, an `S.NAMES` entry in `engine.js`, and `s.trust` support.
+- A new person needs a `WHO` entry, an `S.NAMES` entry in `core/engine.js`, and `s.trust` support.
 
 ## Known issues
 None recorded.

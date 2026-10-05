@@ -1,7 +1,7 @@
 // WS6: the story's balance with Corvin's escalating orders (day 12: half of R.duke.sacks, day 15: the full R.duke.sacks, both on R.duke.terms),
 // bots through a STORY-shaped game (offers on, the story's own Duke orders injected the way story.js does), the timeline's "tied up" line,
 // and (item 9) the seeded events. Run: node tests/test-spine.js
-const S = require("../engine.js"), Bot = require("../bot.js"); let fail = 0;
+const S = require("../core/engine.js"), Bot = require("../core/bot.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const D = S.R.duke, C = S.R.corvin, first = C[0].sacks, second = C[1].sacks;
 // A story-shaped game: no sandbox Duke on day 10 (engine skips it for story games); Corvin's two orders arrive like story.js's arrive(1)/arrive(2).

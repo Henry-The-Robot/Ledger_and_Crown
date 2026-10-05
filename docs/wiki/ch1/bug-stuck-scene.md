@@ -3,7 +3,7 @@ title: Bug — a scene waits on nothing and the map freezes (days 22–23)
 type: bug
 pack: ch1
 season: spring
-files: [game.js, story.js]
+files: [core/game.js, chapters/ch1/spring/story.js]
 symbols: [unstick]
 concepts: []
 sessions: []
@@ -20,8 +20,8 @@ Kyle's iPad playtest 2: on day 22 or 23 the map stopped responding; only "save a
 **Not reproduced.** A scene chain was waiting on a promise with nothing visible on screen, so `busy` stayed set.
 
 ## Fix (a safety valve, not a root-cause fix)
-- v0.4.4: if a scene waits ~7 s with nothing visible, `game.js` (~286) calls `Story.unstick()` (`story.js` ~513), which clears `busy` and frees the map.
-- v0.4.6: an epoch guard in `story.js`: `unstick()` bumps the epoch, and a scene chain started under an old epoch exits at
+- v0.4.4: if a scene waits ~7 s with nothing visible, `core/game.js` (~286) calls `Story.unstick()` (`chapters/ch1/spring/story.js` ~513), which clears `busy` and frees the map.
+- v0.4.6: an epoch guard in `chapters/ch1/spring/story.js`: `unstick()` bumps the epoch, and a scene chain started under an old epoch exits at
   its next await, so it cannot resume later and race a new scene. `#mkt` and the intro overlay count as "on screen".
 
 ## Test

@@ -5,8 +5,8 @@
 <meta name="theme-color" content="#1f2a1a"><meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Ledger & Crown — Spring at Thornfield</title>
-<link rel="stylesheet" href="style.css?v=0.4.6"><link rel="stylesheet" href="verbs.css?v=0.4.6">
-<link rel="stylesheet" href="market.css?v=0.4.6"><link rel="stylesheet" href="court.css?v=0.4.6"><link rel="stylesheet" href="intro.css?v=0.4.6">
+<link rel="stylesheet" href="core/style.css?v=0.4.6"><link rel="stylesheet" href="core/verbs.css?v=0.4.6">
+<link rel="stylesheet" href="core/market.css?v=0.4.6"><link rel="stylesheet" href="chapters/ch1/spring/court.css?v=0.4.6"><link rel="stylesheet" href="core/intro.css?v=0.4.6">
 <style>
   body{background:#1f2a1a;overflow:hidden;user-select:none}
   #wrap{position:relative;margin:0 auto}
@@ -92,7 +92,7 @@
   body.touch .modal{max-height:92dvh;padding:18px 18px;-webkit-overflow-scrolling:touch}
   body.touch .pclose{min-height:46px}
 </style>
-<link rel="stylesheet" href="story.css?v=0.4.6"><link rel="stylesheet" href="ui.css?v=0.4.6"><style>html body{background:#1f2a1a} /* ui.css sets a parchment page colour; the game is dark so no light bars show round the map */</style></head>
+<link rel="stylesheet" href="chapters/ch1/spring/story.css?v=0.4.6"><link rel="stylesheet" href="core/ui.css?v=0.4.6"><style>html body{background:#1f2a1a} /* ui.css sets a parchment page colour; the game is dark so no light bars show round the map */</style></head>
 <body>
 <div id="wrap">
   <canvas id="c" width="320" height="200"></canvas>
@@ -108,9 +108,9 @@
 <div class="overlay" id="panel" style="display:none"><div class="modal" id="panelBody"></div></div>
 <!-- ?v= busts browser caches on every release (Safari otherwise mixes old scripts with a new page). Never edit it by hand: `node tools/stamp.js <version>` bumps version.js and stamps every tag. -->
 <script src="version.js?v=0.4.6"></script>
-<script src="endings.js?v=0.4.6"></script><!-- WS6: offer price, epilogues, unlocks (pure; resolves Spring/Bot lazily) -->
-<script src="codex.js?v=0.4.6"></script>
-<script src="engine.js?v=0.4.6"></script><script src="books.js?v=0.4.6"></script><script src="transcript.js?v=0.4.6"></script>
-<script src="art.js?v=0.4.6"></script><script src="bot.js?v=0.4.6"></script><script src="market.js?v=0.4.6"></script><script src="fx.js?v=0.4.6"></script><script src="music.js?v=0.4.6"></script><script src="cast.js?v=0.4.6"></script><script src="practice.js?v=0.4.6"></script><script src="standing.js?v=0.4.6"></script>
-<script src="scenes.js?v=0.4.6"></script><script src="court.js?v=0.4.6"></script><script src="intro.js?v=0.4.6"></script><script src="verbs.js?v=0.4.6"></script><script src="story.js?v=0.4.6"></script><script src="game.js?v=0.4.6"></script>
+<script src="chapters/ch1/spring/endings.js?v=0.4.6"></script><!-- WS6: offer price, epilogues, unlocks (pure; resolves Spring/Bot lazily) -->
+<script src="core/codex.js?v=0.4.6"></script>
+<script src="core/engine.js?v=0.4.6"></script><script src="core/books.js?v=0.4.6"></script><script src="core/transcript.js?v=0.4.6"></script>
+<script src="core/art.js?v=0.4.6"></script><script src="core/bot.js?v=0.4.6"></script><script src="core/market.js?v=0.4.6"></script><script src="core/fx.js?v=0.4.6"></script><script src="core/music.js?v=0.4.6"></script><script src="chapters/ch1/spring/cast.js?v=0.4.6"></script><script src="chapters/ch1/spring/practice.js?v=0.4.6"></script><script src="chapters/ch1/spring/standing.js?v=0.4.6"></script>
+<script src="chapters/ch1/spring/scenes.js?v=0.4.6"></script><script src="chapters/ch1/spring/court.js?v=0.4.6"></script><script src="core/intro.js?v=0.4.6"></script><script src="core/verbs.js?v=0.4.6"></script><script src="chapters/ch1/spring/story.js?v=0.4.6"></script><script src="core/game.js?v=0.4.6"></script>
 </body></html>

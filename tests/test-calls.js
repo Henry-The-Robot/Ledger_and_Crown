@@ -1,6 +1,6 @@
 // Creative calls 1-5 (docs/TASKS-season1.md): letter order, clue-card length, Market Day days. Run: node tests/test-calls.js
-global.window = global; const S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../transcript.js"); global.Verbs = {}; global.Endings = require("../endings.js");
-require("../cast.js"); require("../scenes.js"); const M = require("../market.js"); require("../story.js"); const Story = window.Story, SC = window.Scenes, C = window.Cast;
+global.window = global; const S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../core/transcript.js"); global.Verbs = {}; global.Endings = require("../chapters/ch1/spring/endings.js");
+require("../chapters/ch1/spring/cast.js"); require("../chapters/ch1/spring/scenes.js"); const M = require("../core/market.js"); require("../chapters/ch1/spring/story.js"); const Story = window.Story, SC = window.Scenes, C = window.Cast;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const wc = x => String(x).trim().split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w)).length;
 // 4. Market Day: 7, 14, 21 only

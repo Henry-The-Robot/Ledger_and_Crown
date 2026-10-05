@@ -3,7 +3,7 @@ title: Lessons, story chapters 1-3 (the writ, first seed, the bakery)
 type: lesson
 pack: ch1
 season: spring
-files: [story.js, transcript.js]
+files: [chapters/ch1/spring/story.js, core/transcript.js]
 symbols: [ch1, ch2, ch3, nameFarm, keep, mastered, page, pin, TITLES, WEEKS, weekCard, after, onTalk, GOALS, CONCEPTS]
 concepts: [equation, inventory, gross, margin]
 sessions: [C1.01, C1.04, C0.02]
@@ -22,14 +22,14 @@ Function names follow the order the code runs, not the numbers in the comments. 
 
 | File · symbol | What |
 |---|---|
-| `story.js` · `ch1` (~122) | The bailiff. `V.tag` builds the balance sheet. One More/Less choice. Names the farm (`nameFarm`). First `craneOffer({first:true})`. Ends at stage `harvest2`. |
-| `story.js` · `after("harvest")` | When the last ripe plot is in, Maud sends the player to Ashby and Edric's first page (`page(0)`). Stage `ashby3`. |
-| `story.js` · `ch3` (~185) | The bakery. Margin worked at 7, the player types margin at 6, the cost floor becomes the red walk-away line in `GL.haggle`. Stage `ship3`. |
-| `story.js` · `after("deliver")` | Ashby's sale: Revenue, Cost of goods sold, gross profit, all in Cash. Points to Tomas. |
-| `story.js` · `ch2` (~172) | First seed. Tomas sells 3 packets, then 6. Cash becomes Inventory. Stage `plant2`. |
-| `story.js` · `onTalk(who)` | Maps stage to scene: `tomas2: ch2`, `ashby3: ch3`. |
-| `story.js` · `keep`, `mastered`, `pin` | `keep` writes the notebook and pins a clue. `mastered` sends evidence to the transcript, unless a hint walked the player. |
-| `transcript.js` · `CONCEPTS` | Concept ids and names, by course. |
+| `chapters/ch1/spring/story.js` · `ch1` (~122) | The bailiff. `V.tag` builds the balance sheet. One More/Less choice. Names the farm (`nameFarm`). First `craneOffer({first:true})`. Ends at stage `harvest2`. |
+| `chapters/ch1/spring/story.js` · `after("harvest")` | When the last ripe plot is in, Maud sends the player to Ashby and Edric's first page (`page(0)`). Stage `ashby3`. |
+| `chapters/ch1/spring/story.js` · `ch3` (~185) | The bakery. Margin worked at 7, the player types margin at 6, the cost floor becomes the red walk-away line in `GL.haggle`. Stage `ship3`. |
+| `chapters/ch1/spring/story.js` · `after("deliver")` | Ashby's sale: Revenue, Cost of goods sold, gross profit, all in Cash. Points to Tomas. |
+| `chapters/ch1/spring/story.js` · `ch2` (~172) | First seed. Tomas sells 3 packets, then 6. Cash becomes Inventory. Stage `plant2`. |
+| `chapters/ch1/spring/story.js` · `onTalk(who)` | Maps stage to scene: `tomas2: ch2`, `ashby3: ch3`. |
+| `chapters/ch1/spring/story.js` · `keep`, `mastered`, `pin` | `keep` writes the notebook and pins a clue. `mastered` sends evidence to the transcript, unless a hint walked the player. |
+| `core/transcript.js` · `CONCEPTS` | Concept ids and names, by course. |
 
 ## Data and state
 - Story state `st` (`Story.state`): `ch`, `stage`, `notebook`, `pages`, `clues`, `farm`. Saved with the game.

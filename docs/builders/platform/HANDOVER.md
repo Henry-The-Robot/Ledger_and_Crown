@@ -1,41 +1,51 @@
-# HANDOVER — Platform pack — updated 2026-10-04 by the platform builder (P1 session)
+# HANDOVER — Platform pack — updated 2026-10-05 by the platform builder (session: P1, P2, W1, W2, P3)
 
 ## State in one paragraph
-W2 (seed the wiki) is built on `platform/wiki-seed` (stacked on `platform/wiki-lint`): 24 pages (14 platform, 10 ch1 incl. LOG and the two earlier), INDEX generated, MAP files link them, coverage is now **strict**. Findings for the creative lead are under "Blocked". W1 (wiki lint) is built on `platform/wiki-lint` (stacked on `platform/version`): `tools/wiki-lint.js`, `docs/wiki/coverage.json`, `tests/test-wiki-lint.js`, a CI step, and three platform wiki pages (P1, P2, W1 themselves). Coverage is warn-only (23 files unnamed) until W2. P2 (one version stamp) is built on `platform/version`, stacked on `platform/ci`: `version.js` holds the version, `tools/stamp.js` stamps every `?v=` (bump: `node tools/stamp.js 0.4.7`), `tests/test-version.js` fails on any differing tag. It also found `index.html`'s `style.css` had no `?v=`. Read the master plan (`docs/MASTER-PLAN.html`) this session: platform phase first (P1 to P12, W1, W2), then Spring final.
-
-P1 (CI) is built on branch `platform/ci`: a GitHub Actions workflow (`.github/workflows/ci.yml`, job `tests`) runs
-`node tests/run-all.js` and then every browser test page in real-time Chromium through `tests/run-html.js --all`.
-The runner now judges pages itself (a `: false` line, THROWN, a page error and so on fail it), because the pages only print
-text. On master two pages were already failing and are fixed here: `midwinter.html` (it printed the intended `false` for a
-reckless farm; it now says "hidden: true") and `practice-ui.html` (it assumed a number problem; decision problems now
-exist, so it hides them). Not started: P2 onward.
+P1, P2, W1, W2 and P3 are built and green in CI; none is merged. Each is its own PR, stacked on the one below.
+CI (`.github/workflows/ci.yml`, check `tests`) runs the node tests, the wiki lint, and every browser page in real-time Chromium.
+There is one version stamp (`version.js`, `tools/stamp.js`). The code wiki has 24 pages and a lint with strict coverage.
+Golden bot seasons and a golden story run (`tests/golden/ch1-spring/`) are recorded. Files now live in `core/` and `chapters/ch1/spring/`,
+and the goldens are byte-identical after the move. Core still holds Spring's constants and Spring-only code (P5 and P6 move them out).
 
 ## Live / branch state
-master = v0.4.6. PR #45 `platform/ci` (P1) open; `platform/version` (P2) stacked on it: merge #45 first, then retarget the P2 PR to master. To prove CI fails on a broken test, a throwaway commit breaks one test, the
-run goes red, and the next commit reverts it (both stay in the PR history).
+master = v0.4.6. Merge in this order, retargeting each PR to `master` as the one below it lands:
+#45 `platform/ci` (P1) → #47 `platform/version` (P2) → #48 `platform/wiki-lint` (W1) → #50 `platform/wiki-seed` (W2)
+→ #51 `platform/golden` (P3 baseline) → #52 `platform/restructure` (P3 move). CI is green on all six.
 
 ## Next 3 actions
-1. P3 — golden runs, then the restructure (a file that moves needs its wiki pages' `files` updated; the lint proves it).
-2. P4 — saves (the save page lists what to fix).
-3. P5 — season settings as data.
+1. After the stack merges: P4 — saves (`docs/wiki/platform/save.md` lists the problems: unversioned, deleted on finish, other stores).
+2. P5 — season settings as data (Spring's `R` out of `core/engine.js`), then P6 — lessons and scenes as data.
+3. Remove the two unseeded `Math.random` calls (`core/game.js`: the review option shuffle, the story seed) when P4 touches the save.
 
 ## Failure lesson
-- The browser test pages passed or failed by eye. A runner that only prints cannot gate a PR. Rule: every test page ends in
-  `label: true|false` lines, and the runner decides. Followed the previous lesson (never merge your own PR).
+- A test that filters its file list with `existsSync` passes on nothing after a move (`test-editor.js` did). Rule: a test that
+  names source files throws if one is missing. Grep for the pattern on any move.
+- Tests that only print cannot gate a PR. Every browser page ends in `label: true|false` lines; the runner decides.
+- Followed: never merge your own PR.
 
 ## Blocked on the creative lead / Kyle
 - Make the `tests` check required in branch protection once #45 merges (asked 2026-10-04).
-- Found while writing the wiki (2026-10-05; not fixed, your call): (1) `story.js` calls `Scenes.morning` every morning but `scenes.js` never exports it, so the call is skipped; `Scenes.pending` has no caller. (2) `lc_intro_seen` is written but never read; a returning player with no save sees the opening again. (3) `Codex.addPrestige`, `setLevel`, `speak`, `due`, `retained` are never called. (4) The save is deleted when Ezra's closing review finishes, so "Welcome back, the spring is over" works only until then (P4). (5) `story.js` chapter headers disagree with function names (`ch2` is the first seed, `ch3` the bakery) and chapters 4-5 are not calendar weeks 2-3. (6) Session tags: ch7 cites C1.06 (bond interest; the honest sources are C0.01, C5.01); C0.02 and C2.09 tags are loose. (7) `market.js` header says Grisby undercuts by 1; the code says 2. (8) The engine header names `test-engine.js` (missing) and a `crownFund` comment says 1,000 (`R.crownDebt` is 1,250). (9) Bot literals (12 per packet, 150 borrow) are not read from `R`. (10) No direct tests for art, fx, codex, verbs.
+- Release note: after #52 merges, an iPad that cached `game.html` requests old script paths (404). Bump with `node tools/stamp.js 0.4.7` at the release.
+- `docs/builders/README.md` ("What lives where") still lists the old root paths. It is canon, so it is yours to update.
+- Found while writing the wiki (not fixed; your call): (1) `Scenes.morning` is called in `story.js` but never defined, and `Scenes.pending` has no caller.
+  (2) `lc_intro_seen` is written, never read. (3) `Codex.addPrestige/setLevel/speak/due/retained` are never called.
+  (4) The save is deleted when Ezra's closing review ends (P4). (5) `story.js` chapter headers disagree with function names; chapters 4–5 are not calendar weeks 2–3.
+  (6) Session tags: ch7 cites C1.06 (bond interest; honest sources are C0.01, C5.01); C0.02 and C2.09 are loose.
+  (7) `market.js` header says Grisby undercuts by 1; the code says 2. The engine header names a missing `test-engine.js`; a `crownFund` comment says 1,000 (it is 1,250).
+  (8) Bot literals (12 per packet, 150 borrow) are not read from `R`. (9) No direct tests for art, fx, codex, verbs.
 
 ## Decisions made and why
-- 2026-10-04: Playwright is installed in CI with `npm install --no-save` (no package.json, no lockfile): the repo stays
-  build-free. Pinned to 1.54.2 so a Playwright release cannot turn CI red by itself.
-- 2026-10-04: `shot-*.html` are screenshot drivers, not tests, so `--all` skips them.
-- 2026-10-04: a fixed test fails honestly; no test was skipped or loosened to get green.
+- 2026-10-05: P3 split into two PRs (baseline, then move) so a reviewer sees the goldens before anything moves.
+- 2026-10-05: `core/` = shared code; `chapters/ch1/spring/` = Spring content; the root keeps entry pages, `version.js`, tools, tests, docs.
+- 2026-10-04: no build step, no framework. Playwright is installed in CI with `--no-save` (pinned 1.54.2).
+- 2026-10-04: `shot-*.html` are screenshot drivers, not tests. Pages are served over http in the runner (file:// blocks `fetch`).
+- 2026-10-04: no test was skipped or loosened to get green; two stale pages (`midwinter`, `practice-ui`) were fixed honestly.
 
 ## Dead ends (do not repeat)
-- Local headless tests need `NODE_PATH=$(npm root -g)` and `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
-- `--virtual-time-budget` runs never advance audio or animation; use `run-html.js`.
+- Local browser tests need `NODE_PATH=$(npm root -g)` and `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
+- `--virtual-time-budget` runs never advance audio or animation; use `tests/run-html.js`.
+- `git revert -q` is not a valid flag combination; a failed revert followed by `commit --amend` rewrote the wrong commit once.
 
 ## Files that matter
-- `.github/workflows/ci.yml` · `tests/run-html.js` · this pack's `MAP.md` (Tests row) · `tests/run-all.js`.
+`.github/workflows/ci.yml` · `tests/run-html.js` · `tests/test-golden-bots.js` · `tests/golden-story.html` · `tests/golden/ch1-spring/` ·
+`tools/stamp.js` · `tools/wiki-lint.js` · `docs/wiki/` (INDEX, `coverage.json`) · `TASK-PLAN.md` · this pack's `MAP.md`.

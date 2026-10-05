@@ -1,5 +1,5 @@
 // The opening's script and timeline are data: check them before anything is drawn. Run: node tests/test-intro.js
-global.window = global; require("../intro.js"); const I = window.Intro;
+global.window = global; require("../core/intro.js"); const I = window.Intro;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const L = I.SCRIPT, sent = x => x.split(/(?<=[.?!])\s+(?=[A-Z"'])/).filter(Boolean).length;
 ok(L.length === 11 && new Set(L.map(l => l.id)).size === L.length && L.every(l => /^i\d\d$/.test(l.id)), "11 lines with unique ids (i01-i11): the file names a voice would be saved as");

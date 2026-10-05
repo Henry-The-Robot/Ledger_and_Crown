@@ -1,9 +1,9 @@
 ---
-title: The game shell (game.js)
+title: The game shell (core/game.js)
 type: system
 pack: platform
 season: all
-files: [game.js]
+files: [core/game.js]
 symbols: [dlg, sayP, ask, haggle, numberPad, pinPage, addSignButtons, initTouch, fit, desk, sleepNow, doSleep, morningBark, night, closeBooks, review, pauseMenu, stall, hud, moodNow, drainUses, showPanel, hidePanel, act]
 concepts: []
 sessions: []
@@ -13,29 +13,29 @@ updated: 2026-10-05
 ---
 
 ## What it does
-`game.js` is the playable world: map, walking, dialogue, menus, the Desk, the day loop and the close of the books. It is one IIFE of about 950 lines and exposes `window.G`, the API that `story.js`, `verbs.js`, `market.js` and the tests use. Engine and books logic stays in `engine.js` and `books.js`.
+`core/game.js` is the playable world: map, walking, dialogue, menus, the Desk, the day loop and the close of the books. It is one IIFE of about 950 lines and exposes `window.G`, the API that `chapters/ch1/spring/story.js`, `core/verbs.js`, `core/market.js` and the tests use. Engine and books logic stays in `core/engine.js` and `core/books.js`.
 
 ## Where
 | File · symbol | What |
 |---|---|
-| `game.js` · `dlg(o)` | The one dialogue box. Takes `{who, text, choices, input, spot}`, returns a Promise `{i, v}`. Types text with `FX.type`. |
-| `game.js` · `sayP`, `say` | `sayP` is the Promise form used by the story. `say` is the menu form (choices as `[label, fn]`) for the sandbox. |
-| `game.js` · `ask(who, text, answer, hints, ...)` | A typed-number question. Hints, "walk me through", skip. Sets `window.__walked` and `window.__want`. |
-| `game.js` · `haggle(o, cfg)` | The sale negotiation scene. |
-| `game.js` · `numberPad(d)` | On-screen pad: digits, minus, backspace, Check. On touch the input is read-only. |
-| `game.js` · `pinPage` | On touch, scrolls the page back to the top when iOS moves it. Skipped while another real input has focus. |
-| `game.js` · `addSignButtons(root)` | Minus-sign buttons for forecast cells, since the iPad pad has none. |
-| `game.js` · `initTouch`, `fit` | Touch setup (tap to walk; `?pad=1` adds a d-pad) and view sizing. |
-| `game.js` · `desk()` | The Desk menu: sleep, ledger, forecast, plan, notebook, transcript, letters, plus `Story.deskItems()`. |
-| `game.js` · `sleepNow`, `doSleep` | `doSleep` calls `Spring.sleep` via `act`, builds the day-end card, resets the player, calls `save()`, then runs `morning`. |
-| `game.js` · `night(title, notes, then, info)` | The overnight card; tap to dismiss. |
-| `game.js` · `morningBark` | Maud's morning line; hides after 9 seconds. |
-| `game.js` · `closeBooks()` | See below. |
-| `game.js` · `review()` | Ezra's closing questions; deletes the save at the end. |
-| `game.js` · `pauseMenu()` | Resume, restart today, save and quit, watch the opening, music and sound switches, copy feedback, report and skip. |
-| `game.js` · `stall` (a `setInterval`) | The stall valve; see below. |
-| `game.js` · `hud`, `moodNow` | HUD paint; `moodNow` picks the music mood each 900 ms. |
-| `game.js` · `drainUses` | Feeds `s.uses` (engine concept uses) into `Transcript.use`. |
+| `core/game.js` · `dlg(o)` | The one dialogue box. Takes `{who, text, choices, input, spot}`, returns a Promise `{i, v}`. Types text with `FX.type`. |
+| `core/game.js` · `sayP`, `say` | `sayP` is the Promise form used by the story. `say` is the menu form (choices as `[label, fn]`) for the sandbox. |
+| `core/game.js` · `ask(who, text, answer, hints, ...)` | A typed-number question. Hints, "walk me through", skip. Sets `window.__walked` and `window.__want`. |
+| `core/game.js` · `haggle(o, cfg)` | The sale negotiation scene. |
+| `core/game.js` · `numberPad(d)` | On-screen pad: digits, minus, backspace, Check. On touch the input is read-only. |
+| `core/game.js` · `pinPage` | On touch, scrolls the page back to the top when iOS moves it. Skipped while another real input has focus. |
+| `core/game.js` · `addSignButtons(root)` | Minus-sign buttons for forecast cells, since the iPad pad has none. |
+| `core/game.js` · `initTouch`, `fit` | Touch setup (tap to walk; `?pad=1` adds a d-pad) and view sizing. |
+| `core/game.js` · `desk()` | The Desk menu: sleep, ledger, forecast, plan, notebook, transcript, letters, plus `Story.deskItems()`. |
+| `core/game.js` · `sleepNow`, `doSleep` | `doSleep` calls `Spring.sleep` via `act`, builds the day-end card, resets the player, calls `save()`, then runs `morning`. |
+| `core/game.js` · `night(title, notes, then, info)` | The overnight card; tap to dismiss. |
+| `core/game.js` · `morningBark` | Maud's morning line; hides after 9 seconds. |
+| `core/game.js` · `closeBooks()` | See below. |
+| `core/game.js` · `review()` | Ezra's closing questions; deletes the save at the end. |
+| `core/game.js` · `pauseMenu()` | Resume, restart today, save and quit, watch the opening, music and sound switches, copy feedback, report and skip. |
+| `core/game.js` · `stall` (a `setInterval`) | The stall valve; see below. |
+| `core/game.js` · `hud`, `moodNow` | HUD paint; `moodNow` picks the music mood each 900 ms. |
+| `core/game.js` · `drainUses` | Feeds `s.uses` (engine concept uses) into `Transcript.use`. |
 
 ## The day loop
 Morning: `doSleep` finishes the night, `save()` writes, `morningBark` and `story("morning")` run. Day: walk, farm (`Spring.act`), talk, trade. Night: `sleepNow` then `doSleep`. When `s.over`, `doSleep` calls `closeBooks`.
@@ -57,5 +57,5 @@ Every second, if the story is busy but no dialogue, panel, pause menu, ending ca
 - Never read `localStorage` directly for new stores; see [save](save.md).
 
 ## Known issues
-- `game.js` mixes drawing, dialogue and flow in one closure. P-series tasks plan to split it.
+- `core/game.js` mixes drawing, dialogue and flow in one closure. P-series tasks plan to split it.
 - Many test hooks live on `window` (`__walked`, `__want`, `__tries`, `__pick`).

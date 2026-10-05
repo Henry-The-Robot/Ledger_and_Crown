@@ -1,5 +1,5 @@
 // WS6: Crane's offer price formula, the mercy offer, the sold-out epilogue numbers, ending classification, unlocks. Run: node tests/test-offer.js
-const S = require("../engine.js"), E = require("../endings.js"), Bot = require("../bot.js"); let fail = 0;
+const S = require("../core/engine.js"), E = require("../chapters/ch1/spring/endings.js"), Bot = require("../core/bot.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const give = (s, n) => { s.bal.cash += n; s.bal.capital -= n; };
 const formula = (earned, gap) => Math.max(150, Math.round(300 + Math.max(0, earned) / 2 - 10 * gap));

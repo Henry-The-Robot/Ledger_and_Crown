@@ -1,5 +1,5 @@
 // Early repayment: interest saved vs the early-repayment fee vs Cash left. Run: node tests/test-loans.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const s = S.newGame(); s.bal.cash = 300; const rate = S.terms(s).rateBp, wk = Math.round(100 * rate / 10000);
 const f = S.loanFacts(s, 100);

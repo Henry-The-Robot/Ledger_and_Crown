@@ -1,5 +1,5 @@
 // Honest mastery checks for transcript.js. Run: node test-transcript.js
-const T = require("../transcript.js"); let fail = 0;
+const T = require("../core/transcript.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 T.reset(); T.master("margin", 3);
 ok(T.state("margin") === "introduced", "one right answer = introduced, not mastered");

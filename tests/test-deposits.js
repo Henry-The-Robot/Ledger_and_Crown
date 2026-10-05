@@ -1,5 +1,5 @@
 // Customer deposits: Cash now, a liability until the grain ships. Run: node tests/test-deposits.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 const open = (s, who) => s.offers.find(o => o.who === who && o.deposit);
@@ -17,5 +17,5 @@ const open = (s, who) => s.offers.find(o => o.who === who && o.deposit);
   const st = B.close(s); ok(st.balanced && st.cf.reconciles, "balanced and reconciled after a refund"); }
 { const s = S.newGame(); upTo(s, 18); ok(open(s, "hobb") && open(s, "hobb").deposit === 0.3, "day 18: Hobb's deposit order appears"); }
 { const s = S.newGame({ story: true }); s.quiet = true; upTo(s, 12); ok(!open(s, "ashby"), "no deposit offers while the story's quiet stretch runs"); }
-for (const k of ["careful", "reckless", "overtrader", "noDuke", "sprinkler"]) { const Bot = require("../bot.js"), s = S.newGame(); let g = 0; while (!s.over && g++ < 40) { Bot[k].day(s); S.sleep(s); } const st = B.close(s); ok(st.balanced && st.cf.reconciles, `${k}: ${s.outcome}, balanced and reconciled`); }
+for (const k of ["careful", "reckless", "overtrader", "noDuke", "sprinkler"]) { const Bot = require("../core/bot.js"), s = S.newGame(); let g = 0; while (!s.over && g++ < 40) { Bot[k].day(s); S.sleep(s); } const st = B.close(s); ok(st.balanced && st.cf.reconciles, `${k}: ${s.outcome}, balanced and reconciled`); }
 process.exit(fail ? 1 : 0);

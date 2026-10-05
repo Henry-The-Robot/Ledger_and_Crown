@@ -3,7 +3,7 @@ title: Practice (the daily problem)
 type: system
 pack: ch1
 season: spring
-files: [practice.js, game.js, transcript.js]
+files: [chapters/ch1/spring/practice.js, core/game.js, core/transcript.js]
 symbols: [BANK, pick, compare, record, available, tierOf, problem, wagerStake, drainUses, teacher, wk4]
 concepts: [gross, margin, tvm, wc, ap, depreciation, breakeven, ratios, accrual, opportunity, overtrading, ev]
 sessions: []
@@ -20,14 +20,14 @@ transcript, a favour and a streak day. On days divisible by 3, with two or more 
 ## Where
 | File · symbol | What |
 |---|---|
-| `practice.js` · `BANK` (~12) | 16 problems. Each has `id`, `concept` and `make(s, tier)`. `make` returns a problem or `null` when it does not apply today. |
-| `practice.js` · `pick(s, level, allow)` (~61) | Chooses today's problem. Weights by level: unseen 0, introduced 1.6, practiced 1.1, mastered .35, plus a small hash of the day. Skips the last 3 ids. Same day, same pick. |
-| `practice.js` · `tierOf` (inside `pick`) | Tier 1 by default. Tier 2 when the concept is practiced. Tier 3 when it is mastered. |
-| `practice.js` · `compare(s)` (~69) | Two offers side by side. Answer A, B or the same. Cash counts only if it arrives by day 28. |
-| `practice.js` · `available(s, level, allow)` (~78) | `null` if today's problem is already done. Else `pick`. |
-| `practice.js` · `record(s, prob, right, walked)` (~80) | Marks the day done, logs it, updates streak and favours. |
-| `game.js` · `problem()` (~522) | The play loop (below). |
-| `game.js` · `wagerStake`, `teacher()`, `wk4()` (~517, ~512) | The optional stake. Who teaches. |
+| `chapters/ch1/spring/practice.js` · `BANK` (~12) | 16 problems. Each has `id`, `concept` and `make(s, tier)`. `make` returns a problem or `null` when it does not apply today. |
+| `chapters/ch1/spring/practice.js` · `pick(s, level, allow)` (~61) | Chooses today's problem. Weights by level: unseen 0, introduced 1.6, practiced 1.1, mastered .35, plus a small hash of the day. Skips the last 3 ids. Same day, same pick. |
+| `chapters/ch1/spring/practice.js` · `tierOf` (inside `pick`) | Tier 1 by default. Tier 2 when the concept is practiced. Tier 3 when it is mastered. |
+| `chapters/ch1/spring/practice.js` · `compare(s)` (~69) | Two offers side by side. Answer A, B or the same. Cash counts only if it arrives by day 28. |
+| `chapters/ch1/spring/practice.js` · `available(s, level, allow)` (~78) | `null` if today's problem is already done. Else `pick`. |
+| `chapters/ch1/spring/practice.js` · `record(s, prob, right, walked)` (~80) | Marks the day done, logs it, updates streak and favours. |
+| `core/game.js` · `problem()` (~522) | The play loop (below). |
+| `core/game.js` · `wagerStake`, `teacher()`, `wk4()` (~517, ~512) | The optional stake. Who teaches. |
 
 ### The bank, by concept
 `gross`, `markup` (margin), `interest` (tvm), `payday` (wc), `discount` (ap), `depreciation`, `breakeven`, `ratio` (ratios), `deposit` (accrual),
@@ -58,7 +58,7 @@ which posts real Cash. A walk-through or a hint is not evidence.
 - Add a problem to `BANK` with `make(s, tier)`. Return `null` when it does not apply. Add a checker to `test-practice.js`.
 - Take every number from `S.R` or the live books. A literal breaks when `R` changes.
 - Keep `hints` as two steps. Keep `work` as the full answer.
-- A new concept id must exist in `transcript.js` `CONCEPTS`.
+- A new concept id must exist in `core/transcript.js` `CONCEPTS`.
 
 ## Known issues
 None recorded.

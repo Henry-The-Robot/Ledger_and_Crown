@@ -1,6 +1,6 @@
 // The Reeve's Court: every claim is built from the player's own statements, and a right card always exists. Run: node tests/test-court.js
 global.window = global; global.location = { search: "" }; global.document = { readyState: "complete", addEventListener() {} };
-const S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; const Bot = require("../bot.js"); require("../court.js"); const C = window.Court;
+const S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; const Bot = require("../core/bot.js"); require("../chapters/ch1/spring/court.js"); const C = window.Court;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const flags = { guarantee: true, hobbExt: true, vane: "asked", craneVane: true }, clues = [{ id: "g", term: "Guarantee for Ashby's bakery", number: null, source: "Ashby" }, { id: "d", term: "Mortgage payable on demand", number: null, source: "Vane" }];
 let books = 0, bad = [], unreachable = [], fresh = 0;

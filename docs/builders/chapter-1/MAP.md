@@ -1,4 +1,4 @@
-# MAP — Chapter 1 (seed, 2026-10-04, v0.4.6; platform P3 moves these into `chapters/ch1/spring/` and rewrites this map)
+# MAP — Chapter 1 (2026-10-05, v0.4.6; after the P3 move: Spring's content is in `chapters/ch1/spring/`, shared code in `core/`)
 
 Read this instead of the code. Open a file only at the place named here.
 **Wiki pages (one per row below):** [spring-settings](../../wiki/ch1/spring-settings.md) · [lessons-week1](../../wiki/ch1/lessons-week1.md) · [lessons-week2](../../wiki/ch1/lessons-week2.md) · [lessons-weeks3-4](../../wiki/ch1/lessons-weeks3-4.md) · [village-scenes](../../wiki/ch1/village-scenes.md) · [cast](../../wiki/ch1/cast.md) · [market-day](../../wiki/ch1/market-day.md) · [practice](../../wiki/ch1/practice.md) · [standing-orders](../../wiki/ch1/standing-orders.md) · [court](../../wiki/ch1/court.md) · [endings](../../wiki/ch1/endings.md) · [bug: stuck scene](../../wiki/ch1/bug-stuck-scene.md) · [build log](../../wiki/ch1/LOG.md). The lint (`node tools/wiki-lint.js`) fails a PR when a page points at code that moved.
@@ -6,16 +6,16 @@ Read this instead of the code. Open a file only at the place named here.
 ## Spring — where each part lives
 | Part | File · entry points | Notes |
 |---|---|---|
-| Season settings | `engine.js` 8–47 (`R`) | 28 days, unit cost 4, wages 45/week, Tomas 2/7 net 14, factor 85%, Duke 132 @ 10 / 28 days, Corvin orders days 12 and 15, Crown 1,250 at Midwinter, prices by day, events and their windows, frost odds. |
-| Chapter lessons (weeks 1–4) | `story.js` | Scene functions incl. `costScene` (fixed vs variable, wages day), `pvScene` (present value, week 3), `craneOffer` (buy-out), `caseBoard`, letters; the morning trigger near the end (`run9` stage, day 16–21 pv). Maud ≤ 2 sentences a box. |
-| Village scenes (days 9–28) | `scenes.js` · `available()`, `pending()` | One-time, red "!" on the speaker; set flags `vane`, `hobbExt`, `ashbyPromise`, `guarantee`, `maudConfessed`, `craneVane`. |
-| Cast, voices, greetings, topics | `cast.js` | Voices in `docs/STORY-BIBLE.md`; Crane's "Item:" ≤ 15% of sentences. |
-| Market Day (days 7, 14, 21) | `market.js` · `newFair`, `playHour`, `decide` (villager types), `floorBet`, `beCell` (break-even), `tally`, Grisby | Sales post through the books. |
-| Practice (desk / Maud / Ezra) | `practice.js` · problem list (tiers 1–3, "why" questions), `pick`, `record` | Tiers by concept level; Ezra takes over in week 4. |
-| Standing orders | `standing.js` · `today`, `facts`, `judge` | Thin / slow / can't-carry traps. |
-| The Reeve's Court (day 28) | `court.js` · `BUILDERS` (claims), `POOLS` (one per core idea), `build`, `hearing`, `letterPage`, `endScene`, `teaser` | 9 claims, pass 6, retake rotates variants and numbers. Saves `vaneFinal`. |
-| Endings and epilogues | `endings.js` · `offer`, `soldOut`, `ending`, `epilogue`, `unlock` | Sold out / Seized / Bridged / Free. |
-| Transcript concepts | `transcript.js` · `CONCEPTS`, `CORE` | The 8 core ideas are tagged `CORE`. |
+| Season settings | `core/engine.js` 8–47 (`R`) | 28 days, unit cost 4, wages 45/week, Tomas 2/7 net 14, factor 85%, Duke 132 @ 10 / 28 days, Corvin orders days 12 and 15, Crown 1,250 at Midwinter, prices by day, events and their windows, frost odds. |
+| Chapter lessons (weeks 1–4) | `chapters/ch1/spring/story.js` | Scene functions incl. `costScene` (fixed vs variable, wages day), `pvScene` (present value, week 3), `craneOffer` (buy-out), `caseBoard`, letters; the morning trigger near the end (`run9` stage, day 16–21 pv). Maud ≤ 2 sentences a box. |
+| Village scenes (days 9–28) | `chapters/ch1/spring/scenes.js` · `available()`, `pending()` | One-time, red "!" on the speaker; set flags `vane`, `hobbExt`, `ashbyPromise`, `guarantee`, `maudConfessed`, `craneVane`. |
+| Cast, voices, greetings, topics | `chapters/ch1/spring/cast.js` | Voices in `docs/STORY-BIBLE.md`; Crane's "Item:" ≤ 15% of sentences. |
+| Market Day (days 7, 14, 21) | `core/market.js` · `newFair`, `playHour`, `decide` (villager types), `floorBet`, `beCell` (break-even), `tally`, Grisby | Sales post through the books. |
+| Practice (desk / Maud / Ezra) | `chapters/ch1/spring/practice.js` · problem list (tiers 1–3, "why" questions), `pick`, `record` | Tiers by concept level; Ezra takes over in week 4. |
+| Standing orders | `chapters/ch1/spring/standing.js` · `today`, `facts`, `judge` | Thin / slow / can't-carry traps. |
+| The Reeve's Court (day 28) | `chapters/ch1/spring/court.js` · `BUILDERS` (claims), `POOLS` (one per core idea), `build`, `hearing`, `letterPage`, `endScene`, `teaser` | 9 claims, pass 6, retake rotates variants and numbers. Saves `vaneFinal`. |
+| Endings and epilogues | `chapters/ch1/spring/endings.js` · `offer`, `soldOut`, `ending`, `epilogue`, `unlock` | Sold out / Seized / Bridged / Free. |
+| Transcript concepts | `core/transcript.js` · `CONCEPTS`, `CORE` | The 8 core ideas are tagged `CORE`. |
 
 ## Core ideas → where they are taught and tested
 SP1 claims: ch1 Crane's list, Court `ownsNothing`/`equityBank` · SP2 profit ≠ cash: ch4–5, Hobb, deposits, Court `profitCash`/`arCash`/`inventoryCash` · SP3 margin vs markup: ch3, Court `margin` · SP4 fixed/variable: `costScene`, Market Day `beCell`, Court `breakeven` · SP5 opportunity cost: `floorBet`, Court `floorOffer` · SP6 time value: Tomas vs Ezra flip, `pvScene`, Court `waitingFree` · SP7 working capital: Corvin's orders, cash book, Court `dukeGenerous` (days count not built: S2) · SP8 EV and ruin: frost almanac, practice, Court `caravanEv`.

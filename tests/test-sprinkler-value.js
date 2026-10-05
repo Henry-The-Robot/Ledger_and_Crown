@@ -1,5 +1,5 @@
 // A sprinkler pays: it saves wages while placed and gives seed a day's head start. Run: node tests/test-sprinkler-value.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const s = S.newGame(); s.bal.cash = 400; const w0 = S.weekBills(s);
 S.buySprinkler(s); ok(S.weekBills(s) === w0, "a sprinkler in the bag saves nothing");
@@ -14,5 +14,5 @@ ok(t.bal.upkeep === S.R.upkeep - S.R.sprinklerSaving && t.bal.depreciation === 5
 const f = S.sprinklerFacts(S.newGame()), g = S.newGame(); g.day = 22; const l = S.sprinklerFacts(g);
 ok(f.weeks === 4 && f.profit === 4 * 20 - 4 * 5 && f.cash === 4 * 20 - 80, "day 1: 4 pay-days, profit +60, Cash back to even by season end");
 ok(l.weeks === 1 && l.profit > 0 && l.cash < 0, "day 22: still adds profit, but Cash is short: profit and Cash disagree");
-for (const k of ["careful", "sprinkler"]) { const Bot = require("../bot.js"), q = S.newGame(); let n = 0; while (!q.over && n++ < 40) { Bot[k].day(q); S.sleep(q); } const st = B.close(q); ok(st.balanced && st.cf.reconciles, `${k}: ${q.outcome}, balanced and reconciled`); }
+for (const k of ["careful", "sprinkler"]) { const Bot = require("../core/bot.js"), q = S.newGame(); let n = 0; while (!q.over && n++ < 40) { Bot[k].day(q); S.sleep(q); } const st = B.close(q); ok(st.balanced && st.cf.reconciles, `${k}: ${q.outcome}, balanced and reconciled`); }
 process.exit(fail ? 1 : 0);

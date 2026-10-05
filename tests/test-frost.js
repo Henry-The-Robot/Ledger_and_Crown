@@ -1,5 +1,5 @@
 // The frost almanac (T6, expected value vs ruin). Run: node tests/test-frost.js
-const S = require("../engine.js"), B = require("../books.js"), Bot = require("../bot.js");
+const S = require("../core/engine.js"), B = require("../core/books.js"), Bot = require("../core/bot.js");
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 // a careful farm up to the evening before the frost, with the frost moved to `night`
 const setup = night => { const s = S.newGame({ story: false }); s.events = { [night]: "frost" }; for (let d = 1; d < night - 1; d++) { Bot.careful.day(s); S.sleep(s); } Bot.careful.day(s); return s; };

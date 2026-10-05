@@ -1,5 +1,5 @@
 // Sprinklers can be picked up and re-placed for free. Run: node tests/test-sprinkler-move.js
-const S = require("../engine.js"); let fail = 0;
+const S = require("../core/engine.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const s = S.newGame(); s.bal.cash = 500; // enough to buy one
 const cash0 = s.bal.cash, equip0 = s.bal.equip;

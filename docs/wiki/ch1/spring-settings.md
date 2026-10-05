@@ -3,7 +3,7 @@ title: Spring settings (the R constants)
 type: data
 pack: ch1
 season: spring
-files: [engine.js]
+files: [core/engine.js]
 symbols: [R, eventsFor, events, windows, corvin, duke, market, deposits, premium, crownDebt, bridgeMax, factorRate, frostOdds, upkeep]
 concepts: []
 sessions: [C1.05, C1.01]
@@ -17,7 +17,7 @@ updated: 2026-10-05
 events and the Crown's debt. The engine, the story, the bots and the tests all read the same `R`. Nothing here changes during play.
 
 ## Where
-`engine.js` · `R` (~8–47). Also `R.pigDay` (derived, right after `R`) and `eventsFor(seed)` (~50).
+`core/engine.js` · `R` (~8–47). Also `R.pigDay` (derived, right after `R`) and `eventsFor(seed)` (~50).
 
 | Group (keys) | What it means |
 |---|---|

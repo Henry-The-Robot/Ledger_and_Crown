@@ -3,7 +3,7 @@ title: Lessons, story chapters 4-5 (Hobb pays later, wages day)
 type: lesson
 pack: ch1
 season: spring
-files: [story.js, transcript.js]
+files: [chapters/ch1/spring/story.js, core/transcript.js]
 symbols: [ch4, ch4b, revealIfDue, ch5, costScene, mastered, keep, page, CONCEPTS]
 concepts: [ar, accrual, margin, wc, breakeven]
 sessions: [C1.02, C2.09, C2.01, C2.02, C0.03]
@@ -20,11 +20,11 @@ The page numbers here are story chapters, not calendar weeks. Wages day plays fr
 ## Where
 | File · symbol | What |
 |---|---|
-| `story.js` · `ch4` (~206) | Hobb at the mill. Haggle with `floor` at cost. Stage `ship4`. |
-| `story.js` · `ch4b(order)` (~217) | After the delivery to Hobb. Revenue rose, Cash did not. Receivable explained. A `V.bet` on the chest on the morning after Hobb pays. Pins `ar`. Edric's page 1. Stage `sleep5`. |
-| `story.js` · `revealIfDue` (~233) | Runs each morning. On or after the reveal day it calls `LV.revealBet()`. A win masters `accrual` and `ar`. |
-| `story.js` · `ch5` (~236) | Wages day, run on the first morning at or after day 8. Reads `S.forecast(G.s, 14)`. Shows the timeline. Tomas's margin bet. Then `costScene`, then Edric's page 2. Stage `tomas6`. |
-| `story.js` · `costScene` (~252) | Fixed against variable cost, and break-even after a price cut (see below). |
+| `chapters/ch1/spring/story.js` · `ch4` (~206) | Hobb at the mill. Haggle with `floor` at cost. Stage `ship4`. |
+| `chapters/ch1/spring/story.js` · `ch4b(order)` (~217) | After the delivery to Hobb. Revenue rose, Cash did not. Receivable explained. A `V.bet` on the chest on the morning after Hobb pays. Pins `ar`. Edric's page 1. Stage `sleep5`. |
+| `chapters/ch1/spring/story.js` · `revealIfDue` (~233) | Runs each morning. On or after the reveal day it calls `LV.revealBet()`. A win masters `accrual` and `ar`. |
+| `chapters/ch1/spring/story.js` · `ch5` (~236) | Wages day, run on the first morning at or after day 8. Reads `S.forecast(G.s, 14)`. Shows the timeline. Tomas's margin bet. Then `costScene`, then Edric's page 2. Stage `tomas6`. |
+| `chapters/ch1/spring/story.js` · `costScene` (~252) | Fixed against variable cost, and break-even after a price cut (see below). |
 
 ### costScene
 1. Maud names two kinds of cost. Variable: seed and grain. Fixed: wages and interest. Today's fixed bill is `S.weekBills(s)`.

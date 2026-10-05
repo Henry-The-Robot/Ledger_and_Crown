@@ -3,17 +3,17 @@
   "strict": true,
   "packs": {
     "platform": [
-      "engine.js",
-      "game.js",
-      "verbs.js",
-      "books.js",
-      "transcript.js",
-      "fx.js",
-      "music.js",
-      "art.js",
-      "intro.js",
-      "bot.js",
-      "codex.js",
+      "core/engine.js",
+      "core/game.js",
+      "core/verbs.js",
+      "core/books.js",
+      "core/transcript.js",
+      "core/fx.js",
+      "core/music.js",
+      "core/art.js",
+      "core/intro.js",
+      "core/bot.js",
+      "core/codex.js",
       "tools/stamp.js",
       "tools/wiki-lint.js",
       "version.js",
@@ -22,14 +22,14 @@
       ".github/workflows/ci.yml"
     ],
     "ch1": [
-      "story.js",
-      "scenes.js",
-      "cast.js",
-      "court.js",
-      "market.js",
-      "practice.js",
-      "standing.js",
-      "endings.js"
+      "chapters/ch1/spring/story.js",
+      "chapters/ch1/spring/scenes.js",
+      "chapters/ch1/spring/cast.js",
+      "chapters/ch1/spring/court.js",
+      "core/market.js",
+      "chapters/ch1/spring/practice.js",
+      "chapters/ch1/spring/standing.js",
+      "chapters/ch1/spring/endings.js"
     ]
   }
 }

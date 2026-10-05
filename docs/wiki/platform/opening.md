@@ -1,9 +1,9 @@
 ---
-title: The opening (intro.js)
+title: The opening (core/intro.js)
 type: system
 pack: platform
 season: spring
-files: [intro.js, intro.css, tools/intro-script.js]
+files: [core/intro.js, core/intro.css, tools/intro-script.js]
 symbols: [Intro, SCRIPT, SHOTS, STARTS, TOTAL, DRAW, setVoice, manifest, play, end, wanted, frame, say, step, lineAt, shotAt]
 concepts: []
 sessions: []
@@ -18,21 +18,21 @@ A 75-second animated prologue on a 320 by 180 canvas. It uses the game's own spr
 ## Where
 | File · symbol | What |
 |---|---|
-| `intro.js` · `SCRIPT` | Data. 11 lines `{id, shot, at, dur, who, dir, text}`. Ids are `i01` to `i11`. |
-| `intro.js` · `SHOTS` | Data. 6 shots with a name, a length, a music mood and sound cues `[seconds, name]`. |
-| `intro.js` · `STARTS`, `TOTAL` | Derived start times and the total length. |
-| `intro.js` · `DRAW` | Six functions, one per shot. Each draws a whole frame from the time in the shot. |
-| `intro.js` · `play(opts)` | Builds the overlay, starts on "Begin", returns a Promise. Options: `speed`, `hold`, `autostart`. |
-| `intro.js` · `step`, `frame` | The animation loop. It draws, fires cues, sets the mood, shows the line. |
-| `intro.js` · `say(l)` | Shows the subtitle and plays `<voiceBase>/<id>.mp3` if a voice is set. |
-| `intro.js` · `end(how)` | Closes with `done` or `skipped`, writes `lc_intro_seen`, resolves the Promise. |
-| `intro.js` · `setVoice(base, ext)`, `manifest()` | A future voice-over: a folder of files named by line id. |
-| `intro.js` · `wanted(q)` | True for a new story game. False for `?intro=0`, `fast`, `sandbox` or `new`. `?intro=1` forces it. |
+| `core/intro.js` · `SCRIPT` | Data. 11 lines `{id, shot, at, dur, who, dir, text}`. Ids are `i01` to `i11`. |
+| `core/intro.js` · `SHOTS` | Data. 6 shots with a name, a length, a music mood and sound cues `[seconds, name]`. |
+| `core/intro.js` · `STARTS`, `TOTAL` | Derived start times and the total length. |
+| `core/intro.js` · `DRAW` | Six functions, one per shot. Each draws a whole frame from the time in the shot. |
+| `core/intro.js` · `play(opts)` | Builds the overlay, starts on "Begin", returns a Promise. Options: `speed`, `hold`, `autostart`. |
+| `core/intro.js` · `step`, `frame` | The animation loop. It draws, fires cues, sets the mood, shows the line. |
+| `core/intro.js` · `say(l)` | Shows the subtitle and plays `<voiceBase>/<id>.mp3` if a voice is set. |
+| `core/intro.js` · `end(how)` | Closes with `done` or `skipped`, writes `lc_intro_seen`, resolves the Promise. |
+| `core/intro.js` · `setVoice(base, ext)`, `manifest()` | A future voice-over: a folder of files named by line id. |
+| `core/intro.js` · `wanted(q)` | True for a new story game. False for `?intro=0`, `fast`, `sandbox` or `new`. `?intro=1` forces it. |
 | `tools/intro-script.js` | `node tools/intro-script.js [json|csv|txt]` prints the manifest for a voice service. |
-| `intro.css` | The overlay, gate button, subtitle bar and skip button. |
+| `core/intro.css` | The overlay, gate button, subtitle bar and skip button. |
 
 ## Data and state
-Writes `lc_intro_seen`; nothing reads it. Escape or Skip ends it. While it runs, the document swallows key events so the game below hears none. `game.js` starts it in `start()`, and the pause menu replays it.
+Writes `lc_intro_seen`; nothing reads it. Escape or Skip ends it. While it runs, the document swallows key events so the game below hears none. `core/game.js` starts it in `start()`, and the pause menu replays it.
 
 ## Invariants
 `tests/test-intro.js` proves: unique ids; lines of at most two sentences; no overlap; each line inside its shot; at most 21 characters per second; the total is 60 to 90 seconds; every cue is inside its shot.
