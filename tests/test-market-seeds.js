@@ -21,8 +21,7 @@ ok(far > 0 && far <= M.ceil - M.floor, "seeded paths do move away from the canon
 // bots over 20 seeds: careful survives, overtrader loses
 // the seed also moves the night events (WS6); here they are pinned to the canonical calendar so only the PRICE path varies
 const run = (k, seed) => { const g = S.newGame({ seed }); g.events = Object.assign({}, R.events); let n = 0; while (!g.over && n++ < 40) { Bot[k].day(g); S.sleep(g); } return g.outcome === "insolvent" ? "insolvent" : S.crownFund(g).verdict; };
-// Some seeds let the overtrader win for reasons that are not the price path (the verdicts match a flat market, spread 0), so the bar is
-// "careful always survives, overtrader loses on most seeds, and the price path never changes who wins".
+// Bar (card P5): careful survives every seed, overtrader loses every seed, and the price path never changes who wins (checked against a flat market, spread 0).
 const lose = v => v === "insolvent" || v === "short";
 let carefulOk = 0, overLoses = 0, same = 0;
 const withVerdicts = () => Array.from({ length: 20 }, (_, i) => run("overtrader", i + 1));
@@ -35,6 +34,6 @@ ok(JSON.stringify(Array.from({ length: 28 }, (_, d) => S2.marketPrice(d + 1, { s
 if (process.env.DIAG) console.log("moving", moving.join(" "), "\nflat  ", flat.join(" "));
 moving.forEach((v, i) => { if (lose(v)) overLoses++; if (lose(v) === lose(flat[i])) same++; });
 ok(carefulOk === 20, `careful survives ${carefulOk}/20 seeds`);
-ok(overLoses >= 14, `overtrader loses ${overLoses}/20 seeds`);
+ok(overLoses === 20,`overtrader loses ${overLoses}/20 seeds`);
 ok(same === 20, `the price path never flips the overtrader's result (${same}/20 match a flat market)`);
 process.exit(fail ? 1 : 0);

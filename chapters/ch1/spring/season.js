@@ -27,7 +27,7 @@
     market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
     // P5 demand model: another seed's price path is the canonical path plus a demand shock that drifts (shock[d] = round(carry * shock[d-1] + noise),
     // noise drawn per game from the seed, uniform in [-spread, spread]). The path stays inside [floor, ceil] (above the unit cost, below a price the bots cannot absorb).
-    marketModel: { carry: 0.5, spread: 1.2, floor: 6, ceil: 11 },
+    marketModel: { carry: 0.5, spread: 0.6, floor: 6, ceil: 11 },
     premium: { ashby: 0, hobb: 1 }, // what each buyer pays over the going price on a standard offer (the Duke's order is a fixed 10, see OFFERS)
     // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
     // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).

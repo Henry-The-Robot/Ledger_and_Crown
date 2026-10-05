@@ -181,7 +181,7 @@ window.Story = (function () {
     keep("inventory", "Inventory", "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", `Day ${G.s.day}: 6 packets, Cash −${6 * sc}, Inventory +${6 * sc} (${inv0} → ${G.s.bal.inv}).`);
     st.planted0 = G.s.plots.filter(p => p.crop).length; to(3, "plant2");
   }
-  // ---------- chapter 3: the bakery (C1.04, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
+  // ---------- chapter 3: the bakery (C1.01, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
   async function ch3() {
     const cost = S.R.unitCost, pct = p => Math.round((p - cost) / p * 100);
     const o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
@@ -254,6 +254,7 @@ window.Story = (function () {
     const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1), up = Math.round((n1 / n0 - 1) * 100);
     await tell(`Two kinds of cost: <b>variable</b> (seed and grain, rising with every sack) and <b>fixed</b> (wages and interest, due every week whatever you sold). This week's fixed bill is <b>${F}</b>.`);
     await tell(`A sack at ${p} leaves ${m} after its ${cost} of grain: its <b>contribution</b>. Break-even is the sacks whose contribution covers the fixed bill: ${F} ÷ ${m} = <b>${n0} sacks a week</b>.`);
+    await tell(`Put together: profit = contribution × sacks − fixed bill. At ${n0} sacks it is ${m} × ${n0} − ${F} = ${m * n0 - F}, about nothing.`);
     const opts = [[`About ${n0} (a small cut changes little)`, false], [`About ${Math.round(n0 * 1.25)}`, false], [`About ${n1}`, true]], k = (s.day + F) % 3, order = opts.map((_, i) => opts[(i + k) % 3]);
     const c = await GL.say("maud", `Suppose a rival like Grisby sets up and undercuts you: the going price falls to <b>${p1}</b>, a cut of ${Math.round(2 / p * 100)}%. How many sacks a week do you need to break even now?`, order.map(o => o[0]));
     const right = order[c][1]; if (right) mastered("breakeven");
@@ -275,7 +276,7 @@ window.Story = (function () {
     await tell(`${right ? "Yes." : "No."} Selling gives up <b>${fee}</b> to get the Cash ${days} days early, about <b>${implied}% a week</b>.`);
     await tell(`Borrowing the same ${got} at ${t.rateBp / 100}% a week costs about <b>${interest}</b> over ${days} days. Same Cash, same wait, a much lower price of waiting.`);
     await tell(`At Ezra's loan rate, ${inv.amount} due in ${days} days is worth about <b>${worth}</b> today. That is its <b>present value</b>: what the promise is worth in Cash now.`);
-    keep("tvm", "Present value", "A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${real ? who : "a neighbour"}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
+    keep("tvm", "Present value of a promise","A promise due later is worth less today. The rate is the price of waiting. Present value = amount ÷ (1 + rate) for each week of waiting. A higher rate makes the promise worth less.", `Day ${s.day}: ${real ? who : "a neighbour"}'s ${inv.amount}, due in ${days} days, is worth about ${worth} at ${t.rateBp / 100}% a week. Selling it to Ezra costs ${implied}% a week.`);
     return true;
   }
   // ---------- chapter 6: Tomas's terms (week 2). Time value (C0.01, C5.01) beside payables (C1.01) — SEASON-1-REDESIGN.md §7 item 1 ----------

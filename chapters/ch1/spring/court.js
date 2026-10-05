@@ -254,6 +254,7 @@ window.Court = (function () {
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
     try {
+      await say("maud", "Say the number, then the reason. A claim answered with a number alone is half an answer.", "Next"); // C0.08: exam technique
       await say("maud", "The Crown's advocate will make nine claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and six refuted will satisfy the court.", "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);

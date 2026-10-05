@@ -17,7 +17,10 @@
    "title": "percentages growth margins",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "gross margin",
+   "rest_home": "Ch1 Summer: percentage points vs % change; Ch1 Winter: CAGR",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C0.03",
@@ -26,7 +29,9 @@
    "title": "algebra for business models",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "break-even as a linear model (card T2 adds the line)",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C0.04",
@@ -71,7 +76,10 @@
    "title": "speaking and exam technique",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "exam technique beat before the Court (card T2)",
+   "rest_home": "speaking voice and delivery: later chapter with presentations",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C1.01",
@@ -107,7 +115,10 @@
    "title": "inventory and cogs",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "cost becomes inventory (taught under C1.01)",
+   "rest_home": "Ch2 Town: FIFO/LIFO and the LIFO reserve, rival merchants",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C1.05",
@@ -143,7 +154,10 @@
    "title": "cash flow statement",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "read and diagnose the indirect-method statement (books.js)",
+   "rest_home": "Ch1 Winter: build the year's statement from two balance sheets at Midwinter",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C1.09",
@@ -242,7 +256,9 @@
    "title": "working capital cash overtrading",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "R"
+   "trust": "R",
+   "spring_scope": "cash forecast; cash-cycle days via card S2",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C2.10",
@@ -1448,7 +1464,10 @@
    "title": "three statements one story",
    "home": "1SP",
    "season": "Ch1 Spring",
-   "trust": "V"
+   "trust": "V",
+   "spring_scope": "the three statements shown at the close",
+   "rest_home": "Ch4 Kingdom: GM-level linking, cash conversion ratio",
+   "scope_ref": "projects/mba-game/reviews/spring-deep-dive-2026-10-05.md"
   },
   {
    "id": "C16.02",

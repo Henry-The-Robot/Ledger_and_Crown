@@ -15,7 +15,9 @@ master = v0.4.6. Merge in this order, retargeting each PR to `master` as the one
 ## Next 3 actions
 0. G1 done (2026-10-05, local builder): `docs/design/save-and-carry.md` + `carry-record.schema.json` written, docs only. Lead reviews; next card P4b builds `core/save.js` from it.
 0b. P4b done (2026-10-05, local builder): `core/save.js` (v4 blob, migration, export/import, seeded shuffle, heir), wired into `core/game.js`; `tests/test-save.js` 40 checks pass; wiki `platform/save.md` rewritten; game_test green. Seeds: review shuffle now seeded. Story seed uses `Save.newSeed`.
-1. P5 — season settings as data (Spring's `R` out of `core/engine.js`), then P6 — lessons and scenes as data.
+0c. P5 done (2026-10-05, local builder): `chapters/ch1/spring/season.js` holds `R`; `marketModel` spread tuned 1.2 → 0.6 so the price path never flips a bot result; `tests/test-market-seeds.js` now needs careful 20/20 survive and overtrader 20/20 lose. game_test green.
+0d. T2 done: cost-scene profit line, Maud "Say the number, then the reason." beat (court.js), ch3 retag C1.01, `tvm` pv entry renamed, coverage map copied. **Golden story NOT re-recorded**: local run has no Playwright (`Cannot find module 'playwright'`). The next run with a browser must re-record `tests/golden/ch1-spring/story-seed3.json` for the two new lines + the renamed notebook title.
+1. P6a — scene record format + `core/scene.js` (needs the golden story runnable first; see 0d).
 3. Remove the two unseeded `Math.random` calls (`core/game.js`: the review option shuffle, the story seed) when P4 touches the save.
 
 ## Failure lesson

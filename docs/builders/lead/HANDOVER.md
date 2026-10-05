@@ -49,7 +49,13 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
   Next session: read both, check 2–3 claims, merge into one `spring-deep-dive-2026-10-05.md` (that satisfies PLAN L4),
   turn WRONG items into cards ahead of S7.
 - New card S2 (what Summer needs, built into Spring) is last in the queue, after S5.
-- Deep dive results (both done, not yet spot-checked). A: 5 sessions correct, C0.02 a loose tag (no pp-vs-% or CAGR),
+- **L4 DONE (2026-10-05):** verdict `projects/mba-game/reviews/spring-deep-dive-2026-10-05.md`. No wrong teaching;
+  all gaps are scope. Spring keeps 8 core ideas. Card T2 adds two cheap lines and retags. Coverage map now has
+  `spring_scope`/`rest_home`: C1.04 LIFO → Ch2, C1.08 build → Ch1 Winter, C0.02 pp → Summer, CAGR → Winter,
+  C16.01 → Ch4. Part B was wrong about C1.08 (books.js:17 is the indirect method).
+- NEXT LEAD SESSION: review P4b (`core/save.js`) against the Lead review in `docs/design/save-and-carry.md`; its card
+  check only tests that the file exists. Merge the local/work PR if it holds canon (T2's coverage copy).
+- Superseded draft notes (kept for history): deep dive results (both done, not yet spot-checked). A: 5 sessions correct, C0.02 a loose tag (no pp-vs-% or CAGR),
   C0.03 algebra and the speaking session missing. B: C2.01, C2.02, C5.01 correct; gaps: C1.04 (no FIFO/LIFO/reserve),
   C1.08 (no indirect-method cash flow), C2.09 (no DSO/DIO/DPO/CCC; card S2 already adds this). Lead's draft call, to
   confirm next session: Spring keeps <= 8 core ideas (S1). LIFO reserve and indirect cash flow become previews, or move
