@@ -89,6 +89,13 @@ st = fresh(Object.assign({ lc_spring_save_v3: v3(open) }, legacy)); Save.load();
   await bad(enc({ v: 5, profile: {} }), /different version/, "v 5");
   await bad(enc({ v: 4 }), /no profile/, "missing profile");
   await bad("LC4U.!!!", /could not be read/, "garbage body");
+  await bad(enc({ v: 4, profile: { id: "X" }, slot: { season: "ch1/spring", s: { cash: 1 } }, closed: {} }), /broken open game/, "a slot without s.day");
+  await bad(enc({ v: 4, profile: { id: "X" }, slot: { season: "ch1/spring" }, closed: {} }), /broken open game/, "a slot without s");
+  ok((await Save.parseCode(enc({ v: 4, profile: { id: "X" }, slot: null, closed: {} }))).ok, "a save with no open game still imports");
+  // a corrupt current blob falls back to the rollback blob before a fresh migrate
+  const good = { v: 4, profile: { id: "PREVPROF" }, slot: null, closed: {} };
+  fresh({ lc_save_v4: "{corrupt", lc_save_v4_prev: JSON.stringify(good) }); ok(Save.load().profile.id === "PREVPROF", "corrupt lc_save_v4: load falls back to lc_save_v4_prev");
+  fresh({ lc_save_v4: "{corrupt", lc_save_v4_prev: "{also corrupt" }); ok(Save.load().v === 4 && Save.load().profile.id !== "PREVPROF", "corrupt blob and corrupt rollback: a fresh v4 is made");
   // v3-shaped import goes through migration
   const st3 = fresh({}); const r3 = await Save.import(v3(done)); ok(r3.ok && JSON.parse(st3.m.lc_save_v4).closed["ch1/spring"].outcome === done.outcome, "a v3-shaped import is migrated");
   // import keeps the old blob

@@ -75,6 +75,7 @@
     if (cache) return cache;
     const cur = jparse(KEY);
     if (isObj(cur) && cur.v === 4 && isObj(cur.profile)) return (cache = cur);
+    if (get(KEY) != null) { const prev = jparse(PREV); if (isObj(prev) && prev.v === 4 && isObj(prev.profile)) return (cache = prev); } // a corrupt blob: the one-step rollback beats a fresh migrate
     const b = migrate(), text = JSON.stringify(b);
     if (put(KEY, text) && get(KEY) === text) { if (isObj(jparse(V3))) put(MIGRATED, "1"); }
     return (cache = b);
@@ -145,6 +146,7 @@
     let o; try { o = JSON.parse(json); } catch (e) { return { ok: false, why: "That save could not be read." }; }
     if (!isObj(o) || o.v !== 4) return { ok: false, why: "That save is from a different version." };
     if (!isObj(o.profile)) return { ok: false, why: "That save has no profile." };
+    if (o.slot != null && !(isObj(o.slot) && isObj(o.slot.s) && o.slot.s.day != null)) return { ok: false, why: "That save has a broken open game." };
     return { ok: true, blob: o };
   }
   // importCode: after the player confirms. A v3-shaped object is migrated by writing it to the v3 key and running the migration.
