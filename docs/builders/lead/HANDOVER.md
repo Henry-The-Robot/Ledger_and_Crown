@@ -38,6 +38,24 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
   open, write cards first. Keep ≥ 3 ready cards ahead of the Builder.
 - Followed last lesson: yes — reached the coordinator by `infra/help.py`, not by send_message.
 
+## Blockers (2026-10-05 07:30 PT) and how each is being resolved
+- Builder idles on 2-hour card leases (ledger 06:57). Stopgap: KICKOFF-BUILDER "Release before you exit". Fix asked:
+  coordinator help 20261005-072058 (shorter lease or a release command).
+- Summer design (U0b) waits on curriculum fixes (C4.01-03, C7.01, C8; C12.11 contract law). Routed to lead:mba;
+  C4 had no MBA card yet (asked in 20261005-072058).
+- Lead has no scheduled run: asked the manager for a daily Opus game-lead run (help 20261005-072618).
+- `tests` required check: coordinator help 20261004-215943 (open).
+- Spring deep dive L4 in flight: two Haiku researchers write `projects/mba-game/reviews/spring-deep-dive-{A,B}-2026-10-05.md`.
+  Next session: read both, check 2–3 claims, merge into one `spring-deep-dive-2026-10-05.md` (that satisfies PLAN L4),
+  turn WRONG items into cards ahead of S7.
+- New card S2 (what Summer needs, built into Spring) is last in the queue, after S5.
+- Deep dive results (both done, not yet spot-checked). A: 5 sessions correct, C0.02 a loose tag (no pp-vs-% or CAGR),
+  C0.03 algebra and the speaking session missing. B: C2.01, C2.02, C5.01 correct; gaps: C1.04 (no FIFO/LIFO/reserve),
+  C1.08 (no indirect-method cash flow), C2.09 (no DSO/DIO/DPO/CCC; card S2 already adds this). Lead's draft call, to
+  confirm next session: Spring keeps <= 8 core ideas (S1). LIFO reserve and indirect cash flow become previews, or move
+  their home to a later season in `curriculum-coverage.json` (comparing firms fits Chapter 2). Do not cram them into
+  Spring. Retag C0.02 as preview, or add one pp-vs-% beat.
+
 ## Blocked on Kyle
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
