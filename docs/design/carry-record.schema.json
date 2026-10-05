@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ledger-and-crown/carry-record.schema.json",
+  "title": "Carry record: what one chapter hands to the next (profile.carry.chN)",
+  "type": "object",
+  "required": ["v", "season", "ending", "cash", "debts", "stakes", "relations", "flags", "transcript", "statements", "seed", "closedAt"],
+  "properties": {
+    "v": { "const": 1 },
+    "season": { "type": "string", "pattern": "^ch[1-4]/[a-z]+$" },
+    "ending": { "enum": ["closed", "insolvent", "sold", "seized", "bridged", "free", "heir"] },
+    "cash": { "type": "integer" },
+    "debts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["to", "amount", "rateBp", "callable"],
+        "properties": {
+          "to": { "type": "string" },
+          "amount": { "type": "integer", "minimum": 0 },
+          "rateBp": { "type": "integer", "minimum": 0, "description": "Basis points per week, as terms(s).rateBp" },
+          "callable": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stakes": {
+      "type": "object",
+      "required": ["mill", "bakery"],
+      "properties": { "mill": { "type": "number", "minimum": 0 }, "bakery": { "type": "number", "minimum": 0 } },
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    },
+    "relations": {
+      "type": "object",
+      "required": ["maud", "crane", "ezra", "ashby", "hobb", "jory", "tomas"],
+      "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 10 }
+    },
+    "flags": {
+      "type": "object",
+      "properties": {
+        "vaneFinal": { "type": "string" },
+        "vane": { "type": "string" },
+        "guarantee": { "type": "boolean" },
+        "hobbExt": { "type": "boolean" },
+        "ashbyPromise": { "type": "boolean" },
+        "craneVane": { "type": "boolean" },
+        "maudConfessed": { "type": "boolean" },
+        "examPassed": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "transcript": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["ev"],
+        "properties": {
+          "ev": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["day", "kind", "real"],
+              "properties": { "day": { "type": "integer" }, "kind": { "type": "string" }, "real": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "statements": { "type": ["object", "null"], "description": "Books.close(s) at season end; null for the heir" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "closedAt": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "additionalProperties": false
+}

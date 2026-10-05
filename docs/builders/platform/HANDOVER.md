@@ -13,6 +13,7 @@ master = v0.4.6. Merge in this order, retargeting each PR to `master` as the one
 → #51 `platform/golden` (P3 baseline) → #52 `platform/restructure` (P3 move). CI is green on all six.
 
 ## Next 3 actions
+0. G1 done (2026-10-05, local builder): `docs/design/save-and-carry.md` + `carry-record.schema.json` written, docs only. Lead reviews; next card P4b builds `core/save.js` from it.
 1. After the stack merges: P4 — saves (`docs/wiki/platform/save.md` lists the problems: unversioned, deleted on finish, other stores).
 2. P5 — season settings as data (Spring's `R` out of `core/engine.js`), then P6 — lessons and scenes as data.
 3. Remove the two unseeded `Math.random` calls (`core/game.js`: the review option shuffle, the story seed) when P4 touches the save.
