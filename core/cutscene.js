@@ -82,8 +82,8 @@
     frame(def, 0); if (go) go.onclick = start; if (opts.autostart || !go) start(); if (go) setTimeout(() => go.isConnected && go.focus({ preventScroll: true }), 30);
     return promise;
   }
-  // a story cutscene plays unless this is a test or sandbox run (?fast, ?sandbox) or ?cuts=0; the opening has its own rule (Intro.wanted)
-  const wanted = q => { q = q || new URLSearchParams(location.search); return !(q.has("fast") || q.has("sandbox") || q.get("cuts") === "0"); };
+  // a story cutscene plays unless this is a test or sandbox run (?fast, ?sandbox, ?savetest, ?intro=0) or ?cuts=0; the opening has its own rule (Intro.wanted)
+  const wanted = q => { q = q || new URLSearchParams(location.search); return !(q.has("fast") || q.has("sandbox") || q.has("savetest") || q.get("intro") === "0" || q.get("cuts") === "0"); };
   // play a registered cutscene if one exists and is wanted: returns its Promise, or null when nothing plays (so a caller can carry on at once). A missing cutscene never blocks the story.
   const maybe = (id, opts) => { try { return REG[id] && typeof document !== "undefined" && document.body && wanted() ? play(id, Object.assign({ autostart: true }, opts)) : null; } catch (e) { return null; } };
   const api = {

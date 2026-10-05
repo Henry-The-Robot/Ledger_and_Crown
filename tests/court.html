@@ -11,7 +11,7 @@ const load = src => new Promise(async r => { const f = document.createElement("i
   const present = async (k, how) => { click(`[data-a=tab][data-v=${k.tab}]`); await sleep(5); click(`[data-a=sel][data-v="${k.id}"]`); await sleep(5); click("[data-a=present]"); await sleep(20); };
   const rightCard = () => T().cards.find(k => cur().right(k)), wrongCard = () => T().cards.find(k => !cur().right(k) && k.tab === "is");
   out.push(`the court opens over the game (standalone hook): ${!!d.getElementById("court")}`);
-  click("[data-k=next]"); await sleep(30);
+  click("[data-k=next]"); await sleep(30); click("[data-k=next]"); await sleep(30); // two screens before the hearing since T2 added Maud's "Say the number, then the reason" (court.js)
   out.push(`nine claims, built from the books: ${T().claims.length === 9}; the first reads "${cur().text.replace(/<[^>]+>/g, "").slice(0, 60)}..."`);
   // --- attempt 1: fail on purpose (three wrong presents on every claim) -> the retake path
   const first = T().claims.map(c => c.id).join();
@@ -38,7 +38,7 @@ const load = src => new Promise(async r => { const f = document.createElement("i
   const g = await load("../game.html?sandbox&new=1"), gw = g.contentWindow, S = gw.Spring; gw.G.closeDlg && gw.G.closeDlg(); const s = gw.G.s;
   for (let k = 0; k < 28 && !s.outcome; k++) { gw.Bot.careful.day(s); S.sleep(s); } s.trust.crane = 4;
   const p = gw.Court.run({ G: gw.G, s, Story: gw.Story, Endings: gw.Endings, st: gw.Books.close(s) }); await sleep(100);
-  out.push(`the game's call opens the court: ${!!gw.document.getElementById("court")}`); gw.document.querySelector("#court [data-k]").click(); await sleep(40);
+  out.push(`the game's call opens the court: ${!!gw.document.getElementById("court")}`); gw.document.querySelector("#court [data-k]").click(); await sleep(40); gw.document.querySelector("#court [data-k]").click(); await sleep(40);
   const t2 = gw.__courtTest; out.push(`(no test hook without ?test: ${t2 === undefined})`);
   gw.document.querySelector("[data-a=leave]").click(); gw.document.querySelector("[data-a=leave]").click(); const lr = await p;
   out.push(`leaving the hall returns passed=false without a crash, and the game keeps a record: ${lr.passed === false && !!s.exam}`);

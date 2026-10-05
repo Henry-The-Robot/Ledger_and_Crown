@@ -8,7 +8,7 @@ async function boot() { const f = await load("?new=1&intro=0&touch=0"), w = f.co
 function stub(x, pick) { const seen = []; x.G.say = async (who, text, choices) => { const labels = (choices || []).map(c => typeof c === "string" ? c : c.label); seen.push({ who, text, labels }); return labels.length ? pick(labels, text) : 0; }; return seen; }
 (async () => { try {
   // fixed vs variable: the right answer is the one that matches the engine's own break-even; a wrong pick is told why; the notebook gets the entry
-  let x = await boot(); x.s.day = 9; let seen = stub(x, (l) => { const F = x.S.weekBills(x.s), n1 = Math.ceil(F / (x.S.marketPrice(x.s.day) - 2 - x.S.R.unitCost)); return l.findIndex(t => t.includes("About " + n1)); });
+  let x = await boot(); x.s.day = 9; let seen = stub(x, (l) => { const F = x.S.weekBills(x.s), n1 = Math.ceil(F / (x.S.marketPrice(x.s.day, x.s) - 2 - x.S.R.unitCost)); /* P5: the price path is seeded per game, so ask with the game's own state */ return l.findIndex(t => t.includes("About " + n1)); });
   await x.w.Story.costScene(); let all = seen.map(y => y.text).join(" ");
   out.push(`cost lesson names fixed and variable and contribution: ${/variable/.test(all) && /fixed/.test(all) && /contribution/.test(all)}; three options: ${seen.some(y => y.labels.length === 3)}; right answer is praised: ${/Yes\./.test(all)}; notebook entry: ${x.w.Story.state.notebook.some(n => n.id === "breakeven")}; break-even rose: ${/rose from/.test(all)}`);
   out.push(`right pick counts as evidence: ${x.w.Transcript.evidence("breakeven").some(e => e.kind === "answer")}`); x.f.remove();

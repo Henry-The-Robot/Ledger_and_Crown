@@ -23,5 +23,5 @@ const read = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
 // the Market Day variants really differ by week, and the speaker for week 2 is the rival
 { const m = defs.filter(([, d]) => /^market-open-/.test(d.id)).map(x => x[1]); ok(m.length === 3 && new Set(m.map(d => d.lines[0].text)).size === 3 && m[1].lines[0].who === "Grisby", "the three Market Day openings say three different things; week 2 is Grisby"); }
 // playing by id: unknown ids and unwanted runs never block
-{ ok(C.maybe("vane-arrives") === null, "Cutscene.maybe answers null when no document exists (a test run), so a caller carries on at once"); const q = s => new URLSearchParams(s); ok(!C.wanted(q("?fast=1")) && !C.wanted(q("?sandbox")) && !C.wanted(q("?cuts=0")) && C.wanted(q("")), "story cutscenes are skipped for ?fast, ?sandbox and ?cuts=0 and wanted otherwise"); }
+{ ok(C.maybe("vane-arrives") === null, "Cutscene.maybe answers null when no document exists (a test run), so a caller carries on at once"); const q = s => new URLSearchParams(s); ok(!C.wanted(q("?fast=1")) && !C.wanted(q("?sandbox")) && !C.wanted(q("?cuts=0")) && !C.wanted(q("?savetest=1")) && !C.wanted(q("?intro=0")) && C.wanted(q("")) && C.wanted(q("?new=1")), "story cutscenes are skipped for ?fast, ?sandbox, ?savetest, ?intro=0 and ?cuts=0 and wanted otherwise"); }
 process.exit(fail ? 1 : 0);
