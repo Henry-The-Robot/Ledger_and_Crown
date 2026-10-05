@@ -3,7 +3,7 @@ title: Market Day (days 7, 14, 21)
 type: system
 pack: ch1
 season: spring
-files: [market.js, market.css, game.js]
+files: [core/market.js, core/market.css, core/game.js]
 symbols: [newFair, playHour, decide, villagers, floorBet, beCell, beFacts, tally, Grisby, grisbyPrice, commit, commitHour, settleBet, experiment, demandFit, FAIR_DAYS, CFG, goalLine, stallAt]
 concepts: [demand, competitor, segments, breakeven, opportunity]
 sessions: [C4.01, C4.02, C8.02]
@@ -22,7 +22,7 @@ The file has two halves. The first half is pure and runs under node. The second 
 
 | Half | File · symbol | What |
 |---|---|---|
-| Model | `market.js` · `CFG`, `FAIR_DAYS` | Hours 3, 8 villagers an hour, `maxStock` 60, Grisby from day 14, `gStock` {14: 24, 21: 5}. |
+| Model | `core/market.js` · `CFG`, `FAIR_DAYS` | Hours 3, 8 villagers an hour, `maxStock` 60, Grisby from day 14, `gStock` {14: 24, 21: 5}. |
 | Model | `villagers(day, hour)` (~42) | The 8 villagers: 3 thrifty, 3 comfortable, 2 in a hurry. Reserve price from the going price, spread evenly, so hours differ only by the player's price. |
 | Model | `decide(v, mine, g, stock)` (~52) | One villager's choice: bought, hesitated (1 over reserve), dear (2+ over), soldout. Thrifty buyers take the cheaper seller. |
 | Model | `newFair(s, o)` (~61), `playHour(f, price)` (~66) | Start a fair. Play one hour at a price. Returns the hour record. |
@@ -30,12 +30,12 @@ The file has two halves. The first half is pure and runs under node. The second 
 | Model | `commitHour`, `commit` | Post each hour through the engine: Cash and Revenue, then Cost of goods sold and Inventory. |
 | Model | `settleBet`, `experiment`, `demandFit` | Maud's day-14 bet. A worked price experiment. The least-squares demand line. |
 | Model | `flat`, `bestFlat`, `auto`, bots | Test helpers. Bots see reactions, never reserves. |
-| UI | `market.js` · `open`, `startAfternoon`, `beginHour`, `finishHour`, `finishFair` | The overlay on the village stall: set-up, price board between hours, tally. |
+| UI | `core/market.js` · `open`, `startAfternoon`, `beginHour`, `finishHour`, `finishFair` | The overlay on the village stall: set-up, price board between hours, tally. |
 | UI | `tally(p)` (~403), `chartSVG` | The takings, a price-against-sacks chart and a fitted line. |
 | UI | `beFacts`, `beCell` (~306), `beWire` | The break-even question after the takings. |
 | UI | `floorBet(s)` (~332) | After the first fair: the lowest price worth taking for a spare sack. |
 | UI | `drawFrame`, `path`, sprites | Pixel scene. Villagers are the player sprite recoloured. |
-| `game.js` | `Market.open`, `stallAt`, `stallTiles`, `drawStall`, `goalLine`, `isOpen`, `init` | The stall prop, the click that opens the fair, the goal-ribbon line, the init. |
+| `core/game.js` | `Market.open`, `stallAt`, `stallTiles`, `drawStall`, `goalLine`, `isOpen`, `init` | The stall prop, the click that opens the fair, the goal-ribbon line, the init. |
 
 ## Data and state
 `s.market = { fairs: [...], named, bet, floorBet }`. A fair record keeps `day`, `units`, `revenue`, `gross`, `points` (price and units per hour).

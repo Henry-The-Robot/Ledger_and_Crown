@@ -3,7 +3,7 @@ title: Village scenes (days 9-28)
 type: system
 pack: ch1
 season: spring
-files: [scenes.js, game.js]
+files: [chapters/ch1/spring/scenes.js, core/game.js]
 symbols: [available, pending, SC, BY, CLUES, runScene, sceneFor, sceneOk, talk]
 concepts: []
 sessions: []
@@ -20,14 +20,14 @@ Nothing here is needed to finish the season.
 ## Where
 | File · symbol | What |
 |---|---|
-| `scenes.js` · `SC` (~7) | The scene list. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need(s)`, `hint`, `run(c)`. |
-| `scenes.js` · `available(who, s)` (~115) | First scene for `who` that is not played, with `day >= from`, `day <= to` and `need(s)` true. Else `null`. |
-| `scenes.js` · `pending(s)` (~119) | Count of scenes waiting now. |
-| `scenes.js` · `CLUES` | 6. The number the player sees in "A clue: n of 6". |
-| `game.js` · `sceneOk`, `sceneFor(who)` (~66) | Scenes wait until the story reaches chapter 5 and is not busy. |
-| `game.js` · `talk(who)` (~326) | Order: `Story.onTalk` first, then `sceneFor`, then fair, then the usual chat. |
-| `game.js` · `wants(who)` (~860) | Draws the red "!" when `sceneFor(who)` is set. |
-| `game.js` · `runScene(sc)` (~551) | Marks the scene done first, builds the helper object `c`, runs it. Saves after. |
+| `chapters/ch1/spring/scenes.js` · `SC` (~7) | The scene list. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need(s)`, `hint`, `run(c)`. |
+| `chapters/ch1/spring/scenes.js` · `available(who, s)` (~115) | First scene for `who` that is not played, with `day >= from`, `day <= to` and `need(s)` true. Else `null`. |
+| `chapters/ch1/spring/scenes.js` · `pending(s)` (~119) | Count of scenes waiting now. |
+| `chapters/ch1/spring/scenes.js` · `CLUES` | 6. The number the player sees in "A clue: n of 6". |
+| `core/game.js` · `sceneOk`, `sceneFor(who)` (~66) | Scenes wait until the story reaches chapter 5 and is not busy. |
+| `core/game.js` · `talk(who)` (~326) | Order: `Story.onTalk` first, then `sceneFor`, then fair, then the usual chat. |
+| `core/game.js` · `wants(who)` (~860) | Draws the red "!" when `sceneFor(who)` is set. |
+| `core/game.js` · `runScene(sc)` (~551) | Marks the scene done first, builds the helper object `c`, runs it. Saves after. |
 
 ### The day table
 | Scene id | Who | Day | Sets or does |
@@ -58,11 +58,11 @@ Nothing here is needed to finish the season.
 ## How to change it safely
 - Add a scene to `SC` with a `hint`. Keep `CLUES` equal to the scenes that call `c.clue()`.
 - A scene that moves money must use `c.S.post`. Never edit balances.
-- Crane's scenes use `at`, so he stands at a tile only while one waits (`cranePos` in `game.js`).
+- Crane's scenes use `at`, so he stands at a tile only while one waits (`cranePos` in `core/game.js`).
 - The court reads the flags `hobbExt`, `guarantee`, `vane`, `craneVane` and `maudConfessed` (`ch1/court`). Rename none of them.
 
 ## Known issues
-- `story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `scenes.js` does not export `morning`. The call is skipped.
+- `chapters/ch1/spring/story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `chapters/ch1/spring/scenes.js` does not export `morning`. The call is skipped.
 - `Scenes.pending` has no caller in the game's `.js` files (grep, 2026-10-05).
 
 ## History

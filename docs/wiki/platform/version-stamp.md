@@ -29,4 +29,4 @@ Every local tag ends `?v=<version.js>` (`tests/test-version.js`); `--check` exit
 A new script tag: add it, then run `node tools/stamp.js`. Never edit a `?v=` by hand. The creative lead makes the release tag.
 
 ## History
-- P2 (`platform/version`): created; found `index.html`'s `style.css` had no `?v=`.
+- P2 (`platform/version`): created; found `index.html`'s `core/style.css` had no `?v=`.

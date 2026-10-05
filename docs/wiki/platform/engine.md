@@ -3,7 +3,7 @@ title: The engine (double-entry journal)
 type: system
 pack: platform
 season: all
-files: [engine.js]
+files: [core/engine.js]
 symbols: [R, post, ACCTS, balanceSheet, forecast, terms, eventsFor, newGame, sleep, preview, coach, crownFund, OFFERS, roll, makeOffers]
 concepts: [equation, accrual, ar, ap, inventory, depreciation, tvm, wc, overtrading, insolvency]
 sessions: [C1.01, C1.02, C2.09]
@@ -13,30 +13,30 @@ updated: 2026-10-05
 ---
 
 ## What it does
-`engine.js` is the whole season as pure JS with no DOM. It runs in the browser (`window.Spring`) and in node. Every action posts a balanced entry to a journal. Every view is derived from the postings.
+`core/engine.js` is the whole season as pure JS with no DOM. It runs in the browser (`window.Spring`) and in node. Every action posts a balanced entry to a journal. Every view is derived from the postings.
 
 ## Where
 | File · symbol | What |
 |---|---|
-| `engine.js` · `R` (top) | Spring's constants: 28 days, seed and sack costs, wages, Duke and Corvin orders, Crown debt 1250, prices by day, event windows. |
-| `engine.js` · `post(s, type, memo, lines)` | The one write path. Lines are integers and must sum to zero, else it throws. |
-| `engine.js` · `ACCTS` | 18 accounts, each `[name, class]`. |
-| `engine.js` · `newGame(opt)` | Builds state `s` and posts the opening balances. Options: `story`, `seed`, `bonus`, `ezraTrust`. |
-| `engine.js` · `balanceSheet(b)` | Derives assets, liabilities, equity and net income from a balance map. |
-| `engine.js` · `terms(s)` | Ezra's loan limit and rate, and Tomas's credit, from trust. |
-| `engine.js` · `forecast(s, n)` | Cash rows for the next days. Same night order as `sleep`. |
-| `engine.js` · `sleep(s)` | Ends the day: growth, events, collections, pay-day, bills, late orders, new offers. |
-| `engine.js` · `eventsFor(seed)` | Event days per game, using mulberry32. Seed 0 gives the canonical calendar `R.events`. |
-| `engine.js` · `roll(d, who, salt)` | Stateless 0..1 hash roll. Same game gives the same offers. |
-| `engine.js` · `makeOffers`, `OFFERS` | The daily buyer offers; sizes and prices vary by trust and `roll`. |
-| `engine.js` · `preview(s, fn)` | Runs an action on a copy and returns the entries it would post. |
-| `engine.js` · `coach(s)` | Maud's one line of advice. `crownFund(s)` gives the "if Midwinter were tomorrow" verdict. |
+| `core/engine.js` · `R` (top) | Spring's constants: 28 days, seed and sack costs, wages, Duke and Corvin orders, Crown debt 1250, prices by day, event windows. |
+| `core/engine.js` · `post(s, type, memo, lines)` | The one write path. Lines are integers and must sum to zero, else it throws. |
+| `core/engine.js` · `ACCTS` | 18 accounts, each `[name, class]`. |
+| `core/engine.js` · `newGame(opt)` | Builds state `s` and posts the opening balances. Options: `story`, `seed`, `bonus`, `ezraTrust`. |
+| `core/engine.js` · `balanceSheet(b)` | Derives assets, liabilities, equity and net income from a balance map. |
+| `core/engine.js` · `terms(s)` | Ezra's loan limit and rate, and Tomas's credit, from trust. |
+| `core/engine.js` · `forecast(s, n)` | Cash rows for the next days. Same night order as `sleep`. |
+| `core/engine.js` · `sleep(s)` | Ends the day: growth, events, collections, pay-day, bills, late orders, new offers. |
+| `core/engine.js` · `eventsFor(seed)` | Event days per game, using mulberry32. Seed 0 gives the canonical calendar `R.events`. |
+| `core/engine.js` · `roll(d, who, salt)` | Stateless 0..1 hash roll. Same game gives the same offers. |
+| `core/engine.js` · `makeOffers`, `OFFERS` | The daily buyer offers; sizes and prices vary by trust and `roll`. |
+| `core/engine.js` · `preview(s, fn)` | Runs an action on a copy and returns the entries it would post. |
+| `core/engine.js` · `coach(s)` | Maud's one line of advice. `crownFund(s)` gives the "if Midwinter were tomorrow" verdict. |
 
 ## Public API
 `root.Spring` exports: `R, roll, eventsFor, eventDay, pellDays, pedlarDays, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders, weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, payOneBill, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach`.
 
 ## Data and state
-State `s` holds `bal` (one balance per account), `journal`, `log`, `uses` (concept uses read by game.js), `trust`, `plots`, `offers`, `orders`, `invoices`, `bills`, `seed`, `events`. Saves from before WS6 have no `s.events` and use the canonical calendar.
+State `s` holds `bal` (one balance per account), `journal`, `log`, `uses` (concept uses read by core/game.js), `trust`, `plots`, `offers`, `orders`, `invoices`, `bills`, `seed`, `events`. Saves from before WS6 have no `s.events` and use the canonical calendar.
 
 ## Spring-specific versus core
 - Spring-specific: the whole `R` block, `OFFERS`, `NAMES`, `NOTICE_DAYS`, event kinds (pigs, rats, warm, frost), Pell, Barnaby, the Duke and Corvin orders.

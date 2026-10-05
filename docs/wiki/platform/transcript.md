@@ -3,7 +3,7 @@ title: The transcript (concepts and mastery)
 type: system
 pack: platform
 season: all
-files: [transcript.js]
+files: [core/transcript.js]
 symbols: [CONCEPTS, CORE, COURSES, record, use, master, level, core, state, evidence, progress, reset, html, KEY]
 concepts: [equation, accrual, margin, breakeven, opportunity, tvm, wc, ev]
 sessions: [C1.01, C16.01]
@@ -18,15 +18,15 @@ The transcript records what the player has done and explained, per concept. It s
 ## Where
 | File · symbol | What |
 |---|---|
-| `transcript.js` · `COURSES` | The 17 core courses `[code, title, act]`. Act 0 is open; later acts are locked. |
-| `transcript.js` · `CONCEPTS` | Concept ids per course: C0 (4), C1 (12), C2 (6), plus C4 and C8 previews from Market Day. |
-| `transcript.js` · `CORE` | The eight Season 1 core ideas: equation, accrual, margin, breakeven, opportunity, tvm, wc, ev. |
-| `transcript.js` · `core()` | `CORE` as `{id, name, level}` rows. The Reeve's Court reads it. |
-| `transcript.js` · `record(id, kind, day)` | Adds one evidence item per concept, game day and kind. Returns the new level if it changed. |
-| `transcript.js` · `use(id, well, day)` | "Did it in play". If `well` is false, it only introduces the idea. |
-| `transcript.js` · `master(id, day)` | "Explained it correctly" (kind `answer`). |
-| `transcript.js` · `level(c)` | The mastery rule. |
-| `transcript.js` · `html()` | The T screen markup. |
+| `core/transcript.js` · `COURSES` | The 17 core courses `[code, title, act]`. Act 0 is open; later acts are locked. |
+| `core/transcript.js` · `CONCEPTS` | Concept ids per course: C0 (4), C1 (12), C2 (6), plus C4 and C8 previews from Market Day. |
+| `core/transcript.js` · `CORE` | The eight Season 1 core ideas: equation, accrual, margin, breakeven, opportunity, tvm, wc, ev. |
+| `core/transcript.js` · `core()` | `CORE` as `{id, name, level}` rows. The Reeve's Court reads it. |
+| `core/transcript.js` · `record(id, kind, day)` | Adds one evidence item per concept, game day and kind. Returns the new level if it changed. |
+| `core/transcript.js` · `use(id, well, day)` | "Did it in play". If `well` is false, it only introduces the idea. |
+| `core/transcript.js` · `master(id, day)` | "Explained it correctly" (kind `answer`). |
+| `core/transcript.js` · `level(c)` | The mastery rule. |
+| `core/transcript.js` · `html()` | The T screen markup. |
 
 ## Mastery rule
 - introduced: met once.
@@ -43,7 +43,7 @@ Stores `lc_transcript_v2` as `{id: {ev: [{day, kind, real}]}}`. Real date is `ne
 ## How to change it safely
 - A new concept: add it to `CONCEPTS`; add it to `CORE` only if Season 1 must prove it.
 - Changing the rule invalidates stored data. Bump `KEY` and say so in the PR (v1 was dropped this way).
-- Callers: `game.js` (`drainUses`), `court.js` and `market.js` (`master`).
+- Callers: `core/game.js` (`drainUses`), `chapters/ch1/spring/court.js` and `core/market.js` (`master`).
 
 ## Known issues
 - Real dates use UTC, so a player near midnight may see two dates in one evening.

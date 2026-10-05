@@ -1,5 +1,5 @@
 // WS7 Market Day: the villager model, Grisby's rule, the books, and a pricing bot that must beat a fixed price. Run: node tests/test-market-day.js
-const S = require("../engine.js"), M = require("../market.js"), B = require("../books.js"), Bot = require("../bot.js"), Tr = require("../transcript.js");
+const S = require("../core/engine.js"), M = require("../core/market.js"), B = require("../core/books.js"), Bot = require("../core/bot.js"), Tr = require("../core/transcript.js");
 let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const game = (day, sacks) => { const s = S.newGame(); s.day = day; s.sacks = sacks; return s; };

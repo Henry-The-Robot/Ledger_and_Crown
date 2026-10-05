@@ -1,8 +1,8 @@
 // The cast, the village scenes and Edric's letters. Run: node tests/test-cast.js
-global.window = global; const S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../transcript.js");
-require("../cast.js"); require("../scenes.js"); const C = window.Cast, SC = window.Scenes;
+global.window = global; const S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../core/transcript.js");
+require("../chapters/ch1/spring/cast.js"); require("../chapters/ch1/spring/scenes.js"); const C = window.Cast, SC = window.Scenes;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
-const story = (() => { global.Verbs = {}; try { require("../story.js"); return window.Story; } catch (e) { console.log("story load: " + e.message); return null; } })();
+const story = (() => { global.Verbs = {}; try { require("../chapters/ch1/spring/story.js"); return window.Story; } catch (e) { console.log("story load: " + e.message); return null; } })();
 const ids = Object.keys(C.WHO);
 // ---- the cast
 ok(["maud", "crane", "ashby", "hobb", "tomas", "ezra", "duke", "pell", "pedlar", "mira", "abbey"].every(w => C.WHO[w]), "everyone in the valley has a character sheet");

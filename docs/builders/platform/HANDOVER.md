@@ -1,7 +1,7 @@
 # HANDOVER — Platform pack — updated 2026-10-04 by the platform builder (P1 session)
 
 ## State in one paragraph
-W2 (seed the wiki) is built on `platform/wiki-seed` (stacked on `platform/wiki-lint`): 24 pages (14 platform, 10 ch1 incl. LOG and the two earlier), INDEX generated, MAP files link them, coverage is now **strict**. Findings for the creative lead are under "Blocked". W1 (wiki lint) is built on `platform/wiki-lint` (stacked on `platform/version`): `tools/wiki-lint.js`, `docs/wiki/coverage.json`, `tests/test-wiki-lint.js`, a CI step, and three platform wiki pages (P1, P2, W1 themselves). Coverage is warn-only (23 files unnamed) until W2. P2 (one version stamp) is built on `platform/version`, stacked on `platform/ci`: `version.js` holds the version, `tools/stamp.js` stamps every `?v=` (bump: `node tools/stamp.js 0.4.7`), `tests/test-version.js` fails on any differing tag. It also found `index.html`'s `style.css` had no `?v=`. Read the master plan (`docs/MASTER-PLAN.html`) this session: platform phase first (P1 to P12, W1, W2), then Spring final.
+P3 is built as two stacked PRs: `platform/golden` (#51: golden bot seasons + golden story run, recorded on the old layout) and `platform/restructure` (files moved into `core/` and `chapters/ch1/spring/`, goldens identical). W2 (seed the wiki) is built on `platform/wiki-seed` (stacked on `platform/wiki-lint`): 24 pages (14 platform, 10 ch1 incl. LOG and the two earlier), INDEX generated, MAP files link them, coverage is now **strict**. Findings for the creative lead are under "Blocked". W1 (wiki lint) is built on `platform/wiki-lint` (stacked on `platform/version`): `tools/wiki-lint.js`, `docs/wiki/coverage.json`, `tests/test-wiki-lint.js`, a CI step, and three platform wiki pages (P1, P2, W1 themselves). Coverage is warn-only (23 files unnamed) until W2. P2 (one version stamp) is built on `platform/version`, stacked on `platform/ci`: `version.js` holds the version, `tools/stamp.js` stamps every `?v=` (bump: `node tools/stamp.js 0.4.7`), `tests/test-version.js` fails on any differing tag. It also found `index.html`'s `style.css` had no `?v=`. Read the master plan (`docs/MASTER-PLAN.html`) this session: platform phase first (P1 to P12, W1, W2), then Spring final.
 
 P1 (CI) is built on branch `platform/ci`: a GitHub Actions workflow (`.github/workflows/ci.yml`, job `tests`) runs
 `node tests/run-all.js` and then every browser test page in real-time Chromium through `tests/run-html.js --all`.
@@ -15,15 +15,17 @@ master = v0.4.6. PR #45 `platform/ci` (P1) open; `platform/version` (P2) stacked
 run goes red, and the next commit reverts it (both stay in the PR history).
 
 ## Next 3 actions
-1. P3 — golden runs, then the restructure (a file that moves needs its wiki pages' `files` updated; the lint proves it).
-2. P4 — saves (the save page lists what to fix).
-3. P5 — season settings as data.
+1. P4 — saves (`docs/wiki/platform/save.md` lists what to fix).
+2. P5 — season settings as data (Spring's `R` out of `core/engine.js`).
+3. P6 — lessons and scenes as data.
 
 ## Failure lesson
+- A test with `.filter(f => fs.existsSync(...))` over a file list passes vacuously after a move (`test-editor.js` did). Rule: a test that names source files throws if one is missing. Fixed in P3; grep for the pattern on any move.
 - The browser test pages passed or failed by eye. A runner that only prints cannot gate a PR. Rule: every test page ends in
   `label: true|false` lines, and the runner decides. Followed the previous lesson (never merge your own PR).
 
 ## Blocked on the creative lead / Kyle
+- After the restructure merges, an iPad that cached `game.html` will request old script paths (404) until it refetches. A version bump (`node tools/stamp.js 0.4.7`) at the release avoids it; the builders README table "What lives where" still lists the old root paths (yours to update).
 - Make the `tests` check required in branch protection once #45 merges (asked 2026-10-04).
 - Found while writing the wiki (2026-10-05; not fixed, your call): (1) `story.js` calls `Scenes.morning` every morning but `scenes.js` never exports it, so the call is skipped; `Scenes.pending` has no caller. (2) `lc_intro_seen` is written but never read; a returning player with no save sees the opening again. (3) `Codex.addPrestige`, `setLevel`, `speak`, `due`, `retained` are never called. (4) The save is deleted when Ezra's closing review finishes, so "Welcome back, the spring is over" works only until then (P4). (5) `story.js` chapter headers disagree with function names (`ch2` is the first seed, `ch3` the bakery) and chapters 4-5 are not calendar weeks 2-3. (6) Session tags: ch7 cites C1.06 (bond interest; the honest sources are C0.01, C5.01); C0.02 and C2.09 tags are loose. (7) `market.js` header says Grisby undercuts by 1; the code says 2. (8) The engine header names `test-engine.js` (missing) and a `crownFund` comment says 1,000 (`R.crownDebt` is 1,250). (9) Bot literals (12 per packet, 150 borrow) are not read from `R`. (10) No direct tests for art, fx, codex, verbs.
 

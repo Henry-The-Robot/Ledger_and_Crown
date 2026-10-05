@@ -3,7 +3,7 @@ title: Save and browser storage
 type: system
 pack: platform
 season: all
-files: [game.js, transcript.js, codex.js, endings.js, fx.js, intro.js]
+files: [core/game.js, core/transcript.js, core/codex.js, chapters/ch1/spring/endings.js, core/fx.js, core/intro.js]
 symbols: [SAVE, save, restart, review, start, KEY, LEVEL_KEY, PKEY, store]
 concepts: []
 sessions: []
@@ -18,15 +18,15 @@ The game keeps all player data in `localStorage`. There is no server. The season
 ## Where
 | Key | Written by | Holds |
 |---|---|---|
-| `lc_spring_save_v3` | `game.js` · `save()` | `{s, story, calm, usePtr, fairSeen}`: the whole engine state, story state and a few UI counters. |
-| `lc_transcript_v2` | `transcript.js` · `store` | Concept evidence per id: `{ev: [{day, kind, real}]}`. |
-| `lc_codex_v1` | `codex.js` | Concept state (felt, named), hits and next-due time. |
-| `lc_level_v1` | `codex.js` · `setLevel` | Guide level; default "apprentice". |
-| `lc_prestige_v1` | `codex.js` · `addPrestige` | A number; read at new game as a Cash bonus. |
-| `lc_unlocks_v1` | `endings.js` · `unlock` | Ending unlocks, kept across games. |
-| `lc_sfx`, `lc_music` | `fx.js` · `save` | "1" or "0" switches. `lc_sound` is the old one-switch key, read only. |
-| `lc_intro_seen` | `intro.js` · `end` | "1" once the opening ends or is skipped. |
-| `lc_bug_reports` | `game.js` (`pauseMenu`) | Array of `{at, day, stage, question, expected}`; `feedbackText` reads the last five. |
+| `lc_spring_save_v3` | `core/game.js` · `save()` | `{s, story, calm, usePtr, fairSeen}`: the whole engine state, story state and a few UI counters. |
+| `lc_transcript_v2` | `core/transcript.js` · `store` | Concept evidence per id: `{ev: [{day, kind, real}]}`. |
+| `lc_codex_v1` | `core/codex.js` | Concept state (felt, named), hits and next-due time. |
+| `lc_level_v1` | `core/codex.js` · `setLevel` | Guide level; default "apprentice". |
+| `lc_prestige_v1` | `core/codex.js` · `addPrestige` | A number; read at new game as a Cash bonus. |
+| `lc_unlocks_v1` | `chapters/ch1/spring/endings.js` · `unlock` | Ending unlocks, kept across games. |
+| `lc_sfx`, `lc_music` | `core/fx.js` · `save` | "1" or "0" switches. `lc_sound` is the old one-switch key, read only. |
+| `lc_intro_seen` | `core/intro.js` · `end` | "1" once the opening ends or is skipped. |
+| `lc_bug_reports` | `core/game.js` (`pauseMenu`) | Array of `{at, day, stage, question, expected}`; `feedbackText` reads the last five. |
 
 ## Data and state
 - `save()` runs only in story games, and not in `?fast` runs unless `?savetest` is set. It is called at each morning (`doSleep`), at `closeBooks`, on "Save and quit", and at story steps through `G.save`.

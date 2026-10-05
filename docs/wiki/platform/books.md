@@ -3,7 +3,7 @@ title: Books (statements and closing review)
 type: system
 pack: platform
 season: spring
-files: [books.js]
+files: [core/books.js]
 symbols: [close, highlight, review, reviewResult, postmortem, sumType, three]
 concepts: [statements, cfs, ratios, gross, margin, wc, pct, accrual]
 sessions: [C1.01, C1.02, C1.08, C1.09, C2.09]
@@ -13,17 +13,17 @@ updated: 2026-10-05
 ---
 
 ## What it does
-`books.js` turns the season's journal into the three statements. It also writes Maud's highlight, Ezra's closing review and the insolvency post-mortem. It is pure JS, no DOM (`window.Books`).
+`core/books.js` turns the season's journal into the three statements. It also writes Maud's highlight, Ezra's closing review and the insolvency post-mortem. It is pure JS, no DOM (`window.Books`).
 
 ## Where
 | File · symbol | What |
 |---|---|
-| `books.js` · `close(s)` | Returns `{is, start, end, cf, day, outcome, balanced}`: income statement, balance sheets at start and end, indirect cash-flow statement. |
-| `books.js` · `highlight(st, s)` | Maud's single line that explains the season, plus the row ids to light up (`is:`, `bs0:`, `bs1:`, `cf:` prefixes). |
-| `books.js` · `review(st)` | Two or three questions on the player's own lines: current ratio (or working capital), cash gap, gross margin. |
-| `books.js` · `reviewResult(s, correct, asked)` | Moves `s.trust.ezra` by `correct * 2 - asked`, then returns `Spring.terms(s)`. |
-| `books.js` · `postmortem(s)` | For an insolvent ending: names what the last week's Cash went on. |
-| `books.js` · `three(c)` | Dedupes options; the first option is the answer. |
+| `core/books.js` · `close(s)` | Returns `{is, start, end, cf, day, outcome, balanced}`: income statement, balance sheets at start and end, indirect cash-flow statement. |
+| `core/books.js` · `highlight(st, s)` | Maud's single line that explains the season, plus the row ids to light up (`is:`, `bs0:`, `bs1:`, `cf:` prefixes). |
+| `core/books.js` · `review(st)` | Two or three questions on the player's own lines: current ratio (or working capital), cash gap, gross margin. |
+| `core/books.js` · `reviewResult(s, correct, asked)` | Moves `s.trust.ezra` by `correct * 2 - asked`, then returns `Spring.terms(s)`. |
+| `core/books.js` · `postmortem(s)` | For an insolvent ending: names what the last week's Cash went on. |
+| `core/books.js` · `three(c)` | Dedupes options; the first option is the answer. |
 
 ## Data and state
 Reads `s.bal`, `s.opening`, `s.journal` and `s.outcome`. Writes only `s.trust.ezra` (in `reviewResult`). The cash-flow check compares the indirect `cfo` with a direct sum of cash lines; `reconciles` must be true.

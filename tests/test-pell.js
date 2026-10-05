@@ -1,5 +1,5 @@
 // Pell the pig farmer and Barnaby's rat poison: the counters to the pigs and the rats. Run: node tests/test-pell.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 const plant = (s, n) => { s.plots.filter(p => p.tilled && !p.crop).slice(0, n).forEach(p => p.crop = { age: 1, cost: 12 }); s.bal.inv += n * 12; s.bal.cash -= n * 12; };

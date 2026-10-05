@@ -1,6 +1,6 @@
 // Maud's daily problems: every problem's answer must be computed from the same books the player sees. Run: node tests/test-practice.js
-global.window = global; const S = require("../engine.js"), B = require("../books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../transcript.js");
-const Bot = require("../bot.js"); require("../practice.js"); const P = window.Practice;
+global.window = global; const S = require("../core/engine.js"), B = require("../core/books.js"); global.Spring = S; global.Books = B; global.Transcript = require("../core/transcript.js");
+const Bot = require("../core/bot.js"); require("../chapters/ch1/spring/practice.js"); const P = window.Practice;
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const seen = new Set(), bad = [], seenT = { 1: new Set(), 2: new Set(), 3: new Set() }; let n = 0, cmps = 0;
 // Independent cross-check of every tiered problem: the numbers stated in the problem's text must match the engine's state, and the answer must follow from those stated numbers.

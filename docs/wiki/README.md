@@ -33,7 +33,7 @@ title: The Reeve's Court
 type: system            # system | lesson | data | bug | decision
 pack: ch1               # platform | ch1 | ch2 | ch3 | ch4
 season: spring          # or "all"
-files: [court.js, court.css]                # paths that exist
+files: [chapters/ch1/spring/court.js, chapters/ch1/spring/court.css]                # paths that exist
 symbols: [BUILDERS, POOLS, build, hearing]  # names that grep in those files
 concepts: [cfs, margin, breakeven]          # transcript concept ids, if any
 sessions: [C1.08, C16.01]                   # curriculum sessions taught or tested, if any

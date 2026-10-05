@@ -1,5 +1,5 @@
 // The wages-day walk-off: a spender triggers it, a careful player does not. Run: node tests/test-walkoff.js
-const S = require("../engine.js"), Bot = require("../bot.js"); let fail = 0;
+const S = require("../core/engine.js"), Bot = require("../core/bot.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const play = (k, opt, days) => { const s = S.newGame(opt); if (opt && opt.story) s.quiet = false; for (let d = 1; d <= days && !s.over; d++) { Bot[k].day(s); S.sleep(s); } return s; };
 { const s = S.newGame({ story: true }); s.quiet = false; let cashBefore = null; for (let d = 1; d <= 7; d++) { Bot.spender.day(s); if (d === 7) cashBefore = s.bal.cash; S.sleep(s); }

@@ -1,5 +1,5 @@
 // Depreciation is per sprinkler owned: 80 cost / 16 weeks = 5 a week each. Run: node tests/test-depreciation.js
-const S = require("../engine.js"); let fail = 0;
+const S = require("../core/engine.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const s = S.newGame(); s.bal.cash = 500; S.buySprinkler(s); S.buySprinkler(s);
 for (let i = 0; i < 7; i++) S.sleep(s);

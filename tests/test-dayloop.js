@@ -1,6 +1,6 @@
 // Day-loop: every day 2-28 has at least one choice and at least one surprise or set piece, over many seeds. Run: node tests/test-dayloop.js [--table]
-global.window = global; const S = require("../engine.js"); global.Spring = S; global.Books = require("../books.js"); global.Transcript = require("../transcript.js"); global.Verbs = {};
-require("../cast.js"); require("../scenes.js"); const M = require("../market.js"); require("../standing.js"); const { dayLoop } = require("./day-loop.js");
+global.window = global; const S = require("../core/engine.js"); global.Spring = S; global.Books = require("../core/books.js"); global.Transcript = require("../core/transcript.js"); global.Verbs = {};
+require("../chapters/ch1/spring/cast.js"); require("../chapters/ch1/spring/scenes.js"); const M = require("../core/market.js"); require("../chapters/ch1/spring/standing.js"); const { dayLoop } = require("./day-loop.js");
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const extra = { Scenes: window.Scenes, Market: M, Standing: window.Standing }, gaps = { choice: {}, surprise: {} };
 for (let seed = 1; seed <= 40; seed++) dayLoop(S, extra, seed).forEach(r => { if (r.day >= 2) { if (!r.choices.length) (gaps.choice[r.day] = gaps.choice[r.day] || []).push(seed); if (!r.surprises.length) (gaps.surprise[r.day] = gaps.surprise[r.day] || []).push(seed); } });

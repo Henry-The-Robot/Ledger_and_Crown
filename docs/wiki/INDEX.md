@@ -1,18 +1,18 @@
 # Code wiki index (one line per page; grouped by pack). Schema: `docs/wiki/README.md`.
 
 ## platform
-- [platform/art](platform/art.md) — system · Pixel art (art.js). `art.js` draws all the game's pixel art in code.
-- [platform/books](platform/books.md) — system · Books (statements and closing review). `books.js` turns the season's journal into the three statements.
-- [platform/bots](platform/bots.md) — system · Scripted bot players. `bot.js` has scripted players.
-- [platform/codex](platform/codex.md) — system · The codex store. `codex.js` is a small shared store from an older design.
-- [platform/engine](platform/engine.md) — system · The engine (double-entry journal). `engine.js` is the whole season as pure JS with no DOM.
-- [platform/game-ui](platform/game-ui.md) — system · The game shell (game.js). `game.js` is the playable world: map, walking, dialogue, menus, the Desk, the day loop and the close of the books.
-- [platform/opening](platform/opening.md) — system · The opening (intro.js). A 75-second animated prologue on a 320 by 180 canvas.
+- [platform/art](platform/art.md) — system · Pixel art (core/art.js). `core/art.js` draws all the game's pixel art in code.
+- [platform/books](platform/books.md) — system · Books (statements and closing review). `core/books.js` turns the season's journal into the three statements.
+- [platform/bots](platform/bots.md) — system · Scripted bot players. `core/bot.js` has scripted players.
+- [platform/codex](platform/codex.md) — system · The codex store. `core/codex.js` is a small shared store from an older design.
+- [platform/engine](platform/engine.md) — system · The engine (double-entry journal). `core/engine.js` is the whole season as pure JS with no DOM.
+- [platform/game-ui](platform/game-ui.md) — system · The game shell (core/game.js). `core/game.js` is the playable world: map, walking, dialogue, menus, the Desk, the day loop and the close of the books.
+- [platform/opening](platform/opening.md) — system · The opening (core/intro.js). A 75-second animated prologue on a 320 by 180 canvas.
 - [platform/save](platform/save.md) — system · Save and browser storage. The game keeps all player data in `localStorage`.
 - [platform/sound](platform/sound.md) — system · Sound (music and effects). All sound is made with WebAudio in code.
 - [platform/tests-and-ci](platform/tests-and-ci.md) — system · Tests and CI. Every pull request and every push to `master` runs the node tests and every browser test page.
 - [platform/transcript](platform/transcript.md) — system · The transcript (concepts and mastery). The transcript records what the player has done and explained, per concept.
-- [platform/verbs](platform/verbs.md) — system · Mechanic verbs (tag, bet, timeline). `verbs.js` holds things the player does instead of typing a sum.
+- [platform/verbs](platform/verbs.md) — system · Mechanic verbs (tag, bet, timeline). `core/verbs.js` holds things the player does instead of typing a sum.
 - [platform/version-stamp](platform/version-stamp.md) — system · The version stamp. One version number, `version.js`.
 - [platform/wiki-lint](platform/wiki-lint.md) — system · The wiki lint. Checks every page of this wiki against the code.
 

@@ -1,7 +1,7 @@
 // Overnight events: pigs, rats, a warm day, a frost. Each posts balanced entries and keeps the statements reconciling.
 // WS6: the event days are drawn per game from the seed saved in the game, so every scenario reads its day from the game (S.eventDay) and runs under
 // the canonical calendar (seed 0) and two drawn seeds. Run: node tests/test-events.js
-const S = require("../engine.js"), B = require("../books.js"); let fail = 0;
+const S = require("../core/engine.js"), B = require("../core/books.js"); let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const upTo = (s, d) => { while (s.day < d && !s.over) S.sleep(s); };
 const plant = (s, n) => { s.plots.filter(p => p.tilled && !p.crop).slice(0, n).forEach(p => p.crop = { age: 1, cost: 12 }); s.bal.inv += n * 12; s.bal.cash -= n * 12; };
@@ -19,6 +19,6 @@ for (const seed of [0, 7, 1234]) {
   { const s = g(); upTo(s, D("warm")); s.bal.cash = 500; plant(s, 3); s.plots.filter(p => p.crop).forEach(p => p.crop.age = 1); S.sleep(s); ok(s.plots.filter(p => p.crop).every(p => p.crop.age === 2 || p.crop.age === 3), "warm day gives crops an extra day of growth" + tag); }
   { const s = g(); upTo(s, D("frost")); plant(s, 3); s.plots.filter(p => p.crop).forEach(p => { p.crop.age = 1; p.watered = true; }); S.sleep(s); ok(s.plots.filter(p => p.crop).every(p => p.crop.age === 1), "frost stops all growth for the night" + tag); }
 }
-for (const k of ["careful", "reckless", "overtrader", "noDuke", "sprinkler"]) { const Bot = require("../bot.js"), s = S.newGame(); let g = 0; while (!s.over && g++ < 40) { Bot[k].day(s); S.sleep(s); }
+for (const k of ["careful", "reckless", "overtrader", "noDuke", "sprinkler"]) { const Bot = require("../core/bot.js"), s = S.newGame(); let g = 0; while (!s.over && g++ < 40) { Bot[k].day(s); S.sleep(s); }
   const st = B.close(s); ok(st.balanced && st.cf.reconciles, `${k}: ${s.outcome}, statements balance and reconcile (losses ${s.bal.losses})`); }
 process.exit(fail ? 1 : 0);

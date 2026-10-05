@@ -15,7 +15,7 @@
 // THE SOLD-OUT EPILOGUE does not claim the offer was too low. It sets the offer beside what the farm EARNS (the Cash it cleared this spring, or its profit while that is still in grain and invoices) and beside book equity, because
 // a business is worth the Cash it will keep earning, and the land (the millstream Vane wants) is not on the books at all. Tag: C0.01 time value, C1.01 equity.
 (function (root) {
-  const SP = () => root.Spring || require("./engine.js");
+  const SP = () => root.Spring || require("../../../core/engine.js");
   const MIN_PRICE = 150, MERCY_FLOOR = 100, MERCY_SHARE = 0.6;
 
   function daysInGap(s) { // days in the next 14 where Cash is forecast below zero, doing nothing else
