@@ -29,7 +29,7 @@
     const debts = []; if (bal.loan < 0) debts.push({ to: "ezra", amount: -bal.loan, rateBp: t.rateBp, callable: false });
     if (bal.crown < 0) debts.push({ to: "crown", amount: -bal.crown, rateBp: 0, callable: false });
     const flags = {}; for (const k in (s.flags || {})) flags[k] = s.flags[k];
-    flags.examPassed = !!ctx.examPassed;
+    flags.examPassed = flags.courtPassed !== undefined ? !!flags.courtPassed : !!ctx.examPassed; // the Court decides; ctx is only for a v3 migration that has no Court flags
     return { v: 1, season, ending: ctx.ending || s.outcome || "closed", cash: Math.round(bal.cash), debts, stakes: { mill: 0, bakery: 0 }, relations: rel, flags,
       transcript: ctx.transcript || {}, statements: B.close(s), seed: s.seed | 0, closedAt: ctx.closedAt || clock() };
   }
@@ -97,13 +97,16 @@
   function closeSeason(season, s, ctx) {
     ctx = Object.assign({}, ctx); snapshot(load().profile); ctx.transcript = ctx.transcript || load().profile.transcript;
     const next = carryFrom(s, season, ctx);
-    const rec = { closedAt: next.closedAt, outcome: s.outcome || "closed", seed: s.seed | 0, statements: next.statements, exam: { passed: !!(ctx && ctx.examPassed), score: ctx && ctx.score, attempts: ctx && ctx.attempts }, next };
+    const fl = s.flags || {}, court = fl.courtPassed !== undefined; // the exam is the Court's result (s.flags.court*), never Ezra's review
+    const rec = { closedAt: next.closedAt, outcome: s.outcome || "closed", seed: s.seed | 0, statements: next.statements, exam: court ? { passed: !!fl.courtPassed, score: fl.courtScore, attempts: fl.courtAttempts } : { passed: next.flags.examPassed, score: ctx.score, attempts: ctx.attempts }, next };
     write({ closed: { [season]: rec } }); return rec;
   }
   // Ezra's review (or the Court) updates only the exam fields of a season that is already frozen.
   function markExam(season, exam) {
     const cur = load().closed[season]; if (!cur) return null;
-    const rec = Object.assign({}, cur, { exam: Object.assign({}, cur.exam, exam) }); write({ closed: { [season]: rec } }); return rec;
+    const rec = Object.assign({}, cur, { exam: Object.assign({}, cur.exam, exam) });
+    if (exam.passed !== undefined && rec.next && rec.next.flags) rec.next = Object.assign({}, rec.next, { flags: Object.assign({}, rec.next.flags, { examPassed: !!exam.passed }) });
+    write({ closed: { [season]: rec } }); return rec;
   }
   function clearSlot() { return write({ slot: null }); }
   function newSeed(forced) { // ?seed=N wins; else a seed from the profile, then games + 1

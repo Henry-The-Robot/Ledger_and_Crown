@@ -249,7 +249,7 @@ window.Court = (function () {
       letter: o.letter || (st && o.Story.letter ? () => o.Story.letter(8) : null) });
   }
   async function run(o) {
-    if (o && o.s && !o.statements) { const g = o, r = await run(fromGame(o)); if (r && g.s) { g.s.exam = { passed: r.passed, score: r.score, attempts: r.attempts, certificate: r.certificate || null }; if (r.flags) Object.assign(g.s.flags, { vaneFinal: r.flags.vaneFinal, examPassed: !!r.passed }); if (g.G && g.G.save) g.G.save(); } return r; }
+    if (o && o.s && !o.statements) { const g = o, r = await run(fromGame(o)); if (r && g.s) { g.s.exam = { passed: r.passed, score: r.score, attempts: r.attempts, certificate: r.certificate || null }; g.s.flags = g.s.flags || {}; Object.assign(g.s.flags, { courtPassed: !!r.passed, courtScore: r.score, courtAttempts: r.attempts }); if (r.flags) Object.assign(g.s.flags, { vaneFinal: r.flags.vaneFinal, examPassed: !!r.passed }); if (g.G && g.G.save) g.G.save(); } return r; }
     o = Object.assign({ flags: {}, trust: {}, farm: "Thornfield" }, o); if (!o.statements) throw new Error("Court.run needs statements (Books.close)");
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
