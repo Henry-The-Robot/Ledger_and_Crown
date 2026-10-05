@@ -796,6 +796,7 @@
   }
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
+    try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} // freeze once, when the books first show; a reload keeps it
     ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
     const pm = s.outcome === "insolvent" ? B.postmortem(s) : null;
     const banner = s.outcome === "insolvent" ? `<div class="banner">Insolvent on day ${s.day}. ${s.why}<br><b>What happened:</b><ul>${pm.lines.map(l => `<li>${l}</li>`).join("")}</ul><b>Next time:</b> ${pm.advice}</div>` : "";
@@ -828,7 +829,7 @@
     function next() {
       document.querySelectorAll("#panelBody tr.ask").forEach(r => r.classList.remove("ask"));
       if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length);
-        try { Save.closeSeason(SEASON, s, { examPassed: right === qs.length, score: right, attempts: 1 }); Save.clearSlot(); } catch (e) {} // freeze the season; the profile stays
+        try { Save.markExam(SEASON, { passed: right === qs.length, score: right, attempts: 1 }); } catch (e) {} // the season froze when the books closed; review sets only the exam
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${right === qs.length ? "You know your own books. Good." : right ? "You know some of your books." : "You don't know your own books. That costs you."}<br>
           Summer terms: lend up to <b>${after.loanLimit}</b> at <b>${after.rateBp / 100}% a week</b> (spring: ${before.loanLimit} at ${before.rateBp / 100}%).</div>
           <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>${endBtn()}`; return wire(); }

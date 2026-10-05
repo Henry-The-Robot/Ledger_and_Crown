@@ -100,6 +100,11 @@
     const rec = { closedAt: next.closedAt, outcome: s.outcome || "closed", seed: s.seed | 0, statements: next.statements, exam: { passed: !!(ctx && ctx.examPassed), score: ctx && ctx.score, attempts: ctx && ctx.attempts }, next };
     write({ closed: { [season]: rec } }); return rec;
   }
+  // Ezra's review (or the Court) updates only the exam fields of a season that is already frozen.
+  function markExam(season, exam) {
+    const cur = load().closed[season]; if (!cur) return null;
+    const rec = Object.assign({}, cur, { exam: Object.assign({}, cur.exam, exam) }); write({ closed: { [season]: rec } }); return rec;
+  }
   function clearSlot() { return write({ slot: null }); }
   function newSeed(forced) { // ?seed=N wins; else a seed from the profile, then games + 1
     const b = load(); if (forced != null && isFinite(forced)) return +forced;
@@ -165,7 +170,7 @@
 
   // Test hooks
   function _use(o) { if (o.store !== undefined) store = o.store; if (o.clock) clock = o.clock; cache = null; }
-  root.Save = { KEY, load, write, profile, slot, saveSlot, closeSeason, clearSlot, newSeed, seedFrom, shuffleSeeded, carryFrom, migrate,
+  root.Save = { KEY, load, write, profile, slot, saveSlot, closeSeason, markExam, clearSlot, newSeed, seedFrom, shuffleSeeded, carryFrom, migrate,
     export: exportCode, exportCompressed, fileName, parseCode, import: importCode, persist, heir, setHeir, _use };
   if (typeof module !== "undefined") module.exports = root.Save;
 })(typeof window !== "undefined" ? window : globalThis);
