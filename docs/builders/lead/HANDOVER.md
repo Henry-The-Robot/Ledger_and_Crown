@@ -53,8 +53,15 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
   all gaps are scope. Spring keeps 8 core ideas. Card T2 adds two cheap lines and retags. Coverage map now has
   `spring_scope`/`rest_home`: C1.04 LIFO → Ch2, C1.08 build → Ch1 Winter, C0.02 pp → Summer, CAGR → Winter,
   C16.01 → Ch4. Part B was wrong about C1.08 (books.js:17 is the indirect method).
-- NEXT LEAD SESSION: review P4b (`core/save.js`) against the Lead review in `docs/design/save-and-carry.md`; its card
-  check only tests that the file exists. Merge the local/work PR if it holds canon (T2's coverage copy).
+- **P4b REVIEWED (2026-10-05 ~11:55 PT):** the core is sound, with three MAJOR integration gaps → card P4c (see
+  `docs/design/save-and-carry.md`, "Lead review of P4b").
+- **RED CI:** the local/work PR (#55) has been red since 09:45. First a stale wiki symbol; now 3 browser pages:
+  court.html crash, golden-story mismatch, lessons-s1 praise/evidence. The Builder ran cards through S5 on red (local
+  tests skip the browser pages). Card R0 is first; speed_note rule 6 says no card is done on red CI.
+  Coordinator asked (help 20261005-115424) to allowlist `gh run view --log-failed` and gate `done` on CI.
+- NEXT LEAD SESSION: confirm #55 is green, then read the full diff of the P6-S5 work. The checks were weak, so check
+  the cutscenes against the story bible and S7 at 1194×834. Then merge #55 (it holds canon: the T2 coverage copy). That
+  ships v0.4.7 to Kyle's iPad.
 - Superseded draft notes (kept for history): deep dive results (both done, not yet spot-checked). A: 5 sessions correct, C0.02 a loose tag (no pp-vs-% or CAGR),
   C0.03 algebra and the speaking session missing. B: C2.01, C2.02, C5.01 correct; gaps: C1.04 (no FIFO/LIFO/reserve),
   C1.08 (no indirect-method cash flow), C2.09 (no DSO/DIO/DPO/CCC; card S2 already adds this). Lead's draft call, to
