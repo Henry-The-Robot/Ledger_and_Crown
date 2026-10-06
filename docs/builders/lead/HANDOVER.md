@@ -85,6 +85,8 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
 ## Decisions made and why (newest first)
+- 2026-10-06 (Kyle, via coordinator): the Lead runs no cron and no scheduled run. It acts only when Kyle writes or a
+  blocking help request is waiting: review PRs, adjust the plan, unblock Builders. My ask for a daily Lead run is withdrawn.
 - 2026-10-05: Kyle: "proceed as planned but push the builder to deliver more faster". Cards now run T1 → P4b → P5 →
   P6a → P6b → P7 → P8 → S7 (iPad fill + v0.4.7, first visible change) → S5; PLAN.json `speed_note` (loop to budget,
   one critic round, tests+goldens+lint gate); P6 story port is one card; U0b waits on curriculum fixes (C4.01-03,
