@@ -2,6 +2,19 @@
 
 **How to bump the version** (one command, never by hand): `node tools/stamp.js 0.4.7` writes the version into `version.js` and stamps every `?v=` in `game.html` and `index.html` (and the visible "v0.4.7" on the title page). `node tools/stamp.js --check` lists any tag that differs; `tests/test-version.js` and CI fail on a mismatch. Adding a script tag? Add it, then run `node tools/stamp.js`. The creative lead makes the release tag.
 
+## v0.4.9: what Summer needs
+- **Your cash conversion cycle, in days** (week 3, the day after the present-value lesson): receivable days, inventory days and payable days from your own books, then you work out the cycle.
+- **Who is paid first** (week 4, Ezra): Crane's offer against what the farm owes. Debts come first, the owner last. Your answer is saved for Summer.
+- Three short naming passes inside existing scenes: your walk-away point (best alternative, less its cost), sunk cost (the seed already bought), and legal / ethical / smart (Vane's "partnership").
+
+## v0.4.8: Spring's cutscenes
+- **Five short cutscenes** play at story beats, each skippable: Corvin Vane arrives (day 12), "It's only my name" (Ashby, day 21+), the night the pigs got in, Crane reads the seal (day 23+), and a Market Day opening that changes in weeks 1, 2 and 3. A short Spring opening is ready for the main menu (not wired yet).
+- Every cutscene you have seen is kept in a journal on your device.
+
+## v0.4.7: the iPad screen is full
+- **The map fills the whole iPad screen**, landscape (1194 × 834) and portrait (834 × 1194). A band of 8 px round the map is gone, and portrait now scales up so the map is no longer 150 px short at the bottom.
+- Under the hood (no change to play): the story's lessons are data (`lessons.js`), the opening runs on a cutscene engine, and the map's still props are data.
+
 ## v0.4.6: review fixes
 - **The Reeve's Court has 9 claims now, and you pass with 6** (creative call 6). Each sitting asks one claim for each of the eight core ideas, plus the guarantee claim. If the guarantee flag is not set, the "on demand" claim stands in.
 - **A retake is not a repeat.** Each idea has a pool of claims, and a retake draws a different one. The numbers in the break-even, floor-offer, waiting and caravan claims change every sitting.

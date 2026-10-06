@@ -9,6 +9,8 @@
 | Double-entry engine | `core/engine.js` | Pure JS, no DOM; runs in node. Lines 8–47 are **Spring's constants** (`R`): days, costs, Duke/Corvin orders, Crown debt, prices by day, events. Seeded events via mulberry32 (`eventsFor`). |
 | Books, statements, review | `core/books.js` | Ezra's closing review questions. |
 | UI, map drawing, save | `core/game.js` (117 KB) | Save key `lc_spring_save_v3` (line 10); `save()` ~836; deleted at ~822 (after the closing review) and ~834 (restart). Map props drawn in code from ~840. iPad scroll pin `pinPage` ~166. Stall valve ~283. |
+| Scene player (P6a) | `core/scene.js` | Plays scene records (data). Spring's 12 village scenes are records in `chapters/ch1/spring/scenes.js`. Wiki: `platform/scene-player`. Format guide: `chapters/README.md`. Test: `tests/test-scene.js`. |
+| Story lessons (P6b) | `chapters/ch1/spring/lessons.js` (words) · `chapters/ch1/spring/story.js` (`CALC`, `VERB`, hooks) | Nine chapters and the lesson scenes are records the scene player runs. Wiki: `ch1/lessons-as-data`. Test: `tests/test-story-trace.js` (golden `tests/golden/ch1-spring/story-trace.json`). |
 | Mechanic verbs | `core/verbs.js`, `core/verbs.css` | tag, bet, timeline, … |
 | Transcript | `core/transcript.js` | Key `lc_transcript_v2`; `CONCEPTS`, `CORE`; mastery needs 3 game days and 2 real dates. |
 | Other stores | `core/codex.js` (`lc_codex_v1`, `lc_level_v1`, `lc_prestige_v1`), `chapters/ch1/spring/endings.js` (`lc_unlocks_v1`), `core/fx.js` (sound prefs), `core/intro.js` (`lc_intro_seen`), bug reports `lc_bug_reports` (core/game.js ~278) | All localStorage, no versions. |

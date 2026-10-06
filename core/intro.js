@@ -117,50 +117,15 @@ window.Intro = (function () {
     },
   ];
 
-  // ---------- playback ----------
-  let st = null, voiceBase = null, voiceExt = "mp3", active = false;
-  const shotAt = t => { let i = STARTS.length - 1; while (i > 0 && t < STARTS[i]) i--; return i; };
-  const lineAt = t => SCRIPT.find(l => t >= l.at && t < l.at + l.dur) || null;
-  function frame(t) { // draw the whole opening at time t (also used by tests and screenshots)
-    if (!ctx) return; ctx.imageSmoothingEnabled = false; const i = shotAt(t), local = t - STARTS[i]; ctx.save(); DRAW[i](local, SHOTS[i].dur);
-    const fi = Math.min(.8, 1 - prog(local, 0, .6)), fo = prog(local, SHOTS[i].dur - .5, SHOTS[i].dur); const dark = i === SHOTS.length - 1 ? fi : Math.max(fi, i < SHOTS.length - 1 ? fo : 0); if (dark > 0) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); } ctx.restore();
-  }
-  function setVoice(base, ext) { voiceBase = base || null; if (ext) voiceExt = ext; }
-  const manifest = () => SCRIPT.map(l => ({ id: l.id, speaker: l.who, text: l.text, direction: l.dir, start: l.at, maxSeconds: l.dur, file: l.id + "." + voiceExt }));
-  function sound(name) { try { if (window.FX && FX.sfx) FX.sfx(name); } catch (e) {} }
-  function say(l) { // a line starts: subtitle, and the voice file if one is set
-    if (!st) return; const el = st.sub; el.innerHTML = `<span class="in-who">${l.who}</span><span class="in-txt">${l.text}</span>`; el.classList.add("on"); st.line = l.id; st.said.push(l.id);
-    if (voiceBase) try { const a = new Audio(`${voiceBase}/${l.id}.${voiceExt}`); a.volume = 1; st.audio = a; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
-  }
-  function step(now) {
-    if (!st) return; const dt = Math.min(.1, (now - (st.last || now)) / 1000); st.last = now; if (!st.hold) st.t += dt * st.speed;
-    const t = st.t; if (t >= TOTAL) return end("done");
-    frame(t);
-    const si = shotAt(t); if (si !== st.shot) { st.shot = si; st.cueI = 0; try { if (window.Music) { Music.start(); Music.setMood(SHOTS[si].mood); } } catch (e) {} }
-    const local = t - STARTS[si]; while (st.cueI < SHOTS[si].cues.length && SHOTS[si].cues[st.cueI][0] <= local) { sound(SHOTS[si].cues[st.cueI][1]); st.fired.push(SHOTS[si].cues[st.cueI][1]); st.cueI++; }
-    const l = lineAt(t); if (l && st.line !== l.id) say(l); else if (!l && st.line) { st.line = null; st.sub.classList.remove("on"); }
-    const bar = st.root.querySelector("#in-bar i"); if (bar) bar.style.width = (t / TOTAL * 100).toFixed(1) + "%";
-    st.raf = requestAnimationFrame(step);
-  }
-  function end(how) {
-    if (!st) return; const s = st; st = null; active = false; cancelAnimationFrame(s.raf); document.removeEventListener("keydown", s.key, true); try { if (s.audio) s.audio.pause(); } catch (e) {}
-    s.root.classList.add("out"); setTimeout(() => s.root.remove(), 380); document.body.classList.remove("in-intro"); try { localStorage.setItem("lc_intro_seen", "1"); } catch (e) {} s.done({ how, said: s.said, fired: s.fired });
-  }
-  // opts.speed: playback rate (tests); opts.hold: do not advance until released (screenshots); opts.autostart: skip the "tap to begin" gate
-  function play(opts) {
-    opts = opts || {}; if (st) return st.promise; let done; const promise = new Promise(r => { done = r; });
-    const root = document.createElement("div"); root.id = "intro"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "The opening");
-    root.innerHTML = `<div class="in-stage"><canvas id="in-cv" width="${W}" height="${H}"></canvas><div class="in-sub" id="in-sub" aria-live="polite"></div><div class="in-gate" id="in-gate"><b>Ledger &amp; Crown</b><span>Spring at Thornfield</span><button type="button" id="in-go">Begin</button><small>Sound on. Tap, or press Enter.</small></div></div><div class="in-top"><span id="in-bar"><i></i></span><button type="button" id="in-skip">Skip</button></div>`;
-    document.body.appendChild(root); document.body.classList.add("in-intro"); active = true; ctx = root.querySelector("#in-cv").getContext("2d"); const go = root.querySelector("#in-go");
-    const start = () => { if (!st || !go.isConnected) return; try { if (window.FX) FX.unlock(); } catch (e) {} root.querySelector("#in-gate").remove(); st.last = performance.now(); st.raf = requestAnimationFrame(step); };
-    const key = e => { if (e.key === "Escape") { e.stopPropagation(); end("skipped"); } else if ((e.key === "Enter" || e.key === " ") && go.isConnected) { e.preventDefault(); e.stopPropagation(); start(); } else e.stopPropagation(); }; // (the game underneath hears no keys while the opening is up)
-    st = { t: 0, last: 0, speed: opts.speed || 1, hold: !!opts.hold, root, sub: root.querySelector("#in-sub"), shot: -1, cueI: 0, line: null, said: [], fired: [], key, done, raf: 0, promise };
-    document.addEventListener("keydown", key, true); root.querySelector("#in-skip").onclick = () => end("skipped");
-    frame(0); go.onclick = start; if (opts.autostart) start(); setTimeout(() => go.isConnected && go.focus({ preventScroll: true }), 30);
-    return promise;
-  }
+  // ---------- playback: the engine is core/cutscene.js; the opening is its first cutscene ----------
+  const C = window.Cutscene || require("./cutscene.js");
+  const DEF = { id: "opening", label: "The opening", w: W, h: H, seenKey: "lc_intro_seen", gate: `<b>Ledger &amp; Crown</b><span>Spring at Thornfield</span>`,
+    shots: SHOTS.map((s, i) => Object.assign({}, s, { draw: DRAW[i] })), lines: SCRIPT, setup: c => { ctx = c; } };
+  if (C.register) C.register(DEF);
+  const setVoice = C.setVoice, manifest = () => C.manifest(DEF);
+  const play = opts => C.play(DEF, opts);
   // a new story game opens with it (sandbox, fast test runs and ?intro=0 don't); ?intro=1 forces it
   const wanted = q => { q = q || new URLSearchParams(location.search); if (q.get("intro") === "1") return true; if (q.get("intro") === "0" || q.has("fast") || q.has("sandbox") || q.has("new")) return false; return true; };
-  const debug = { get st() { return st; }, frame, seek(t) { if (st) { st.t = t; st.hold = true; frame(t); } }, release() { if (st) st.hold = false; }, canvas: () => document.getElementById("in-cv") };
-  return { SCRIPT, SHOTS, STARTS, TOTAL, play, end: how => end(how || "skipped"), wanted, setVoice, manifest, frame, debug, get active() { return active; } };
+  const debug = { get st() { return C.state; }, frame: t => C.frame(DEF, t), seek(t) { const s = C.state; if (s) { s.t = t; s.hold = true; C.frame(DEF, t); } }, release() { const s = C.state; if (s) s.hold = false; }, canvas: () => document.getElementById("in-cv") };
+  return { SCRIPT, SHOTS, STARTS, TOTAL, DEF, play, end: how => C.end(how || "skipped"), wanted, setVoice, manifest, frame: t => C.frame(DEF, t), debug, get active() { return C.active; } };
 })();

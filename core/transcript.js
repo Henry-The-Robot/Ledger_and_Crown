@@ -27,6 +27,11 @@
     C4: [["demand", "Demand & the price you set"], ["competitor", "Pricing against a rival"]],
     C8: [["segments", "Customer segments"]],
   };
+  // The Season 1 core (audit 2026-10-04): the eight ideas the season must prove and Summer builds on. Every other concept is a preview: Summer teaches it properly.
+  // `equation` stands for claims (assets, liabilities, equity, the guarantee), `accrual` for profit vs Cash, `wc` and `overtrading` for working capital.
+  const CORE = ["equation", "accrual", "margin", "breakeven", "opportunity", "tvm", "wc", "ev"];
+  for (const k in CONCEPTS) CONCEPTS[k].forEach(c => { c[2] = CORE.indexOf(c[0]) >= 0 ? "core" : "preview"; }); // each concept is [id, name, kind]: kind is core|preview
+  const kind = id => { for (const k in CONCEPTS) for (const c of CONCEPTS[k]) if (c[0] === id) return c[2]; return null; };
   const CODEX_IDS = ["accrual", "ar", "ap", "inventory", "gross", "operating", "wc", "overtrading", "insolvency", "breakeven", "margin", "tvm", "statements"];
   let mem = {};
   const store = root.localStorage ? { get: () => { try { return JSON.parse(root.localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }, set: d => { try { root.localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {} } }
@@ -63,16 +68,13 @@
   function html() {
     const row = ([code, title, act]) => { const p = Math.round(progress(code) * 100), locked = act > 0;
       return `<div class="course${locked ? " locked" : ""}"><div class="ch"><b>${code}</b> ${title}<span>${locked ? "&#128274; " + ACTS[act] : p + "%"}</span></div>` +
-        (locked ? "" : `<div class="bar"><i style="width:${p}%"></i></div>` + CONCEPTS[code].map(([i, n]) => { const st = state(i);
-          return `<div class="cx ${st === "mastered" ? "mastered" : st === "unseen" ? "unseen" : "used"}"><span>${st === "unseen" ? "? ? ?" : n}</span><span>${LABEL[st]}</span></div>`; }).join("")) + "</div>"; };
+        (locked ? "" : `<div class="bar"><i style="width:${p}%"></i></div>` + CONCEPTS[code].map(([i, n, kd]) => { const st = state(i);
+          return `<div class="cx ${st === "mastered" ? "mastered" : st === "unseen" ? "unseen" : "used"}"><span>${st === "unseen" ? "? ? ?" : n} <small class="tag ${kd}">${kd}</small></span><span>${LABEL[st]}</span></div>`; }).join("")) + "</div>"; };
     return `<h2>Transcript <span class="hint">Thornfield School of the Vale · MBA core</span></h2>` +
       `<p class="hint">Introduced: you've met it. Practiced: right on your own on 2 different days. Mastered: right on your own on 3 different days, at least once by explaining it, across at least 2 real days. Ideas come back in later seasons so you can master them.</p>` +
       `<div class="courses">${COURSES.map(row).join("")}</div><div class="diploma">&#128274; Diploma: sealed until the Grand Audit</div>`;
   }
-  // The Season 1 core (audit 2026-10-04): the eight ideas the season must prove and Summer builds on. Everything else in CONCEPTS is a preview Summer teaches properly.
-  // `equation` stands for claims (assets, liabilities, equity, the guarantee), `accrual` for profit vs Cash, `wc` and `overtrading` for working capital.
-  const CORE = ["equation", "accrual", "margin", "breakeven", "opportunity", "tvm", "wc", "ev"];
   const core = () => CORE.map(id => ({ id, name: name(id), level: state(id) }));
-  root.Transcript = { COURSES, CONCEPTS, CORE, core, use, master, evidence, state, name, progress, reset, html, level };
+  root.Transcript = { COURSES, CONCEPTS, CORE, core, kind, use, master, evidence, state, name, progress, reset, html, level };
   if (typeof module !== "undefined") module.exports = root.Transcript;
 })(typeof window !== "undefined" ? window : globalThis);

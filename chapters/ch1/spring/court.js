@@ -245,15 +245,16 @@ window.Court = (function () {
   function fromGame(o) {
     const s = o.s, S = window.Spring, st = o.Story && o.Story.state, inv = (s.invoices || []).map(v => ({ who: S.NAMES[v.who] ? S.NAMES[v.who].split(" ")[0] : "", amount: v.amount, due: v.due }));
     return Object.assign({}, o, { statements: o.st || window.Books.close(s), clues: ((st && st.clues) || []).map(c => ({ id: c.id, term: c.term, number: c.num == null || c.num === "" ? null : c.num, source: c.from })), flags: s.flags || {}, trust: s.trust || {}, farm: (st && st.farm) || "Thornfield",
-      seed: o.seed != null ? o.seed : hash((st && st.farm || "") + ":" + s.day), facts: { invoices: inv, ratePct: S.terms(s).rateBp / 100, market: S.marketPrice(Math.min(s.day, 28)), bill: S.weekBills(s) },
+      seed: o.seed != null ? o.seed : hash((st && st.farm || "") + ":" + s.day), facts: { invoices: inv, ratePct: S.terms(s).rateBp / 100, market: S.marketPrice(Math.min(s.day, 28), s), bill: S.weekBills(s) },
       letter: o.letter || (st && o.Story.letter ? () => o.Story.letter(8) : null) });
   }
   async function run(o) {
-    if (o && o.s && !o.statements) { const g = o, r = await run(fromGame(o)); if (r && g.s) { g.s.exam = { passed: r.passed, score: r.score, attempts: r.attempts, certificate: r.certificate || null }; if (r.flags) Object.assign(g.s.flags, { vaneFinal: r.flags.vaneFinal, examPassed: !!r.passed }); if (g.G && g.G.save) g.G.save(); } return r; }
+    if (o && o.s && !o.statements) { const g = o, r = await run(fromGame(o)); if (r && g.s) { g.s.exam = { passed: r.passed, score: r.score, attempts: r.attempts, certificate: r.certificate || null }; g.s.flags = g.s.flags || {}; Object.assign(g.s.flags, { courtPassed: !!r.passed, courtScore: r.score, courtAttempts: r.attempts }); if (r.flags) Object.assign(g.s.flags, { vaneFinal: r.flags.vaneFinal, examPassed: !!r.passed }); if (g.G && g.G.save) g.G.save(); } return r; }
     o = Object.assign({ flags: {}, trust: {}, farm: "Thornfield" }, o); if (!o.statements) throw new Error("Court.run needs statements (Books.close)");
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
     try {
+      await say("maud", "Say the number, then the reason. A claim answered with a number alone is half an answer.", "Next"); // C0.08: exam technique
       await say("maud", "The Crown's advocate will make nine claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and six refuted will satisfy the court.", "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);

@@ -28,3 +28,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Browser tests (every tests/*.html page, real-time Chromium)
         run: node tests/run-html.js --all 90000
+      - name: "Golden story dump (only after a failure; the story as it plays now, to review before re-recording)"
+        if: failure()
+        run: node tests/run-html.js "tests/golden-story.html?record=1" 120000
+

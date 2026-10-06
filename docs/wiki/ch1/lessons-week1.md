@@ -36,7 +36,7 @@ Function names follow the order the code runs, not the numbers in the comments. 
 - Flow of stages: `intro` > `harvest2` > `ashby3` > `ship3` > `tomas2` > `plant2` > `hobb4`.
 - Concepts: `equation` (mastered if the player says "less" right), `inventory`, `gross` and `margin` (mastered on the typed margin).
 - Case-board clues: one card per `keep`, each at most 12 words.
-- Sessions in the file header: C1.01 (equation), C1.04 (cost becomes inventory), C0.02 (margin).
+- Sessions in the file header: C1.01 (equation, cost becomes inventory), C1.04 (rest goes to Chapter 2), C0.02 (margin). T2 retagged ch3 from C1.04 to C1.01.
 
 ## Invariants
 - House rule (no test): scene text takes its numbers from `S.R` or the opening balance sheet.

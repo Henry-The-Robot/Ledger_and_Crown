@@ -14,7 +14,7 @@
 //   in a hurry   2 of 8  reserve = going price + 4        buys 1
 // A buyer who can't pay shows 'hesitated' when the price is 1 over their reserve (a coin less would have won them) and
 // 'too dear' when it is 2+ over. Grisby (the rival, from day 14) sets his price after seeing yours at the start of each hour:
-// he undercuts by 1 when you are above the going price, otherwise holds at it. Thrifty villagers who see both buy the
+// he undercuts by 2 when you are above the going price, otherwise holds at it. Thrifty villagers who see both buy the
 // cheaper (ties stay with you); comfortable and hurried villagers don't comparison-shop.
 // Sales post to the books through the engine's own journal (Cash, Revenue, Cost of goods sold), so the statements tie out.
 (function (root) {
@@ -39,8 +39,8 @@
   // the 8 villagers who walk by in an hour (same game, same villagers). Every hour has the same mix (3 thrifty, 3 comfortable, 2 in a hurry)
   // and each segment's reserves are stratified (one from each band, with a roll inside the band), so an hour's demand depends on YOUR PRICE and
   // not on which hour it happens to be. That keeps the player's own demand curve (price vs sacks per hour) readable: a fair experiment, not noise.
-  function villagers(day, hour) {
-    const market = S.marketPrice(day), mix = { thrifty: 3, comfortable: 3, hurry: 2 }, slots = [];
+  function villagers(day, hour, mk) {
+    const market = mk != null ? mk : S.marketPrice(day), mix = { thrifty: 3, comfortable: 3, hurry: 2 }, slots = [];
     Object.keys(mix).forEach(seg => { for (let j = 0; j < mix[seg]; j++) slots.push({ seg, j, n: mix[seg], key: roll(day, "mk" + hour + seg + j, 5) }); });
     slots.sort((a, b) => a.key - b.key); // arrival order
     return slots.map((o, k) => {
@@ -61,12 +61,12 @@
   function newFair(s, o) {
     o = o || {}; const day = s.day, stock = Math.max(0, Math.min(o.stock != null ? o.stock : s.sacks, s.sacks, CFG.maxStock));
     const g0 = grisbyIn(day) ? grisbyStock(day) : 0;
-    return { day, market: S.marketPrice(day), grisby: grisbyIn(day), gStock0: g0, gStock: g0, stock0: stock, stock, hour: 0, hours: [], cost: S.R.unitCost };
+    return { day, market: S.marketPrice(day, s), grisby: grisbyIn(day), gStock0: g0, gStock: g0, stock0: stock, stock, hour: 0, hours: [], cost: S.R.unitCost };
   }
   function playHour(f, price) { // price: your price this hour; returns the hour record (events in arrival order)
     price = Math.max(1, Math.min(CFG.maxPrice, Math.round(price)));
     const g = f.grisby ? grisbyPrice(f.market, price) : null, stock0 = f.stock, gOut0 = f.grisby && f.gStock <= 0, ev = [], segSeen = {}, segBought = {};
-    villagers(f.day, f.hour).forEach(v => {
+    villagers(f.day, f.hour, f.market).forEach(v => {
       // Grisby sells only what he has: once his stock is gone the thrifty crowd comes back to you (a villager he can only half-serve takes what is left)
       const d = decide(v, price, f.grisby && f.gStock > 0 ? g : null, f.stock); if (d.to === "me") f.stock -= d.qty; else if (d.to === "grisby" && d.react === "bought") { d.qty = Math.min(d.qty, f.gStock); f.gStock -= d.qty; }
       segSeen[v.seg] = (segSeen[v.seg] || 0) + 1; if (d.react === "bought") segBought[v.seg] = (segBought[v.seg] || 0) + 1;
@@ -233,15 +233,21 @@ if (typeof document !== "undefined") (function (root) {
 
   function open() {
     const s = G.s;
-    if (st) return;
+    if (st || opening) return;
     M.settleBet(s);
     if (!M.isDay(s.day, s)) return G.say("maud", `Market Day is on days 7, 14 and 21, and today is day ${s.day}: bring grain you can spare.`, ["Close"]);
     if (history(s).some(f => f.day === s.day)) return G.say("maud", "You've had your fair today. The next one is the next 7th day.", ["Close"]);
     if (!s.sacks) return G.say("maud", "The barn is empty, so there is nothing for the stall: come back with sacks you can spare.", ["Close"]);
     s.market = s.market || { fairs: [], named: false, bet: null };
+    const cs = window.Cutscene && Cutscene.maybe("market-open-" + Math.min(3, Math.ceil(s.day / 7))); // S5: a short opening that changes by week (skipped in tests and sandbox)
+    if (cs) { opening = true; return cs.then(() => { opening = false; if (!st) openStall(s); }); }
+    openStall(s);
+  }
+  let opening = false;
+  function openStall(s) {
     const pl = G.pl, T = G.T; pl.x = STALL.x * T + 8; pl.y = (STALL.y + 1) * T + 12; pl.dir = "up"; pl.target = null;
     const barn = s.sacks, committed = S.committed(s), spare = Math.max(0, barn - committed);
-    st = { phase: "setup", price: S.marketPrice(s.day), bring: Math.min(barn, Math.max(spare, Math.min(barn, 12)), 18), barn, committed, spare, f: null, rec: null, hourT: 0, fast: false, evs: null, bet: null, last: 0, cash0: s.bal.cash };
+    st = { phase: "setup", price: S.marketPrice(s.day, s), bring: Math.min(barn, Math.max(spare, Math.min(barn, 12)), 18), barn, committed, spare, f: null, rec: null, hourT: 0, fast: false, evs: null, bet: null, last: 0, cash0: s.bal.cash };
     document.body.classList.add("mk-open");
     const el = document.createElement("div"); el.id = "mkt"; el.innerHTML = `<div class="mk-card"><div class="mk-top" id="mk-top"></div><div class="mk-sceneBox" id="mk-sceneBox"><canvas id="mk-cv" width="${LW}" height="${LH}"></canvas></div><div class="mk-panel" id="mk-panel"></div></div>`;
     $("wrap").appendChild(el); layout(); render(); loop.t = 0; if (!loop.on) { loop.on = true; requestAnimationFrame(loop); }
@@ -263,7 +269,7 @@ if (typeof document !== "undefined") (function (root) {
 
   function top() {
     const s = G.s, el = $("mk-top"); if (!el) return;
-    el.innerHTML = `<div class="mk-title"><b>Market Day</b> <span>day ${s.day}${M.grisbyIn(s.day) ? " · Grisby is across the lane" : ""}</span></div><div class="mk-stats"><span>Cash <b>${s.bal.cash}</b></span><span>Going price <b>${S.marketPrice(s.day)}</b></span>` +
+    el.innerHTML = `<div class="mk-title"><b>Market Day</b> <span>day ${s.day}${M.grisbyIn(s.day) ? " · Grisby is across the lane" : ""}</span></div><div class="mk-stats"><span>Cash <b>${s.bal.cash}</b></span><span>Going price <b>${S.marketPrice(s.day, s)}</b></span>` +
       (st.f ? `<span>Sacks left <b id="mk-left">${st.f.stock}</b></span><span>Takings <b id="mk-take">0</b></span>` : `<span>Barn <b>${s.sacks}</b> sacks</span>`) + `</div>`;
     liveStats();
   }
@@ -423,7 +429,7 @@ if (typeof document !== "undefined") (function (root) {
     for (let y = 0; y < LH; y += 16) for (let x = 0; x < LW; x += 16) { const lane = y >= 48 && y < 112; ctx.drawImage(lane ? TL.cobble[((x >> 4) * 3 + (y >> 4)) % 2] : TL.grass[((x >> 4) + (y >> 4) * 2) % 4], x, y); }
     [[-6, -14], [292, -12], [-8, 134], [296, 130]].forEach(([x, y], i) => ctx.drawImage(A.tree[i % 3], x, y));
     const f = st.f, price = st.phase === "setup" || st.phase === "bet" ? st.price : (st.rec ? st.rec.price : st.price), g = (f ? f.grisby : M.grisbyIn(s.day));
-    const grisbyP = g ? (st.rec && st.phase !== "setup" ? st.rec.grisbyPrice : M.grisbyPrice(S.marketPrice(s.day), price)) : null;
+    const grisbyP = g ? (st.rec && st.phase !== "setup" ? st.rec.grisbyPrice : M.grisbyPrice(S.marketPrice(s.day, s), price)) : null;
     // Grisby's stall (top) and yours (bottom)
     const stall = (cx, cy, awn, counterY, board, label, sacksN, vendor, vy, up) => {
       if (up) { ctx.fillStyle = "#6b4526"; ctx.fillRect(cx - 36, awn, 2, counterY - awn + 6); ctx.fillRect(cx + 34, awn, 2, counterY - awn + 6); }

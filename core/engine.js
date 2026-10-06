@@ -1,51 +1,11 @@
-// Spring at Thornfield — season engine. Pure JS, no DOM: runs in the browser and under node (test-engine.js).
+// Spring at Thornfield — season engine. Pure JS, no DOM: runs in the browser and under node (tests/test-crown.js, test-spine.js).
 // Built from poc/harvest-engine.js (every action posts; every view derives from the postings), re-parameterized
 // to days and upgraded to a true general journal: each posting is a set of debit (+) / credit (-) lines that must
 // sum to zero, so Assets = Liabilities + Owner's equity holds after every transaction (curriculum C1.01; the
 // double-entry method as in OpenStax *Principles of Accounting* Vol. 1, ch. 3). Subledgers (open invoices, open
 // bills, sacks/seed/crops at cost) are kept separately and tested against the ledger accounts every day.
 (function (root) {
-  const R = {
-    days: 28, seedCost: 12, sacksPerPlot: 3, unitCost: 4, growDays: 4, // a plot: 12 of seed -> 3 sacks at 4 each
-    upkeep: 45,                 // weekly farmhand wages + upkeep (Operating expense), paid in Cash
-    sprinklerSaving: 20, wageFloor: 20, // each placed sprinkler saves the hands 20 a week of hauling water (wages never fall below the floor)
-    spotDelta: -2, traderDelta: -1, // the market cart buys surplus for Cash at the going price - 2, the road trader at the going price - 1 (never below cost)
-    sprinklerHead: 1,           // a crop planted in sprinkled soil starts this many days along (a shorter cycle, so more harvests)
-    sprinklerCost: 80, depPerWeek: 5, // Equipment: 16-week life, straight-line, no salvage (C1.05)
-    lateGrace: 3, breachPct: 0.1, // an order more than 3 days late is cancelled, with a forfeit of 10% of its value
-    apDefault: 5,               // a bill 5 days overdue: Tomas takes you to the reeve's court
-    apDays: 14, discDays: 7, discPct: 0.02, // Tomas's terms: "2/7, net 14" (2% off if paid within 7 days)
-    prepayBefore: 21,           // Ezra charges one week's interest on any amount repaid before day 21: the interest he was counting on
-    factorRate: 0.85,           // Ezra buys an invoice for 85% of its value today
-    // The Duke's one big order (sandbox and story use the same numbers). 132 sacks is more than a careful player can grow and carry unless they borrow and
-    // decline other orders; a player who says yes to everything runs out of Cash on a pay-day and is finished. Tuned with the bots in tests/test-crown.js.
-    duke: { sacks: 132, price: 10, terms: 28, dueIn: 12 },
-    // WS6: the story's Corvin Vane escalates (SEASON-1-REDESIGN.md §7 item 3): day 12 a first order of half of duke.sacks, day 15 the whole duke.sacks.
-    // The second order is due 9 days out (day 24, the same day as the first) so a player who says yes to everything has both fall due at once.
-    // Tuned with the bots in tests/test-spine.js: careful still pays the Crown, the overtrader is sued for the forfeit, reckless goes insolvent.
-    corvin: [{ day: 12, sacks: 66, dueIn: 12 }, { day: 15, sacks: 132, dueIn: 9 }],
-    crownDebt: 1250,            // owed to the Crown at Midwinter (the story's goal); a careful season ends close to it, so the last weeks matter
-    bridgeMax: 250, rescueRateBp: 200, // Ezra will bridge a small gap at Midwinter; his one emergency loan costs 2 points a week more
-    rain: [5, 12, 13, 20, 26],
-    // the going price per sack by day (index = day - 1): steady at first, then a glut around days 10-13, a Duke-fuelled rise by day 17, a dip, a late rally
-    market: [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 7, 8, 9, 9, 10, 10, 9, 9, 8, 8, 9, 10, 10, 9, 9, 8],
-    premium: { ashby: 0, hobb: 1 }, // what each buyer pays over the going price on a standard offer (the Duke's order is a fixed 10, see OFFERS)
-    // overnight events (the night after the day): pigs eat a quarter of the crop in the ground unless the field is fenced, rats
-    // take a fifth of the barn, a warm day speeds the crop, a frost stops it. Warned a day ahead (see warning()).
-    // customers who pay part up front: [day offered, buyer, sacks, price, days to deliver, deposit share, what they say]
-    deposits: [[11, "ashby", 27, 9, 8, 0.5, "My niece is marrying at the end of the week. A feast's worth of bread: 27 sacks. Half now to hold your place, the rest on delivery."],
-      [18, "hobb", 24, 10, 8, 0.3, "I'm adding a second wheel. 24 sacks, and a third paid today so you can buy seed. I'll want them on time."]],
-    pellDays: [5, 8], pedlarDays: [13, 16], poisonCost: 35, pellSacks: 12, pellShare: 80, // the pig farmer, the rat-poison pedlar, and what Pell's pig sale would give you
-    // WS6 item 9: the event days are drawn per game from a seed saved with the game (same seed = same game), inside these windows.
-    // Seed 0 (the default, and every sandbox/bot/test game) is the canonical calendar in `events`; any other seed draws from the windows.
-    events: { 9: "pigs", 16: "rats", 19: "warm", 23: "frost" }, windows: { pigs: [7, 11], rats: [14, 18], warm: [17, 21], frost: [21, 25] }, fenceCost: 20, pigShare: 0.25, ratShare: 0.2,
-    // T6 frost almanac (expected value vs ruin): the evening before the frost the notice board gives the odds of a HARD frost (1 in 3) and the price of straw (5 a plot).
-    // Covering costs 5 a plot for certain; risking it loses a crop's 12 of seed with probability 1/3 (4 a plot on average: cheaper than the straw), unless losing the lot would sink the Crown fund.
-    // Only a player who answers the notice is exposed to the hard frost, so unattended play (the bots, the sandbox tuning) is unchanged.
-    frostCover: 5, frostOdds: 1 / 3,
-    field: { x0: 5, y0: 10, w: 9, h: 4 },
-  };
-  R.pigDay = +Object.keys(R.events).find(d => R.events[d] === "pigs"); // the canonical pig night (a game's own is eventDay(s, "pigs"))
+  const R = root.SpringSeason || require("../chapters/ch1/spring/season.js"); // Spring's settings are data: chapters/ch1/spring/season.js
   // ---------- seeded events (WS6 item 9) ----------
   function eventsFor(seed) { // { day: kind } for one game; mulberry32 (Tommy Ettinger's public-domain 32-bit PRNG) keeps it tiny and reproducible
     if (!seed) return Object.assign({}, R.events);
@@ -76,8 +36,18 @@
     [23, "hobb", 24, 9, 14, 5], [25, "ashby", 9, 8, 0, 3],
   ];
 
-  const marketPrice = d => R.market[clamp(d, 1, R.days) - 1];
-  const spotPrice = d => Math.max(R.unitCost, marketPrice(d) + R.spotDelta), traderPrice = d => Math.max(R.unitCost, marketPrice(d) + R.traderDelta);
+  // The going price per day for one game's seed (P5 demand model). Seed 0 is the canonical path in the season settings, so every sandbox, bot and test game is unchanged.
+  // Another seed adds a drifting demand shock to that path: shock = round(carry * last shock + noise), noise uniform in [-spread, spread] (same mulberry32 as eventsFor).
+  const pathCache = {};
+  function pricesFor(seed) {
+    seed = seed | 0; if (!seed) return R.market;
+    if (pathCache[seed]) return pathCache[seed];
+    const m = R.marketModel; let a = (seed * 7919 + 13) >>> 0, shock = 0;
+    const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    return pathCache[seed] = R.market.map(p => { shock = m.carry * shock + (rnd() * 2 - 1) * m.spread; return clamp(p + Math.round(shock), m.floor, m.ceil); });
+  }
+  const marketPrice = (d, s) => pricesFor(s && s.seed)[clamp(d, 1, R.days) - 1]; // s is optional: without it, the canonical (seed 0) price
+  const spotPrice = (d, s) => Math.max(R.unitCost, marketPrice(d, s) + R.spotDelta), traderPrice = (d, s) => Math.max(R.unitCost, marketPrice(d, s) + R.traderDelta);
   function roll(d, who, salt) { // a stateless 0..1 roll from (day, buyer, salt): same game, same offers, nothing to save
     let h = 2166136261; for (const c of who + ":" + d + ":" + salt) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
     h = Math.imul(h ^ (h >>> 15), 2246822507); h ^= h >>> 13; return (h >>> 0) % 1000 / 1000;
@@ -211,7 +181,7 @@
   }
   function sellSpot(s, n, price) {
     n = Math.min(n, s.sacks); if (n <= 0) return err("Nothing to sell.");
-    const v = n * (price || spotPrice(s.day)), c = n * R.unitCost; s.sacks -= n;
+    const v = n * (price || spotPrice(s.day, s)), c = n * R.unitCost; s.sacks -= n;
     post(s, "sale", `Sold ${n} surplus sacks to the market cart for Cash`, { cash: v, revenue: -v });
     post(s, "cogs", `Cost of the ${n} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += n; return ok();
@@ -258,7 +228,7 @@
     const weeks = Math.floor(R.days / 7) - Math.floor((s.day - 1) / 7), saved = R.sprinklerSaving * weeks, dep = R.depPerWeek * weeks;
     return { weeks, saved, dep, profit: saved - dep, cash: saved - R.sprinklerCost, paybackWeeks: Math.ceil(R.sprinklerCost / R.sprinklerSaving), life: R.sprinklerCost / R.depPerWeek };
   }
-  // The Crown's 1,000 is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
+  // The Crown's 1,250 (R.crownDebt) is due at Midwinter, long after this spring. "If Midwinter were tomorrow": what you could pay it with, and
   // what you'd be counting on. Promises (Pell's pig share) are shown apart: they are hoped for, not owned.
   function crownFund(s) {
     const b = balanceSheet(s.bal), hoped = sum((s.promises || []).map(p => p.amount));
@@ -408,12 +378,12 @@
   const hardFrost = (s, d) => roll(d, "hardfrost", 1) < R.frostOdds; // decided by the night itself, not by anything the player does
   const growing = s => s.plots.filter(p => p.crop);
   function frostFacts(s) { const g = growing(s), n = g.length, cover = n * R.frostCover, atRisk = sum(g.map(p => p.crop.cost)), ev = Math.round(atRisk * R.frostOdds); return { n, cover, atRisk, ev, night: frostNight(s) }; }
-  function marketOutlook(s) { return [1, 2, 3].filter(k => s.day + k <= R.days).map(k => ({ day: s.day + k, price: marketPrice(s.day + k) })); }
+  function marketOutlook(s) { return [1, 2, 3].filter(k => s.day + k <= R.days).map(k => ({ day: s.day + k, price: marketPrice(s.day + k, s) })); }
   function notice(s) {
     const eve = frostNight(s) && s.day === frostNight(s) - 1 && growing(s).length > 0, id = NOTICE_DAYS[s.day] || (eve ? "frost" : null); if (!id || s.notices[s.day] != null) return null;
     return { id, ...{
       tinker: { title: "A tinker's cart of seed", text: "A tinker is selling 6 packets of seed for 60: ten a packet, cheaper than Tomas. He won't let you open them first, though. Or he'll let you inspect them for a fee of 5.", options: ["Buy all 6 unseen (60)", "Pay 5 to inspect first", "Walk past"] },
-      trader: { title: "A grain trader on the road", text: `A trader will buy up to 9 spare sacks today for ${traderPrice(s.day)} each, Cash (the going price is ${marketPrice(s.day)}). Sacks you sell now can't fill tomorrow's orders.`, options: ["Sell what I can spare (up to 9)", "Keep my grain"] },
+      trader: { title: "A grain trader on the road", text: `A trader will buy up to 9 spare sacks today for ${traderPrice(s.day, s)} each, Cash (the going price is ${marketPrice(s.day, s)}). Sacks you sell now can't fill tomorrow's orders.`, options: ["Sell what I can spare (up to 9)", "Keep my grain"] },
       frost: (() => { const f = frostFacts(s); return { title: "The almanac: frost tomorrow night", text: `The almanac says a <b>hard frost</b> tomorrow night has a <b>1 in 3</b> chance: it would kill the ${f.n} plots in the ground (${f.atRisk} of seed and work). Straw to cover them costs ${R.frostCover} a plot: <b>${f.cover}</b> in all, for certain.`, options: [`Cover every plot with straw (${f.cover})`, "Risk it"] }; })(),
       hands: { title: "Hands for hire", text: "Day-labourers will weed and water every crop in the ground tonight for 25 Cash: everything growing gains a day.", options: ["Hire them (25)", "No, thanks"] } }[id] };
   }
@@ -426,7 +396,7 @@
         post(s, "seed", "Bought the 4 good packets of seed from the tinker for Cash (40 for 48 of standard cost)", { inv: 48, cash: -40, cogs: -8 }); s.seeds += 4; note(s, "Inspected: two packets were mouldy. You bought the 4 good ones for 40, 11.25 a packet including the fee."); return ok("inspected"); }
       return ok("pass");
     }
-    if (n.id === "trader") { if (i !== 0) return ok("pass"); const k = Math.min(9, s.sacks); if (k <= 0) { s.notices[s.day] = null; return err("The barn is empty."); } sellSpot(s, k, traderPrice(s.day)); note(s, `Sold ${k} sacks to the trader at ${traderPrice(s.day)}.`); return ok("sold"); }
+    if (n.id === "trader") { if (i !== 0) return ok("pass"); const k = Math.min(9, s.sacks); if (k <= 0) { s.notices[s.day] = null; return err("The barn is empty."); } sellSpot(s, k, traderPrice(s.day, s)); note(s, `Sold ${k} sacks to the trader at ${traderPrice(s.day, s)}.`); return ok("sold"); }
     if (n.id === "frost") { const f = frostFacts(s); if (i === 0) { if (s.bal.cash < f.cover) { s.notices[s.day] = null; return err(`Straw is ${f.cover}; Cash is ${s.bal.cash}.`); } post(s, "upkeep", `Straw to cover ${f.n} plots against the frost (Operating expense)`, { upkeep: f.cover, cash: -f.cover }); s.strawed = f.night; note(s, `Straw laid over ${f.n} plots for ${f.cover}.`); return ok("covered"); } s.frostRisk = f.night; note(s, "You left the crops uncovered and trusted the 1 in 3."); return ok("risk"); }
     if (n.id === "hands") { if (i !== 0) return ok("pass"); if (s.bal.cash < 25) { s.notices[s.day] = null; return err(`That's 25; Cash is ${s.bal.cash}.`); } post(s, "upkeep", "Day-labourers weeded and watered every crop (Operating expense)", { upkeep: 25, cash: -25 }); s.boost = s.day; note(s, "The labourers will be at the crops tonight."); return ok("hired"); }
     return err("");
@@ -441,7 +411,7 @@
     if (s.quiet) return; // the story's first lessons run without stray orders
     OFFERS.filter(o => o[0] === s.day && !(s.story && o[1] === "duke")).forEach(([d, who, base, fixed, tdays, dueIn]) => {
       let sacks = who === "duke" ? base : Math.max(3, Math.round(base * (0.6 + s.trust[who] / 10) / 3) * 3);
-      let price = who === "duke" ? fixed : marketPrice(d) + (R.premium[who] || 0), due = dueIn, /* the Duke's one big order is a fixed 10, as the story tells it; everyone else follows the market */ terms = tdays, tag = "";
+      let price = who === "duke" ? fixed : marketPrice(d, s) + (R.premium[who] || 0), due = dueIn, /* the Duke's one big order is a fixed 10, as the story tells it; everyone else follows the market */ terms = tdays, tag = "";
       if (who !== "duke") { // buyers differ day to day: a rush, a bigger order on longer terms, a small one on short terms
         const r = roll(d, who, 1), rescale = k => Math.max(3, Math.round(sacks * k / 3) * 3);
         if (who === "ashby") { if (r >= .8 && d <= 20) { terms = 7; price += 1; tag = "pays in a week"; } else if (r >= .55) { sacks = rescale(.75); due = 2; price += 1; tag = "rush"; } }

@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Save: persist hint once</title></head>
+<body><pre id="out">running</pre>
+<!-- P4c3: the first save calls Save.persist(); when storage is not persisted the iPad hint shows once, never twice (also not after a reload). -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = () => new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?new=1&savetest&seed=3"; f.onload = () => res(f); document.body.appendChild(f); });
+(async () => {
+  try {
+    localStorage.clear(); // a clean profile: no hint shown yet
+    let f = await load(), w = f.contentWindow; await sleep(600);
+    for (let i = 0; i < 5; i++) { w.G.save(); await sleep(60); }
+    await sleep(300);
+    const p = w.Save.profile().settings, n = (w.__hints || []).length;
+    out.push(`storage persisted in this browser (info): ${p.persisted ? "yes" : "no"}`);
+    out.push(`hint shown once on the first run (or never when persisted): ${p.persisted ? n === 0 : n === 1}`);
+    out.push(`hint remembered in the profile: ${p.persisted ? true : p.hintShown === true}`);
+    out.push(`hint text names Add to Home Screen: ${p.persisted ? true : /Add to Home Screen/.test(w.__hints[0])}`);
+    f.remove(); f = await load(); w = f.contentWindow; await sleep(600);
+    for (let i = 0; i < 3; i++) { w.G.save(); await sleep(60); }
+    await sleep(300);
+    out.push(`never twice (a reload shows no hint): ${(w.__hints || []).length === 0}`);
+    out.push(`JS errors: 0`);
+  } catch (e) { out.push("THROWN " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

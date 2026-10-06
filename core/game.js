@@ -7,7 +7,7 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26;
   let VW = 320, VH = 200; // the view in map pixels: fixed on a desktop, sized to the screen on an iPad (see fit)
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
-  const q = new URLSearchParams(location.search), SAVE = "lc_spring_save_v3";
+  const q = new URLSearchParams(location.search), SEASON = "ch1/spring"; // saves live in core/save.js (one versioned blob, lc_save_v4)
   // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
   const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
   if (TOUCH) document.body.classList.add("touch");
@@ -30,8 +30,8 @@
   NPC.pell = { who: "pell", x: 30, y: 8, dir: "right" }; NPC.pedlar = { who: "pedlar", x: 22, y: 12, dir: "right" }; // visitors who come and go (see npcHere)
   // the market fair: two stalls in the lower square (other buyers, other prices: first market research)
   // Stalls sit clear of every villager's spot (Ezra stands below the bank door at 30,18; the old 31,20 stall hid him).
-  const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
-    abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
+  const FAIR = { mira: { x: 25, y: 20, sacks: 6, delta: -2, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day, s) + this.delta); }, terms: 0, color: "#d9a83a", line: "Six sacks, Cash, today. I buy cheap and I buy now." },
+    abbey: { x: 43, y: 20, sacks: 9, delta: 0, get walk() { return Math.max(S.R.unitCost + 1, S.marketPrice(s.day, s) + this.delta); }, terms: 7, color: "#6a8fc4", line: "The Abbey pays well, a week after delivery. Nine sacks." } };
   Object.keys(FAIR).forEach(k => NPC[k] = { who: k, x: FAIR[k].x, y: FAIR[k].y, dir: "down" });
   const CRATE = { x: 9, y: 7 }, WELL = { x: 34, y: 9 }, POND = [16, 16, 19, 19], BOARD = { x: 18, y: 7 }; // beside the road (the path runs along y=8), not on it
   const CHEST = { x: 5, y: 7 }, SACKS = { x: 10, y: 7 }, FWELL = { x: 13, y: 7 }; // WS3 (see Story.ch1: the tag verb's targets and decoys)
@@ -48,14 +48,10 @@
     const tree = (x, y, v) => { if (solid.has(key(x, y))) return; solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.tree[v % 3], x * T - 8, y * T - 28) }); };
     for (let x = 0; x < MW; x += 2) { tree(x, 0, x); tree(x + 1, MH - 1, x + 1); } for (let y = 1; y < MH - 1; y += 2) { tree(0, y, y); tree(MW - 1, y + 1, y); }
     [[15, 3], [18, 4], [20, 2], [12, 3], [2, 12], [2, 17], [8, 19], [12, 21], [22, 16], [21, 22], [26, 23], [46, 16], [44, 23], [30, 23], [16, 11], [19, 13], [47, 6], [2, 22], [5, 23]].forEach(([x, y], i) => tree(x, y, i));
-    [[10, 2], [21, 12], [23, 13], [36, 23], [40, 23], [15, 21], [45, 13], [11, 17], [29, 10]].forEach(([x, y]) => { solid.add(key(x, y)); props.push({ y: y + 1, draw: () => blit(A.bush, x * T, y * T) }); });
-    solid.add(key(CRATE.x, CRATE.y)); props.push({ y: CRATE.y + 1, draw: () => blit(A.crate, CRATE.x * T, CRATE.y * T) });
-    solid.add(key(WELL.x, WELL.y)); props.push({ y: WELL.y + 1, draw: () => drawWell(WELL) });
-    // WS3: the cold-open scene: the cash chest, sacks stacked by the crate, and a farm well (a decoy for the tag verb)
-    solid.add(key(CHEST.x, CHEST.y)); props.push({ y: CHEST.y + 1, draw: () => blit(A.chest, CHEST.x * T, CHEST.y * T) });
-    solid.add(key(SACKS.x, SACKS.y)); props.push({ y: SACKS.y + 1, draw: () => { blit(A.sack, SACKS.x * T, SACKS.y * T); blit(A.sack, SACKS.x * T + 4, SACKS.y * T - 5); blit(A.sack, SACKS.x * T - 3, SACKS.y * T + 2); } });
-    solid.add(key(FWELL.x, FWELL.y)); props.push({ y: FWELL.y + 1, draw: () => drawWell(FWELL) });
-    solid.add(key(BOARD.x, BOARD.y)); props.push({ y: BOARD.y + 1, draw: drawBoard });
+    // P8: the props that stand still are data (chapters/ch1/spring/props.js); core/map.js builds them and these sprites draw them. Order is the old push order (draw ties keep it).
+    MapProps.register("bush", p => blit(A.bush, p.x * T, p.y * T)); MapProps.register("crate", p => blit(A.crate, p.x * T, p.y * T)); MapProps.register("chest", p => blit(A.chest, p.x * T, p.y * T));
+    MapProps.register("sacks", p => { blit(A.sack, p.x * T, p.y * T); blit(A.sack, p.x * T + 4, p.y * T - 5); blit(A.sack, p.x * T - 3, p.y * T + 2); }); MapProps.register("well", p => drawWell(p)); MapProps.register("board", () => drawBoard());
+    MapProps.build(SpringProps, { solid, props, state: () => s, places: { CRATE, WELL, CHEST, SACKS, FWELL, BOARD } });
     Object.values(FAIR).forEach(f => { solid.add(key(f.x - 1, f.y - 1)); solid.add(key(f.x, f.y - 1)); solid.add(key(f.x + 1, f.y - 1)); props.push({ y: f.y, draw: () => drawStall(f) }); });
     if (window.Market) { Market.stallTiles().forEach(([x, y]) => solid.add(key(x, y))); props.push({ y: Market.STALL.y, draw: () => Market.drawStall(ctx, cam, s, frame) }); } // WS7: your own Market Day stall on the square
   })();
@@ -261,6 +257,8 @@
       <p><button class="btn alt" id="pz-intro" style="width:100%">Watch the opening</button></p>
       <p><button class="btn alt" id="pz-music" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-sound" style="width:100%"></button></p>
+      <p><button class="btn alt" id="pz-export" style="width:100%">Export my game</button></p>
+      <p><button class="btn alt" id="pz-import" style="width:100%">Import a saved game</button></p>
       <p><button class="btn alt" id="pz-feedback" style="width:100%">Copy feedback details</button></p>
       ${askSkip ? `<p><button class="btn alt" id="pz-skip" style="width:100%">Report a problem and skip this question</button></p><p class="hint">Use this only if the game seems broken. The lesson won't count as mastered, and Maud will bring it up again later. Copies feedback details too, so you can paste them to Kyle.</p>` : ""}
       <p class="hint">Today's progress since the morning save is lost if you restart or leave.</p></div>`;
@@ -271,6 +269,16 @@
     $("pz-restart").onclick = () => location.reload();
     $("pz-map").onclick = () => { save(); location.href = "index.html"; };
     $("pz-feedback").onclick = () => copyFeedback();
+    $("pz-export").onclick = async () => { // the code goes to the clipboard and to a .lcsave file download
+      try { save(); const code = await Save.exportCompressed();
+        try { await navigator.clipboard.writeText(code); } catch (e) {}
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" })); a.download = Save.fileName(); document.body.appendChild(a); a.click(); a.remove();
+        toast("Game exported: copied, and saved as a file."); } catch (e) { toast("Could not export."); } };
+    $("pz-import").onclick = async () => {
+      const code = prompt("Paste your saved-game code. This replaces the game on this device (a one-step backup is kept).");
+      if (!code) return; const r = await Save.parseCode(code); if (!r.ok) return toast(r.why);
+      const b = r.blob || {}, sl = b.slot; if (!confirm(sl ? `Load a game on day ${sl.s.day}, saved ${String(sl.savedAt).slice(0, 10)}?` : "Load this saved profile?")) return;
+      const w = await Save.import(code); toast(w.ok ? "Loaded. Reloading." : w.why); if (w.ok) setTimeout(() => { location.search = ""; }, 600); };
     const snd = () => { $("pz-sound").textContent = FX.sfxOn ? "🔔 Sound effects: on (tap to mute)" : "🔕 Sound effects: off (tap to turn on)"; $("pz-music").textContent = FX.musicOn ? "🎵 Music: on (tap to mute)" : "🎵 Music: off (tap to turn on)"; }; snd();
     $("pz-sound").onclick = () => { FX.setSfx(!FX.sfxOn); snd(); };
     $("pz-music").onclick = () => { FX.setMusic(!FX.musicOn); snd(); };
@@ -372,7 +380,7 @@
   }
   // ---------- the notice board: market outlook and a small decision on some days ----------
   function noticeBoard() {
-    const o = S.marketOutlook(s), now = S.marketPrice(s.day), n = S.notice(s), top = o.slice().sort((a, b) => b.price - a.price)[0];
+    const o = S.marketOutlook(s), now = S.marketPrice(s.day, s), n = S.notice(s), top = o.slice().sort((a, b) => b.price - a.price)[0];
     const arrow = p => p > now ? " ▲" : p < now ? " ▼" : "";
     const tip = !top ? "" : top.price > now ? `Prices are heading up: ${top.price} by day ${top.day}. Grain you don't have to ship before then could fetch more.` : top.price < now ? "Prices are slipping. Better to ship what you've promised and not hold surplus." : "Prices hold steady.";
     const text = `<b>Village notices</b><br>Going price today: <b>${now}</b> a sack.<br>${o.length ? o.map(x => `Day ${x.day}: ${x.price}${arrow(x.price)}`).join(" · ") : "The season is nearly over."}<br><i>${tip}</i>${n ? `<br><br><b>${n.title}</b><br>${n.text}` : ""}`;
@@ -555,7 +563,7 @@
         if (storyOn && sc.card) Story.pin("scene_" + sc.id, sc.card[0], sc.card[1], `Day ${s.day} · ${Cast.short(sc.who)}`, "scene"); else toast(`A clue: ${s.clues} of ${Scenes.CLUES}`); },
       trust: (who, d) => { if (s.trust[who] != null) s.trust[who] = Math.max(0, Math.min(10, s.trust[who] + d)); if (d > 0) toast(`${Cast.name(who).split(",")[0]} trusts you more ♥`); },
       letter: async i => { if (storyOn) await Story.letter(i); else await page(Story.PAGES[i], Story.LETTERS[i]); } };
-    try { await sc.run(c); } finally { hud(); save(); }
+    try { if (storyOn && sc.cutscene) await Story.cut(sc.cutscene); await sc.run(c); } finally { hud(); save(); } // S5: a scene may name a cutscene that plays first (scenes.js `cutscene`)
   }
   function crate() {
     const opts = S.openOrders(s).sort((a, b) => a.due - b.due).map(o => [`Ship ${o.sacks} to ${S.NAMES[o.who]} (due day ${o.due})`,
@@ -678,7 +686,7 @@
     const fund = S.crownFund(s).net, pct = Math.max(0, Math.min(100, Math.round(fund / S.R.crownDebt * 100)));
     $("hudmain").innerHTML = box("day", "Spring", `${s.day} · ${wd}${S.rain(s.day) ? `<span class="rainw"> · rain</span><span class="rainic"> ☔</span>` : ""}`) + box("cash", "Cash", b.cash, b.cash < due) +
       `<span class="wood" id="h-fund"><span class="k"><span class="kl">Toward the </span>Crown</span><span class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="${S.R.crownDebt}" aria-valuenow="${fund}"><i style="width:${pct}%"></i></span><b class="v">${fund} / ${S.R.crownDebt}</b></span>`;
-    $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day) + (s.day > 1 ? (S.marketPrice(s.day) > S.marketPrice(s.day - 1) ? " ▲" : S.marketPrice(s.day) < S.marketPrice(s.day - 1) ? " ▼" : "") : ""), false, 1) +
+    $("books").innerHTML = box("mkt", "Market, a sack", S.marketPrice(s.day, s) + (s.day > 1 ? (S.marketPrice(s.day, s) > S.marketPrice(s.day - 1, s) ? " ▲" : S.marketPrice(s.day, s) < S.marketPrice(s.day - 1, s) ? " ▼" : "") : ""), false, 1) +
       box("ni", "Net income (Ledger)", b.ni, false, 1) + box("ar", "Accounts receivable", b.ar, false, 1) + box("inv", "Inventory", b.inv, false, 1) + box("ap", "Accounts payable", b.ap, false, 1) +
       box("loan", "Loan payable", b.loan, false, 1) + box("crown", "Crown debt, Midwinter", b.crown, false, 1) + box("due", "Due by day " + wk, due, b.cash < due, 1) +
       `<div class="wood deskonly" id="coin">${coinBar(b)}</div>` + (storyOn ? `<button type="button" class="wood" id="casebtn">Case board (${Story.state.clues.length})</button>` : ""); // WS6: the case board button
@@ -788,6 +796,7 @@
   }
   async function closeBooks() {
     if (closing) return; const st = B.close(s), h = B.highlight(st, s); closing = { st, h }; atDesk = true; hud();
+    try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} // freeze once, when the books first show; a reload keeps it
     ["statements", "cfs"].forEach(i => { const c = TR.use(i, true, s.day); if (c) toast(`Transcript: ${TR.name(i)} (${c})`); });
     const pm = s.outcome === "insolvent" ? B.postmortem(s) : null;
     const banner = s.outcome === "insolvent" ? `<div class="banner">Insolvent on day ${s.day}. ${s.why}<br><b>What happened:</b><ul>${pm.lines.map(l => `<li>${l}</li>`).join("")}</ul><b>Next time:</b> ${pm.advice}</div>` : "";
@@ -804,6 +813,7 @@
     wire(); save();
     // WS6 finale slot: if the Ledger Duel (court.js, another builder) is loaded it runs now; otherwise the close + verdict above stand
     if (storyOn && window.Court && Court.run && s.outcome !== "insolvent" && !(s.exam && s.exam.passed)) await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
+    try { const f = s.flags || {}; if (f.courtPassed !== undefined) Save.markExam(SEASON, { passed: !!f.courtPassed, score: f.courtScore, attempts: f.courtAttempts }); } catch (e) {} // the exam is the Court's result; Ezra's review never sets it
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));
     $("mline").innerHTML = `<b>Maud:</b> ${text}`; $("ez").innerHTML = `<button class="btn gold" id="rnext">Next</button>`; $("rnext").onclick = () => { $("ez").innerHTML = ""; res(); }; }); }
@@ -819,21 +829,23 @@
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
       document.querySelectorAll("#panelBody tr.ask").forEach(r => r.classList.remove("ask"));
-      if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length); localStorage.removeItem(SAVE);
+      if (i >= qs.length) { const after = B.reviewResult(s, right, qs.length);
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${right === qs.length ? "You know your own books. Good." : right ? "You know some of your books." : "You don't know your own books. That costs you."}<br>
           Summer terms: lend up to <b>${after.loanLimit}</b> at <b>${after.rateBp / 100}% a week</b> (spring: ${before.loanLimit} at ${before.rateBp / 100}%).</div>
           <button class="btn gold" id="again">Play spring again</button> <button class="btn alt" onclick="G.transcript()">Transcript</button>${endBtn()}`; return wire(); }
       const qq = qs[i]; qq.lines.forEach(l => document.querySelectorAll(`#panelBody tr[data-line="${l}"]`).forEach(r => r.classList.add("ask")));
       ez.innerHTML = `<div class="ezq"><b>Ezra</b> <span class="hint">(${i + 1} of ${qs.length}; each answer moves your summer rate)</span><br>${qq.q} ${qq.ask}</div>` +
-        qq.options.slice().sort(() => Math.random() - .5).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
+        Save.shuffleSeeded(qq.options, s.seed, i).map(o => `<button class="btn alt choice" data-o="${o}">${o}</button>`).join("");
       ez.querySelectorAll(".choice").forEach(b => b.onclick = () => { const ok = b.dataset.o === qq.answer; if (ok) { right++; [qq.id].concat(qq.also || []).forEach(id => { const c = TR.master(id, s.day); if (c) toast(c === "mastered" ? `Mastered: ${TR.name(id)} ★` : `Transcript: ${TR.name(id)} (${c})`); }); }
         ez.innerHTML = `<div class="ezq"><b>Ezra:</b> ${ok ? "Just so." : `No. ${qq.answer}.`}</div><button class="btn gold" id="nx">Next</button>`; $("nx").onclick = () => { i++; next(); }; });
     }
     next();
   }
-  function restart() { localStorage.removeItem(SAVE); location.search = ""; }
+  function restart() { Save.clearSlot(); location.search = ""; } // clears the open season only; profile and closed seasons stay
   // ---------- save (every morning and at each chapter step) ----------
-  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { localStorage.setItem(SAVE, JSON.stringify({ s, story: Story.state, calm, usePtr, fairSeen })); } catch (e) {} }
+  let persistAsked = false; // Save.persist runs on the first save of a page load; the profile remembers a shown hint, so it shows once ever
+  function askPersist() { if (persistAsked) return; persistAsked = true; Save.persist().then(r => { if (r && r.hint) { (window.__hints = window.__hints || []).push(r.hint); toast(r.hint); } }).catch(() => {}); }
+  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); askPersist(); } catch (e) {} }
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
@@ -886,8 +898,9 @@
   // A desktop shows a fixed 320x200 view in whole-pixel steps. An iPad scales in half steps and then shows as much MAP as the screen holds, so the game
   // fills the whole screen in either orientation instead of floating in a letterbox.
   function fit() {
-    const base = Math.min(innerWidth / 320, innerHeight / 200), sc = Math.max(2, TOUCH ? Math.floor(base * 2) / 2 : Math.floor(base));
-    VW = TOUCH ? Math.min(MW * T, Math.max(320, Math.floor(innerWidth / sc))) : 320; VH = TOUCH ? Math.min(MH * T, Math.max(200, Math.floor(innerHeight / sc))) : 200;
+    // S7: on an iPad the map must also be big enough to fill the screen the other way (the map is 800 x 416, so a portrait iPad needs a bigger scale, and a narrower view, or a band is left empty).
+    const base = Math.min(innerWidth / 320, innerHeight / 200), fill = Math.ceil(Math.max(innerWidth / (MW * T), innerHeight / (MH * T)) * 2) / 2, sc = Math.max(2, TOUCH ? Math.max(Math.floor(base * 2) / 2, fill) : Math.floor(base));
+    VW = TOUCH ? Math.min(MW * T, Math.max(160, Math.ceil(innerWidth / sc))) : 320; VH = TOUCH ? Math.min(MH * T, Math.max(160, Math.ceil(innerHeight / sc))) : 200; // ceil: the canvas covers the screen, the few pixels over are clipped
     if (cv.width !== VW) cv.width = VW; if (cv.height !== VH) cv.height = VH;
     cv.style.width = VW * sc + "px"; cv.style.height = VH * sc + "px"; $("wrap").style.width = VW * sc + "px";
   }
@@ -921,11 +934,11 @@
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
-    const saved = (() => { try { return JSON.parse(localStorage.getItem(SAVE)); } catch (e) { return null; } })();
+    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? 1 + Math.floor(Math.random() * 2147483646) : 0 });
+      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in

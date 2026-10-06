@@ -30,6 +30,7 @@ The page numbers here are story chapters, not calendar weeks. Wages day plays fr
 1. Maud names two kinds of cost. Variable: seed and grain. Fixed: wages and interest. Today's fixed bill is `S.weekBills(s)`.
 2. Contribution per sack is price minus `unitCost`. Break-even is the fixed bill divided by that contribution.
 3. A multiple choice: a rival cuts the going price by 2. How many sacks break even now? The three answers are rotated by day.
+3b. A line after break-even gives the whole formula: profit = contribution × sacks − fixed bill, with the week's numbers (T2, C0.03).
 4. The right answer masters `breakeven`. The notebook keeps "Fixed, variable, break-even".
 5. The scene returns at once if contribution or the bill is zero or less.
 

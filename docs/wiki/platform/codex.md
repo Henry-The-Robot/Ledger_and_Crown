@@ -41,5 +41,6 @@ A failed storage call never throws.
 Treat it as shared with the hub (other pages read the same keys). Do not rename keys.
 
 ## Known issues
+- Keep the unused functions (`speak`, `setLevel`, `addPrestige`, `due`, `retained`): platform task P10 uses them (Lead decision 2026-10-05).
 - Most of the API is unused here. `prestige` can never rise, because nothing calls `addPrestige`.
 - No version inside any value; see [save](save.md).

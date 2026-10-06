@@ -19,8 +19,21 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 - **Daily PR reviewer** = task `curiosity` (Sonnet, 09:40): merges clean Normal PRs, **max 2 PRs a run, oldest first**;
   never merges canon (README, CHARTER, WORK-ORDER beyond a status tick, DESIGN.md, OUTLINE.md, master plan).
 
-## Next 3 actions (Lead)
-1. Review the Builder's output: G1 `docs/design/save-and-carry.md` (+ schema) before P4b ends; U0a notes; U0b
+## START HERE (2026-10-05 ~12:10 PT): fresh Lead session
+0. `python infra/help.py list --to lead:mba-game --open` FIRST, every session, and again before stopping (missed 8
+   asks for 2.7 h on 10-05). Self Review: `reflections/2026-10-05/lead-mba-game.md` (honesty 14/14).
+1. **Full-game decomposition** (Kyle via coordinator 093910 + 094455, manager 114426): the end state first, then
+   100+ cards, chapters 1-3 in full, `skills/plan-doc.md` (now Roadmap), with `overlap_ok_when` for 2 Builders. Each card:
+   one verb, <= 3 files, 20-50 min, check = `projects/mba-game/tools/check.py` (pushed + CI green + a file/text
+   condition). 42 cards exist (29 new small ones, R0 first).
+2. R0 green → read the P6-S5 diff, then merge the local/work PR (it holds canon) → v0.4.7 reaches Kyle's iPad.
+   Screenshots from the live site at 1194×834.
+3. Accept or redo the weak-check cards (T1..S5) once CI is green. P6a/P6b goldens stay unverified until then.
+
+## Next 3 actions (Lead, older)
+1. Review the Builder's output: G1 is DONE and reviewed (Lead section in `docs/design/save-and-carry.md`: season
+   record vs chapter carry, heir = careful@seed0 frozen, stakes numeric); check P4b follows it. U0a notes (done, not yet
+   reviewed); U0b
    `chapters/ch1/summer/DESIGN-DRAFT.md` (then send it to Kyle for approval via the manager). Merge #54 when it holds
    canon (the reviewer will not). Write the next cards (P6b… story.js chapters) when P6a lands.
 2. Spring deep dive (PLAN item L4): Haiku agents read the 15 Spring sessions + answers; compare with the teaching
@@ -36,10 +49,45 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
   open, write cards first. Keep ≥ 3 ready cards ahead of the Builder.
 - Followed last lesson: yes — reached the coordinator by `infra/help.py`, not by send_message.
 
+## Blockers (2026-10-05 07:30 PT) and how each is being resolved
+- Builder idles on 2-hour card leases (ledger 06:57). Stopgap: KICKOFF-BUILDER "Release before you exit". Fix asked:
+  coordinator help 20261005-072058 (shorter lease or a release command).
+- Summer design (U0b) waits on curriculum fixes (C4.01-03, C7.01, C8; C12.11 contract law). Routed to lead:mba;
+  C4 had no MBA card yet (asked in 20261005-072058).
+- Lead has no scheduled run: asked the manager for a daily Opus game-lead run (help 20261005-072618).
+- `tests` required check: coordinator help 20261004-215943 (open).
+- Spring deep dive L4 in flight: two Haiku researchers write `projects/mba-game/reviews/spring-deep-dive-{A,B}-2026-10-05.md`.
+  Next session: read both, check 2–3 claims, merge into one `spring-deep-dive-2026-10-05.md` (that satisfies PLAN L4),
+  turn WRONG items into cards ahead of S7.
+- New card S2 (what Summer needs, built into Spring) is last in the queue, after S5.
+- **L4 DONE (2026-10-05):** verdict `projects/mba-game/reviews/spring-deep-dive-2026-10-05.md`. No wrong teaching;
+  all gaps are scope. Spring keeps 8 core ideas. Card T2 adds two cheap lines and retags. Coverage map now has
+  `spring_scope`/`rest_home`: C1.04 LIFO → Ch2, C1.08 build → Ch1 Winter, C0.02 pp → Summer, CAGR → Winter,
+  C16.01 → Ch4. Part B was wrong about C1.08 (books.js:17 is the indirect method).
+- **P4b REVIEWED (2026-10-05 ~11:55 PT):** the core is sound, with three MAJOR integration gaps → card P4c (see
+  `docs/design/save-and-carry.md`, "Lead review of P4b").
+- **RED CI:** the local/work PR (#55) has been red since 09:45. First a stale wiki symbol; now 3 browser pages:
+  court.html crash, golden-story mismatch, lessons-s1 praise/evidence. The Builder ran cards through S5 on red (local
+  tests skip the browser pages). Card R0 is first; speed_note rule 6 says no card is done on red CI.
+  Coordinator asked (help 20261005-115424) to allowlist `gh run view --log-failed` and gate `done` on CI.
+- NEXT LEAD SESSION: confirm #55 is green, then read the full diff of the P6-S5 work. The checks were weak, so check
+  the cutscenes against the story bible and S7 at 1194×834. Then merge #55 (it holds canon: the T2 coverage copy). That
+  ships v0.4.7 to Kyle's iPad.
+- Superseded draft notes (kept for history): deep dive results (both done, not yet spot-checked). A: 5 sessions correct, C0.02 a loose tag (no pp-vs-% or CAGR),
+  C0.03 algebra and the speaking session missing. B: C2.01, C2.02, C5.01 correct; gaps: C1.04 (no FIFO/LIFO/reserve),
+  C1.08 (no indirect-method cash flow), C2.09 (no DSO/DIO/DPO/CCC; card S2 already adds this). Lead's draft call, to
+  confirm next session: Spring keeps <= 8 core ideas (S1). LIFO reserve and indirect cash flow become previews, or move
+  their home to a later season in `curriculum-coverage.json` (comparing firms fits Chapter 2). Do not cram them into
+  Spring. Retag C0.02 as preview, or add one pp-vs-% beat.
+
 ## Blocked on Kyle
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
 ## Decisions made and why (newest first)
+- 2026-10-05: Kyle: "proceed as planned but push the builder to deliver more faster". Cards now run T1 → P4b → P5 →
+  P6a → P6b → P7 → P8 → S7 (iPad fill + v0.4.7, first visible change) → S5; PLAN.json `speed_note` (loop to budget,
+  one critic round, tests+goldens+lint gate); P6 story port is one card; U0b waits on curriculum fixes (C4.01-03,
+  C7.01, C8) routed via the coordinator, who was also asked for a 30-min Builder cadence.
 - 2026-10-05: the Lead merged the platform stack itself (merge commits, bottom-up). Why: all six reviewed, CI green,
   the ch1 WORK-ORDER says the creative lead merges, and the reviewer's 2-PR cap would have idled the Builder 3 days.
 - 2026-10-05: season designs are drafted as `DESIGN-DRAFT.md` (not canon; reviewer may merge); the Lead renames to

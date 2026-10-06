@@ -20,7 +20,7 @@ Nothing here is needed to finish the season.
 ## Where
 | File · symbol | What |
 |---|---|
-| `chapters/ch1/spring/scenes.js` · `SC` (~7) | The scene list. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need(s)`, `hint`, `run(c)`. |
+| `chapters/ch1/spring/scenes.js` · `SC` (~7) | The scene list, now data (P6a): `RECORDS` with `steps`; `SC` adds `run(c)`. Format and player: `platform/scene-player`. Fields: `id`, `who`, `from`, optional `to`, `at` (map tile), `card` (clue card), `need` (a condition record), `hint`, `steps`. |
 | `chapters/ch1/spring/scenes.js` · `available(who, s)` (~115) | First scene for `who` that is not played, with `day >= from`, `day <= to` and `need(s)` true. Else `null`. |
 | `chapters/ch1/spring/scenes.js` · `pending(s)` (~119) | Count of scenes waiting now. |
 | `chapters/ch1/spring/scenes.js` · `CLUES` | 6. The number the player sees in "A clue: n of 6". |
@@ -62,7 +62,7 @@ Nothing here is needed to finish the season.
 - The court reads the flags `hobbExt`, `guarantee`, `vane`, `craneVane` and `maudConfessed` (`ch1/court`). Rename none of them.
 
 ## Known issues
-- `chapters/ch1/spring/story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `chapters/ch1/spring/scenes.js` does not export `morning`. The call is skipped.
+- `chapters/ch1/spring/story.js` calls `Scenes.morning(...)` each morning ("HOOK"), but `chapters/ch1/spring/scenes.js` does not export `morning`. The call is skipped. This is a guarded hook for platform task P6: keep it (Lead decision 2026-10-05).
 - `Scenes.pending` has no caller in the game's `.js` files (grep, 2026-10-05).
 
 ## History

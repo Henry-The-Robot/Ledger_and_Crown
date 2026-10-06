@@ -90,7 +90,7 @@ async function drive(w, until) {
     w.__badAsks = badAsks;
     const r1 = await drive(w, st => st === "tomas6");
     if (r1.stopped) { log("stopped for screenshot at " + stopAt); document.getElementById("out").textContent = out.join("\n"); return; }
-    const saved = JSON.parse(w.localStorage.getItem("lc_spring_save_v3") || "null");
+    const saved = (JSON.parse(w.localStorage.getItem("lc_save_v4") || "{}")).slot || null;
     log(`chapters 1-5: stages ${r1.seen.join(" → ")}; day ${w.G.s.day}; Cash ${w.G.s.bal.cash}; save stage ${saved && saved.story.stage}`);
     const [f2, w2] = await load("?fast=1&savetest=1"); await sleep(150);
     const cont = [...w2.document.querySelectorAll("#dlg button")].find(b => /Continue/.test(b.textContent)); if (cont) cont.click(); await sleep(50);
@@ -119,7 +119,7 @@ async function drive(w, until) {
     log(`Try beats with a missing or misplaced setting: ${w.__badAsks.length} ${JSON.stringify(w.__badAsks)}`);
     // WS6: the four-week frame, the case board, the name, the ribbon, the seeded events
     { const days = Object.keys(runs).map(Number).sort((a, b) => a - b), worst = Math.max(0, ...days.map(d => runs[d])); log(`dialogue runs (boxes in a row without a choice), longest per day: ${days.map(d => "d" + d + ":" + runs[d]).join(" ")}; overall longest ${worst}${worst > 4 ? " FAIL: more than 4 in a row on day(s) " + days.filter(d => runs[d] > 4).join(",") : " (<= 4: ok)"}`); days.filter(d => runs[d] > 4).forEach(d => log(`  day ${d} run of ${runs[d]}: ${runBoxes[d].join(" | ")}`)); }
-    log(`WS6 seed ${w.G.s.seed}: event nights ${JSON.stringify(w.G.s.events)} (stored in the save: ${!!JSON.parse(w.localStorage.getItem("lc_spring_save_v3") || "{}").s})`);
+    log(`WS6 seed ${w.G.s.seed}: event nights ${JSON.stringify(w.G.s.events)} (stored in the save: ${!!((JSON.parse(w.localStorage.getItem("lc_save_v4") || "{}")).slot || {}).s})`);
     log(`WS6 weeks: cards shown for weeks ${JSON.stringify(st.weeks)}; farm "${st.farm}" (name overlay clicked ${named}x); ribbon "${d.getElementById("goal").textContent}"`);
     log(`WS6 case board: ${st.clues.length} clues pinned: ${st.clues.map(c => c.id).join(", ")}; Crane's offer pinned ${st.clues.some(c => c.id === "offer")}; Crane=Vane clue absent (canon: he is only a messenger) ${!st.clues.some(c => c.id === "crane-vale")};Edric's page 6 pinned ${st.clues.some(c => c.id === "page5")}; case button "${(d.getElementById("casebtn") || {}).textContent}"`);
     // every ending's epilogue is reachable through the ?ending= test hook

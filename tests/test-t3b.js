@@ -5,20 +5,32 @@ require("../chapters/ch1/spring/cast.js"); require("../chapters/ch1/spring/scene
 let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const sent = x => x.replace(/\$\{[^}]*\}/g, "N").replace(/<[^>]+>/g, "").replace(/\d\.\d/g, "d").split(/(?<=[.?!])\s+(?=[A-Z"“'‘(])/).filter(s => s.trim().length > 2);
 const grab = (file, re) => { const out = []; fs.readFileSync(file, "utf8").split("\n").forEach((ln, i) => { let m; re.lastIndex = 0; while ((m = re.exec(ln))) out.push([`${file}:${i + 1}`, m[1].slice(1, -1)]); }); return out; };
-const STR = "(`(?:[^`\\\\]|\\\\.)*`|\"(?:[^\"\\\\]|\\\\.)*\")";
+// every box a person says in scenes.js (records), as [where, text]; `maud` steps count as Maud's
+const sceneTexts = (who, onlyAside) => { const out = []; const walk = (list, id) => list.forEach(st => { if (st.say === who && !onlyAside) st.lines.forEach(t => out.push([`scenes.js:${id}`, t])); if (who === "maud" && st.maud) out.push([`scenes.js:${id}`, st.maud]); if (st.ask) st.options.forEach(o => walk(o.then || [], id)); }); window.Scenes.RECORDS.forEach(r => walk(r.steps, r.id)); if (!out.length) throw new Error("no scene text found for " + who); return out; };
+// every box in the story's lesson records (lessons.js): Maud's `tell` and `speak: "maud"` boxes, or one person's `speak` boxes; walks into if / pick / ask branches
+const lessonTexts = (who) => { const out = []; const walk = (list, id) => (list || []).forEach(st => { if (who === "maud" && st.tell != null) out.push([`lessons.js:${id}`, st.tell]); if (st.speak === who) out.push([`lessons.js:${id}`, st.text]);
+  walk(st.then, id); walk(st.else, id); (st.cases || []).forEach(c => walk(c, id)); (st.options || []).forEach(o => walk(o.then, id)); }); window.Lessons.RECORDS.forEach(r => walk(r.steps, r.id)); if (!out.length) throw new Error("no lesson text found for " + who); return out; };
+const STR ="(`(?:[^`\\\\]|\\\\.)*`|\"(?:[^\"\\\\]|\\\\.)*\")";
 // Maud: at most two sentences a box
 { const re = new RegExp("(?:\\btell\\(|G\\.say\\(\"maud\",\\s*|sayP\\(\"maud\",\\s*|c\\.maud\\(|maud:\\s*|say\\(\"maud\",\\s*)" + STR, "g"), long = [];
-  for (const f of ["../chapters/ch1/spring/story.js", "../chapters/ch1/spring/scenes.js"]) grab(__dirname + "/" + f, re).forEach(([w, t]) => { if (sent(t).length > 2) long.push(w + " " + sent(t).length); });
+  grab(__dirname + "/../chapters/ch1/spring/story.js", re).forEach(([w, t]) => { if (sent(t).length > 2) long.push(w + " " + sent(t).length); });
+  // the story's lessons are data too (lessons.js). Boxes that were built as multi-line ternaries were never scanned by the old text search; five of them run past two sentences.
+  // They are Lead's writing calls (HANDOVER), so they are listed here as a note, not a failure; any NEW long box fails.
+  const KNOWN = ["lessons.js:ch4b 3", "lessons.js:ch5 4", "lessons.js:tvm 4", "lessons.js:tvm 3", "lessons.js:duke 3"], seen = [];
+  lessonTexts("maud").forEach(([w, t]) => { const n = sent(t.replace(/\{[^}]*\}/g, "N")).length; if (n > 2) { const k = w + " " + n; if (KNOWN.indexOf(k) >= 0 && seen.indexOf(k) < 0) seen.push(k); else long.push(k); } });
+  if (seen.length) console.log("note " + seen.length + " older lesson boxes run past two sentences (Lead's call): " + seen.join(", "));
+  sceneTexts("maud", true).forEach(([w, t]) => { if (sent(t).length > 2) long.push(w + " " + sent(t).length); }); // scenes are data now (core/scene.js); same scope as before: Maud's asides (c.maud), not her scene dialogue
   ok(long.length === 0, "every Maud box in story.js and scenes.js is at most two sentences" + (long.length ? " :: " + long.join(", ") : "")); }
 // Crane: formal and pedantic; "Item:" is a tic used now and then, never on every sentence (about one sentence in five at most, two to a box)
 { const bad = [], re1 = new RegExp("GL?\\.say\\(\"crane\",\\s*" + STR, "g"), pieces = [];
-  grab(__dirname + "/../chapters/ch1/spring/story.js", re1).forEach(x => pieces.push(x)); const sc = fs.readFileSync(__dirname + "/../chapters/ch1/spring/scenes.js", "utf8").split("\n");
-  sc.forEach((ln, i) => { const m = /c\.lines\("crane",\s*\[(.*)\]\)/.exec(ln); if (m) (m[1].match(/"(?:[^"\\]|\\.)*"/g) || []).forEach(t => pieces.push([`scenes.js:${i + 1}`, t.slice(1, -1)])); });
+  grab(__dirname + "/../chapters/ch1/spring/story.js", re1).forEach(x => pieces.push(x));
+  sceneTexts("crane").forEach(x => pieces.push(x));
+  lessonTexts("crane").forEach(x => pieces.push(x));
   const C = window.Cast.WHO.crane; [].concat(C.greet, C.low, C.rich, C.rain || []).forEach(t => pieces.push(["cast greet", t])); C.topics.forEach(tp => tp.lines.forEach(t => pieces.push(["cast " + tp.id, t])));
   let all = 0, tic = 0; pieces.forEach(([w, t]) => { const ss = sent(t), k = ss.filter(x => /^Item:/.test(x.trim())).length; all += ss.length; tic += k; if (k > 2 || (ss.length >= 1 && k === ss.length)) bad.push(w + " " + t.slice(0, 40)); });
   ok(bad.length === 0 && tic > 0 && tic / all <= .15, `Crane keeps his "Item:" tic to ${tic} of ${all} sentences (${Math.round(tic / all * 100)}%, at most 15%), at most two to a box, no box where every sentence starts with "Item:"` + (bad.length ? " :: " + bad.slice(0, 5).join(" | ") : "")); }
 // no "(coming)" in anything a player reads
-{ const bad = ["../chapters/ch1/spring/story.js", "../core/game.js", "../chapters/ch1/spring/endings.js", "../chapters/ch1/spring/scenes.js", "../chapters/ch1/spring/cast.js", "../chapters/ch1/spring/court.js"].filter(f => fs.existsSync(__dirname + "/" + f)).filter(f => /\(coming\)/.test(fs.readFileSync(__dirname + "/" + f, "utf8").replace(/\/\/.*$/gm, ""))); ok(bad.length === 0, "no '(coming)' text in player-facing strings" + (bad.length ? " :: " + bad : "")); }
+{ const bad = ["../chapters/ch1/spring/story.js", "../core/game.js", "../chapters/ch1/spring/endings.js", "../chapters/ch1/spring/scenes.js", "../chapters/ch1/spring/lessons.js", "../chapters/ch1/spring/cast.js", "../chapters/ch1/spring/court.js"].filter(f => fs.existsSync(__dirname + "/" + f)).filter(f => /\(coming\)/.test(fs.readFileSync(__dirname + "/" + f, "utf8").replace(/\/\/.*$/gm, ""))); ok(bad.length === 0, "no '(coming)' text in player-facing strings" + (bad.length ? " :: " + bad : "")); }
 // the time-value verdict: whole coins, the discount is the one the engine books, and it can flip when the rate moves
 { const mk = trustE => { const s = S.newGame({ story: true }); s.trust.ezra = trustE; s.trust.tomas = 6; S.buySeeds(s, 9, true); return s; };
   const res = []; for (const e of [0, 4, 8, 10]) { const s = mk(e); Story.init({ s, goal() {}, save() {} }, null); const bill = s.bills[s.bills.length - 1], F = Story.tvmFacts(bill); res.push([e, S.terms(s).rateBp, F.discX, F.carryX, F.cheaper]);
