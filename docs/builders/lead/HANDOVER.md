@@ -85,6 +85,10 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
 ## Decisions made and why (newest first)
+- 2026-10-06 (Kyle): test ElevenLabs voiceover + sound on the opening only; Kyle reviews, then decides for the whole
+  game. Card V1 (Builder) adds audio-file playback behind `?vo=1` (the live game is unchanged). The Lead generates the
+  11 opening lines (695 characters) + a few sound effects, once ElevenLabs is reachable from a Lead session. On 10-06
+  it was not: no connector, MCP tool or env key was visible.
 - 2026-10-06 (Kyle, via coordinator): the Lead runs no cron and no scheduled run. It acts only when Kyle writes or a
   blocking help request is waiting: review PRs, adjust the plan, unblock Builders. My ask for a daily Lead run is withdrawn.
 - 2026-10-05: Kyle: "proceed as planned but push the builder to deliver more faster". Cards now run T1 → P4b → P5 →
