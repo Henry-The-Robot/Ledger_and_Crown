@@ -26,9 +26,10 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
    100+ cards, chapters 1-3 in full, `skills/plan-doc.md` (now Roadmap), with `overlap_ok_when` for 2 Builders. Each card:
    one verb, <= 3 files, 20-50 min, check = `projects/mba-game/tools/check.py` (pushed + CI green + a file/text
    condition). 42 cards exist (29 new small ones, R0 first).
-2. R0 green → read the P6-S5 diff, then merge the local/work PR (it holds canon) → v0.4.7 reaches Kyle's iPad.
-   Screenshots from the live site at 1194×834.
-3. Accept or redo the weak-check cards (T1..S5) once CI is green. P6a/P6b goldens stay unverified until then.
+2. DONE 2026-10-06: Lead reviewed and merged #55 (527b39f, tag `v0.4.9-beta`). **v0.4.9 is live** (iPad fill,
+   five cutscenes, saves v4 + export/import, cash-cycle days, who-is-paid-first). CI green, so the P6a/P6b goldens are
+   proven. Follow-up card B2 (two literals, scope_ref path). Still to do: screenshots at 1194×834 and 834×1194 from
+   the live site.
 
 ## Next 3 actions (Lead, older)
 1. Review the Builder's output: G1 is DONE and reviewed (Lead section in `docs/design/save-and-carry.md`: season
