@@ -105,9 +105,11 @@ window.Story = (function () {
     // chapter 5 and the cost scene
     ch5Setup: () => { const walked = !!G.s.walkedOff, low = lowOf(S.forecast(G.s, 14)); return { walked, walkedWages: G.s.walkedWages, lowDay: low.day, lowClose: low.close, lowNote: low.close < 60 ? "That's where Edric lived." : "Watch that dip.", walkNote: walked ? " Jory walked off on wages day." : "", day: G.s.day }; },
     markupMargin: () => ({ m: Math.round(50 / 150 * 100) }),
-    costFacts: () => { const s = G.s, p = S.marketPrice(s.day, s), cost = S.R.unitCost, F = S.weekBills(s), m = p - cost, p1 = p - 2, m1 = p1 - cost; if (m <= 0 || m1 <= 0 || F <= 0) return { skip: true };
+    costFacts: () => { const s = G.s, cost = S.R.unitCost, F = S.weekBills(s); // B1: a thin margin must not skip the lesson; use the next day whose price leaves a contribution of 2 or more
+      let dd = s.day; while (dd < S.R.days && S.marketPrice(dd, s) - cost < 2) dd++; if (S.marketPrice(dd, s) - cost < 2) { dd = s.day; while (dd > 1 && S.marketPrice(dd, s) - cost < 2) dd--; }
+      const p = S.marketPrice(dd, s), m = p - cost, cutBy = Math.min(2, m - 1), p1 = p - cutBy, m1 = p1 - cost; if (m < 2 || F <= 0) return { skip: true };
       const need = x => Math.ceil(F / x), n0 = need(m), n1 = need(m1);
-      return { skip: false, p, cost, F, m, p1, m1, n0, n1, n0b: Math.round(n0 * 1.25), up: Math.round((n1 / n0 - 1) * 100), zero: m * n0 - F, cutPct: Math.round(2 / p * 100), dropPct: Math.round((1 - m1 / m) * 100), k: (s.day + F) % 3, day: s.day }; },
+      return { skip: false, p, cost, F, m, p1, m1, n0, n1, n0b: Math.round(n0 * 1.25), up: Math.round((n1 / n0 - 1) * 100), zero: m * n0 - F, cutBy, cutPct: Math.round(cutBy / p * 100), dropPct: Math.round((1 - m1 / m) * 100), k: (s.day + F) % 3, day: dd }; },
     costRight: v => { const right = (v.c + v.k) % 3 === 2; return { right, verdict: right ? "Yes." : "Not quite." }; },
     // the price of waiting
     pvFacts: () => { const s = G.s, t = S.terms(s), room = t.loanLimit + s.bal.loan, real = s.invoices.filter(v => v.due - s.day >= 7 && v.amount >= 60 && Math.round(v.amount * S.R.factorRate) <= room).sort((a, b) => b.amount - a.amount)[0], inv = real || { who: null, amount: 100, due: s.day + 14 };

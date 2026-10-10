@@ -4,7 +4,7 @@
 <script>
 const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
 const load = q => new Promise(r => { const f = document.createElement("iframe"); f.style.cssText = "width:1194px;height:834px;border:0"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => r(f); });
-async function boot() { const f = await load("?new=1&intro=0&touch=0&seed=3"), w = f.contentWindow; await sleep(500); w.Story.testScene("none"); w.G.closeDlg(); document.querySelectorAll(".wkcard").forEach(e => e.remove()); return { f, w, G: w.G, s: w.G.s, S: w.Spring }; }
+async function boot() { const f = await load("?new=1&intro=0&touch=0"), w = f.contentWindow; await sleep(500); w.Story.testScene("none"); w.G.closeDlg(); document.querySelectorAll(".wkcard").forEach(e => e.remove()); return { f, w, G: w.G, s: w.G.s, S: w.Spring }; }
 function stub(x, pick) { const seen = []; x.G.say = async (who, text, choices) => { const labels = (choices || []).map(c => typeof c === "string" ? c : c.label); seen.push({ who, text, labels }); return labels.length ? pick(labels, text) : 0; }; return seen; }
 (async () => { try {
   // fixed vs variable: the right answer is the one that matches the engine's own break-even; a wrong pick is told why; the notebook gets the entry
