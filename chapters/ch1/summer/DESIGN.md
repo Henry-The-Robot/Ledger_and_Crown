@@ -1,6 +1,24 @@
-# SEASON DESIGN DRAFT — Chapter 1, Summer (card U0b, 2026-10-09, game-builder)
+# SEASON DESIGN — Chapter 1, Summer (card U0b, 2026-10-09, game-builder; Lead review below)
 
-Status: working draft, not canon. The Lead reviews it; Kyle approves it. Only then does it become `DESIGN.md`.
+Status: **canon, approved to build.** Kyle 2026-10-09: "get the first and second season playable". The Lead reviewed it the
+same day; the decisions in section 0 override the draft text below where they differ. Kyle reviews the playable season.
+
+## 0. Lead review (2026-10-09) — decisions
+1. **Blockers cleared.** All 18 Chapter 1 sessions pass review (`knowledge/mba/modules/REVIEW-LOG-CH1.md`): C4.01-03 are
+   fixed (use the corrected values, e.g. elasticity -1.09, revenue peak at 0.875 of the old price), C6.03 is rewritten,
+   C12.11 contract law exists. SU5 and SU8 (including the penalty clause) build as designed; risks 1 and 2 are closed.
+2. **Source of truth for sessions:** `curriculum-coverage.json`. C2.09 and C5.01 stay Spring sessions; Summer uses them
+   again under SU1 (a return, not a new home). Risk 3 closed.
+3. **Play time: 60-90 minutes**, not 3-4 hours. Spring is ~45 minutes; the jump must be gentle. Each idea gets one
+   decision and one second use, as designed; cut dialogue, not decisions.
+4. **No new platform scene types for v1.** The Tender runs as scripted offers on the existing scene player (risk 5's
+   fallback), with the floor computed from the player's books. The price test uses Market Day with a daily price. The
+   three-scale sort is one choice per scale. The pass line is the existing number input, locked before the data shows.
+5. **Names.** The King's purveyor: **Master Aldous Penhallow** (formal, impatient). His clerk: **Wendel** (soft,
+   eager). The chicken farmer: **Goody Marsh** (blunt, practical; says what she needs, not what she wants).
+6. **Start state:** Summer reads `closed["ch1/spring"].next` from the save (or the frozen heir when there is none).
+   `?season=ch1/summer` opens Summer directly for testing.
+7. **Exam:** the Tender is Summer's exam (pass rule as in section 5). Its result freezes `closed["ch1/summer"]`.
 Sources: master plan §2, §4, §13; `CURRICULUM-NOTES.md` (U0a); `docs/STORY-BIBLE.md`; the Spring flags it lists.
 Build order: no Summer code starts before approval. Two blockers are in section 10.
 
