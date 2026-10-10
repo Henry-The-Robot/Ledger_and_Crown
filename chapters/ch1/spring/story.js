@@ -97,7 +97,7 @@ window.Story = (function () {
     ch2After: () => ({ day: G.s.day, inv1: G.s.bal.inv, planted: G.s.plots.filter(p => p.crop).length }),
     // chapters 3 and 4
     ch3Setup: () => { const cost = S.R.unitCost, pc = p => Math.round((p - cost) / p * 100), o = G.s.offers.find(x => x.who === "ashby") || S.addOffer(G.s, "ashby", 6, 7, 0, 4, 4); S.setPrice(G.s, o.id, 7);
-      return { cost, pc, o, seedCost: S.R.seedCost, per: S.R.sacksPerPlot, m7: 7 - cost, p7: pc(7), m6: 6 - cost, p6: pc(6) }; },
+      return { cost, pc, o, seedCost: S.R.seedCost, per: S.R.sacksPerPlot, m7: 7 - cost, p7: pc(7), m6: 6 - cost, r6: ((6 - cost) / 6).toFixed(2), p6: pc(6) }; },
     ch3Deal: v => { const price = v.deal.price; return { price, pm: price - v.cost, pp: v.pc(price) }; },
     ch4Setup: () => { const o = G.s.offers.find(x => x.who === "hobb") || S.addOffer(G.s, "hobb", 9, 9, 14, 5, 4); S.setPrice(G.s, o.id, 9); return { o, cost: S.R.unitCost }; },
     ch4bFacts: v => { const val = v.order.value, inv = G.s.invoices.find(x => x.who === "hobb"), arNow = S.balanceSheet(G.s.bal).ar; return { v: val, inv, arNow, arBig: arNow > val, due: inv.due, n: inv.due - G.s.day + 1, revealDay: inv.due + 1 }; },
@@ -133,7 +133,7 @@ window.Story = (function () {
     ezraKeep: v => ({ borrowInt: Math.round(v.borrowed * v.t.rateBp / 10000), day: G.s.day }),
     // Corvin Vane
     dukeSetup: () => { const o = G.s.offers.find(x => x.who === "duke"); if (!o) return { noOffer: true }; const D = S.R.duke, sacks = o.sacks;
-      return { noOffer: false, o, D, sacks, half: Math.round(sacks / 6) * 3, value: sacks * o.price, price: o.price, due: o.due, terms: D.terms, tookFirst: G.s.orders.some(x => x.who === "duke"), tied1: st.tied1 || 0 }; },
+      return { noOffer: false, o, D, sacks, half: Math.round(sacks / 6) * 3, value: sacks * o.price, price: o.price, due: o.due, terms: D.terms, tookFirst: G.s.orders.some(x => x.who === "duke"), tied1: st.tied1 || 0, factorPct: Math.round(S.R.factorRate * 100) }; },
     dukeBoard: v => { const V = LV, o = v.o, sacks = v.sacks, need = Math.max(0, Math.ceil((sacks + S.committed(G.s) - G.s.sacks - S.sacksComing(G.s)) / S.R.sacksPerPlot) - G.s.seeds), extra = need * S.R.seedCost, low = lowOf(S.forecast(G.s, 14, extra)), ord = { sacks, price: o.price, due: o.due };
       const base = V.rows({ n: 14, tied: true }), withO = V.rows({ n: 14, tied: true, extra, order: ord }), delta = withO[withO.length - 1].tied - base[base.length - 1].tied; // what this order ties up by the end of the window
       return { need, extra, low, ord, delta, lowClose: low.close, lowDay: low.day, plural: need > 1 ? "s" : "", day: G.s.day }; },
