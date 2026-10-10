@@ -52,20 +52,34 @@
   const sound = name => { try { if (window.FX && FX.sfx) FX.sfx(name); } catch (e) {} };
   function say(l) { // a line starts: subtitle, and the voice file if one is set
     if (!st) return; const el = st.sub; el.innerHTML = `<span class="in-who">${l.who}</span><span class="in-txt">${l.text}</span>`; el.classList.add("on"); st.line = l.id; st.said.push(l.id);
-    if (voiceBase) try { const a = new Audio(`${voiceBase}/${l.id}.${voiceExt}`); a.volume = 1; st.audio = a; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    if (voiceBase) try { const a = new Audio(`${voiceBase}/${l.id}.${voiceExt}`); a.volume = 1; const prev = st.audio; st.audio = a; st.audios.push(a); // a line waits for the one before it to finish (i08 follows i07)
+      const go = () => { if (!st) return; const p = a.play(); if (p && p.catch) p.catch(() => {}); };
+      if (prev && !prev.paused && !prev.ended) prev.addEventListener("ended", go, { once: true }); else go(); } catch (e) {}
   }
+  // files that replace synth cues in voice mode: def.sfxFiles = [{ src, at, vol, loop, until, mute: { shotIndex: [cueIndex, ...] } }] (at/until are seconds from the start)
+  function sfxFiles(t) {
+    if (!voiceBase || !st.def.sfxFiles) return;
+    st.def.sfxFiles.forEach((f, i) => {
+      let r = st.sfx[i], v = f.vol == null ? 1 : f.vol;
+      if (!r && t >= f.at && (f.until == null || t < f.until)) { try { const a = new Audio(f.src); a.volume = v; a.loop = !!f.loop; st.audios.push(a); const p = a.play(); if (p && p.catch) p.catch(() => {}); r = st.sfx[i] = { a }; } catch (e) { r = st.sfx[i] = {}; } }
+      if (r && r.a && f.until != null) { if (t >= f.until) r.a.pause(); else if (t > f.until - 1) r.a.volume = Math.max(0, v * (f.until - t)); }
+    });
+  }
+  const sfxMuted = (si, ci) => !!(voiceBase && st.def.sfxFiles && st.def.sfxFiles.some(f => f.mute && f.mute[si] && f.mute[si].indexOf(ci) >= 0));
+  function stopAudio(s) { try { (s.audios || []).forEach(a => a.pause()); } catch (e) {} }
   function step(now) {
     if (!st) return; const def = st.def, tl = st.tl; const dt = Math.min(.1, (now - (st.last || now)) / 1000); st.last = now; if (!st.hold) st.t += dt * st.speed;
     const t = st.t; if (t >= tl.total) return end("done");
     frame(def, t);
     const si = shotAt(tl, t); if (si !== st.shot) { st.shot = si; st.cueI = 0; try { if (window.Music) { Music.start(); Music.setMood(def.shots[si].mood); } } catch (e) {} }
-    const cues = def.shots[si].cues, local = t - tl.starts[si]; while (st.cueI < cues.length && cues[st.cueI][0] <= local) { sound(cues[st.cueI][1]); st.fired.push(cues[st.cueI][1]); st.cueI++; }
+    const cues = def.shots[si].cues, local = t - tl.starts[si]; while (st.cueI < cues.length && cues[st.cueI][0] <= local) { if (!sfxMuted(si, st.cueI)) sound(cues[st.cueI][1]); st.fired.push(cues[st.cueI][1]); st.cueI++; }
+    sfxFiles(t);
     const l = lineAt(def, t); if (l && st.line !== l.id) say(l); else if (!l && st.line) { st.line = null; st.sub.classList.remove("on"); }
     const bar = st.root.querySelector("#in-bar i"); if (bar) bar.style.width = (t / tl.total * 100).toFixed(1) + "%";
     st.raf = requestAnimationFrame(step);
   }
   function end(how) {
-    if (!st) return; const s = st; st = null; active = false; cancelAnimationFrame(s.raf); document.removeEventListener("keydown", s.key, true); try { if (s.audio) s.audio.pause(); } catch (e) {}
+    if (!st) return; const s = st; st = null; active = false; cancelAnimationFrame(s.raf); document.removeEventListener("keydown", s.key, true); stopAudio(s);
     s.root.classList.add("out"); setTimeout(() => s.root.remove(), 380); document.body.classList.remove("in-intro"); try { if (s.def.seenKey) localStorage.setItem(s.def.seenKey, "1"); } catch (e) {} note(s.def.id);
     s.done({ how, said: s.said, fired: s.fired });
   }
@@ -77,7 +91,7 @@
     document.body.appendChild(root); document.body.classList.add("in-intro"); active = true; ctx = root.querySelector("#in-cv").getContext("2d"); if (def.setup) def.setup(ctx); const go = root.querySelector("#in-go");
     const start = () => { if (!st) return; if (go && !go.isConnected) return; try { if (window.FX) FX.unlock(); } catch (e) {} const g = root.querySelector("#in-gate"); if (g) g.remove(); st.last = performance.now(); st.raf = requestAnimationFrame(step); };
     const key = e => { if (e.key === "Escape") { e.stopPropagation(); end("skipped"); } else if ((e.key === "Enter" || e.key === " ") && go && go.isConnected) { e.preventDefault(); e.stopPropagation(); start(); } else e.stopPropagation(); }; // (the game underneath hears no keys while a cutscene is up)
-    st = { def, tl: timeline(def), t: 0, last: 0, speed: opts.speed || 1, hold: !!opts.hold, root, sub: root.querySelector("#in-sub"), shot: -1, cueI: 0, line: null, said: [], fired: [], key, done, raf: 0, promise };
+    st = { def, tl: timeline(def), t: 0, last: 0, speed: opts.speed || 1, hold: !!opts.hold, root, sub: root.querySelector("#in-sub"), shot: -1, cueI: 0, line: null, said: [], fired: [], audios: [], sfx: [], key, done, raf: 0, promise };
     document.addEventListener("keydown", key, true); root.querySelector("#in-skip").onclick = () => end("skipped");
     frame(def, 0); if (go) go.onclick = start; if (opts.autostart || !go) start(); if (go) setTimeout(() => go.isConnected && go.focus({ preventScroll: true }), 30);
     return promise;

@@ -84,6 +84,18 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 ## Blocked on Kyle
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
+## Push to Spring + Summer playable (Kyle 2026-10-09: "get the first and second season playable. After that we'll pause")
+- ElevenLabs MCP works (connector id 94648465…). Flow XOFEZioDAK1mj34PHBB4: 11 opening lines (voice "Daniel – The Gruff
+  Old British Wizard", eleven_v3) + 4 sfx (eleven_text_to_sound_v2); ~1,070 credits total. Files are on local/work:
+  assets/voice/intro/i01-i11.mp3 (the engine's setVoice naming), assets/sfx/intro/{rain,gate,coins,seal}.mp3. The rain
+  is only 2 s (requested 10 s): loop it, or regenerate with a set duration if Kyle likes the test. Card V1 wires it
+  behind ?vo=1. Test link once V1 merges: https://henry-the-robot.github.io/Ledger_and_Crown/game.html?vo=1
+- Repo renamed to Henry-The-Robot/Ledger_and_Crown (old name redirects for gh and git). Live site moved to
+  https://henry-the-robot.github.io/Ledger_and_Crown/ (the old URL is a 404).
+- Summer DESIGN.md approved to build (Lead review = section 0). 24 cards SM1-SM5, SU-*, then SU-R1 = v0.5.0.
+- Merging: the reviewer task `curiosity` is disabled, so only a Lead session merges the local/work PR. Each Kyle ping:
+  check CI, read the diff, merge.
+
 ## Decisions made and why (newest first)
 - 2026-10-06 (Kyle): test ElevenLabs voiceover + sound on the opening only; Kyle reviews, then decides for the whole
   game. Card V1 (Builder) adds audio-file playback behind `?vo=1` (the live game is unchanged). The Lead generates the
