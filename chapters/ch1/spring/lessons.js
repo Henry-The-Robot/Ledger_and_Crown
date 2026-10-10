@@ -110,7 +110,7 @@
       work: "A packet of seed is {seedCost} and gives {per} sacks, so each sack cost {cost}. Sell below {cost} and you lose money.", how: "Your cost floor is what one item cost you. If 10 of seed grows 5 sacks, each sack cost 10 ÷ 5 = 2. Below 2, you lose money." },
     { speak: "ashby", text: "Times are hard, dear. Would you take 6?" },
     { quiz: "Work it out before you answer. Your margin at 6, in %?", answer: "p6", hints: ["Look at how I worked it at 7 in my notebook, then do the same at 6.", "Margin compares the profit on one sack with the price the buyer pays."], spot: null, tol: 1, docs: ["notebook"],
-      work: "At 6 you keep 6 − {cost} = {m6} a sack. {m6} ÷ 6 = 0.33, so {p6}%.", how: "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%." },
+      work: "At 6 you keep 6 − {cost} = {m6} a sack. {m6} ÷ 6 = {r6}, so {p6}%.", how: "Margin = profit on one item ÷ the price you sell it for, × 100. Sell for 10 what cost 6: profit 4, and 4 ÷ 10 × 100 = 40%." },
     { master: "gross" }, { master: "margin" },
     { tell: "Your cost floor, {cost}, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away." },
     { tell: "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it." }, // S2 naming pass (C16.12: reservation point)
@@ -287,7 +287,7 @@
     { master: "overtrading", if: "wise" },
     { if: { eq: ["n", 1] }, then: [{ remember: ["tied1", { var: "delta" }] }] },
     { pick: "tellIdx", cases: [
-      [{ tell: "Your own board says Cash goes to {lowClose}. Edric did the same. Borrow, or sell the invoice to Ezra for 85% (factoring), or it ends the same way." }],
+      [{ tell: "Your own board says Cash goes to {lowClose}. Edric did the same. Borrow, or sell the invoice to Ezra for {factorPct}% (factoring), or it ends the same way." }],
       [{ tell: "Your board says you can carry it. Then carry it." }],
       [{ tell: "Half: {half} sacks, and about {halfTied|money} less tied up. Growth you can't fund isn't growth." }],
       [{ tell: "Growth you can't fund isn't growth. Edric never learned that." }]] },

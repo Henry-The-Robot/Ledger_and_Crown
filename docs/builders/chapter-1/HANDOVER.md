@@ -1,31 +1,34 @@
-# HANDOVER — Chapter 1 builder — updated 2026-10-04 22:50 by game-builder (Sonnet)
+# HANDOVER — Chapter 1 builder — updated 2026-10-09 by game-builder (Sonnet)
 
 ## State in one paragraph
-Spring is live as v0.4.6. Summer design is docs-only (Lead, 2026-10-05). Card U0a is done: `chapters/ch1/summer/CURRICULUM-NOTES.md` covers the 16 sessions with home 1SU, lists 8 core ideas and the previews, and flags errors in C4.01-03, C7.01, C8.01-03. Card U0b (the Summer design draft) is next and is ready.
+Spring is live as v0.4.6. Summer is docs-only until Kyle approves a design. Card U0a is done (`chapters/ch1/summer/CURRICULUM-NOTES.md`). Card U0b is built: `chapters/ch1/summer/DESIGN-DRAFT.md` follows the season design template, with 8 core ideas, week by week, opening, 5 cutscenes, Tender finale, cast, numbers sketch, platform needs, previews and risks.
 
 ## Live / branch state
 master = v0.4.6. Local work is on `local/work`; `infra/git_sync_game.py` pushes it. No open PR from this builder.
 
 ## Next 3 actions
-1. U0b: write `chapters/ch1/summer/DESIGN-DRAFT.md` from `docs/builders/SEASON-DESIGN-TEMPLATE.md` and master plan §4 and §13 (opening animation, cutscene list). Use the 8 core ideas in the notes. Read the notes' error table first.
-2. Platform cards G1, P4b, P5 (see `python infra/plan_cards.py next mba-game`).
-3. T1 small drift fix in `tests/run-html.js`.
+1. Lead reviews `DESIGN-DRAFT.md`; Kyle approves; the Lead renames it `DESIGN.md`.
+2. Next ready card from `python infra/plan_cards.py next mba-game`.
+3. File platform requests for the negotiation scene, contract object, price-test tool, three-scale sort UI and pass-line lock (draft section 8).
 
 ## Failure lesson
-Reading 16 sessions with their answers cost about 100k tokens in one session. Next time: read the answers file only for sessions that have a formula, and stop at U0a before starting a design card.
+The first `claim` call was denied once, then passed on retry. Retry a denied claim once before building.
 
 ## Blocked on the creative lead / Kyle
-- C12.11 (contract law) is NOT WRITTEN. Summer's Vane and guarantee scenes wait for it (PLAN item C1).
-- Curriculum fixes needed before the elasticity and scale scenes: see the error table in CURRICULUM-NOTES.md. Not yet filed as a help request.
+- C12.11 (contract law) NOT WRITTEN. Summer's contract half of SU8 and the guarantee thread wait for it.
+- C4.01 to C4.03 errors (see CURRICULUM-NOTES.md) block SU5.
+- Master plan SU1 cites C2.09 and C5.01; the coverage file homes them in Spring. Lead picks the source of truth (draft section 10, item 3).
+- Names for the purveyor and the clerk.
 
 ## Decisions made and why
-- 2026-10-04: idea 8 (legal, ethical, smart) is core because S2 already names it. It is the first to demote if Summer runs long.
-- 2026-10-04: Kyle's venture names (V1, V10, HVAC client) in session text must not reach player text.
+- 2026-10-09: used master-plan ids SU1 to SU8 in the draft; mapped U0a sessions onto them.
+- 2026-10-09: all numbers in the numbers sketch are marked [Guessing]; no literal player-facing numbers.
+- 2026-10-04: idea 8 (legal, ethical, smart) is first to demote. Kyle's venture names must not reach player text.
 
 ## Dead ends (do not repeat)
 - `tests/run-html.js` needs Playwright, not installed locally.
 - Printing session files with python `print` fails on Windows (cp1252). Use the Read tool.
 
 ## Files that matter
-- `chapters/ch1/summer/CURRICULUM-NOTES.md` — U0a output.
-- `docs/builders/chapter-1/WORK-ORDER.md` row U0, `docs/curriculum-coverage.json`.
+- `chapters/ch1/summer/DESIGN-DRAFT.md`, `chapters/ch1/summer/CURRICULUM-NOTES.md`
+- `docs/builders/SEASON-DESIGN-TEMPLATE.md`, `docs/MASTER-PLAN.html` §4, §13

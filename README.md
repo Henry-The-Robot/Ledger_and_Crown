@@ -39,6 +39,8 @@ Any modern desktop browser on Mac or Windows: Chrome, Edge, Firefox, or Safari, 
 version back. No install, no account — it runs entirely in the browser tab and saves locally on
 your machine (nothing is sent anywhere).
 
+Opening voice and sound generated with ElevenLabs.
+
 ## Feedback
 
 Send feedback to the person who invited you to test this — not by any address in the game itself.

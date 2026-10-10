@@ -25,7 +25,7 @@ A 75-second animated prologue on a 320 by 180 canvas. It uses the game's own spr
 | `core/intro.js` · `DEF` | The opening as a cutscene definition (P7). `play`, `end`, `frame` and `setVoice` hand it to `core/cutscene.js`. |
 | `core/cutscene.js` · `play(def, opts)` | The engine: builds the overlay, starts on "Begin", loop, cues, mood, subtitles, voice, `end`. Wiki: `platform/cutscene`. Options: `speed`, `hold`, `autostart`. |
 | `core/intro.js` · `play(opts)`, `end(how)`, `frame(t)` | One-line wrappers over the engine. `end` writes `lc_intro_seen` (the def's `seenKey`) and the journal. |
-| `core/intro.js` · `setVoice(base, ext)`, `manifest()` | A future voice-over: a folder of files named by line id. |
+| `core/intro.js` · `setVoice(base, ext)`, `manifest()` | The voice-over: a folder of files named by line id. `?vo=1` (see `playOpening` in `core/game.js`) turns on `assets/voice/intro` and the `sfxFiles` in `DEF` (rain, gate, coins, seal). A line waits for the line before it to end. Skip stops every file. Test: `tests/voice-opening.html`. |
 | `core/intro.js` · `wanted(q)` | True for a new story game. False for `?intro=0`, `fast`, `sandbox` or `new`. `?intro=1` forces it. |
 | `tools/intro-script.js` | `node tools/intro-script.js [json|csv|txt]` prints the manifest for a voice service. |
 | `core/intro.css` | The overlay, gate button, subtitle bar and skip button. |

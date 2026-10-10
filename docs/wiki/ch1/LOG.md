@@ -21,3 +21,4 @@ How Chapter 1 was built, one line per merged PR or release, newest last. Append-
 - 2026-10-04: Playtest-2 fixes, fixed-vs-variable and present-value lessons, practice tiers, review fixes; Court 9 claims / pass 6 (PR #41, v0.4.6-beta).
 - P6b (local/work): the story's nine chapters and its lesson scenes became records in `chapters/ch1/spring/lessons.js`; `story.js` keeps hooks, formulas and verbs. 90 scene traces match the code before the port. No player-visible change.
 - P3 (`platform/restructure`): files moved into `core/` and `chapters/ch1/spring/`; the golden bot seasons and the golden story run match byte for byte. No player-visible change.
+- B1 (local/work): the cost lesson no longer skips when the market margin is 2 or less. `cutBy = min(2, m - 1)`; with a margin under 2 the lesson uses the next day with margin 2 or more. `tests/test-b1.js` covers seeds 0-199; seed=3 unpinned in lessons-s1.html and stale-scene.html.

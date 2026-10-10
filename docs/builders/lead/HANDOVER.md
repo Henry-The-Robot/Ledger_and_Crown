@@ -26,9 +26,10 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
    100+ cards, chapters 1-3 in full, `skills/plan-doc.md` (now Roadmap), with `overlap_ok_when` for 2 Builders. Each card:
    one verb, <= 3 files, 20-50 min, check = `projects/mba-game/tools/check.py` (pushed + CI green + a file/text
    condition). 42 cards exist (29 new small ones, R0 first).
-2. R0 green → read the P6-S5 diff, then merge the local/work PR (it holds canon) → v0.4.7 reaches Kyle's iPad.
-   Screenshots from the live site at 1194×834.
-3. Accept or redo the weak-check cards (T1..S5) once CI is green. P6a/P6b goldens stay unverified until then.
+2. DONE 2026-10-06: Lead reviewed and merged #55 (527b39f, tag `v0.4.9-beta`). **v0.4.9 is live** (iPad fill,
+   five cutscenes, saves v4 + export/import, cash-cycle days, who-is-paid-first). CI green, so the P6a/P6b goldens are
+   proven. Follow-up card B2 (two literals, scope_ref path). Still to do: screenshots at 1194×834 and 834×1194 from
+   the live site.
 
 ## Next 3 actions (Lead, older)
 1. Review the Builder's output: G1 is DONE and reviewed (Lead section in `docs/design/save-and-carry.md`: season
@@ -83,7 +84,25 @@ season data + market model, P6a scene player. Open PR: #54 (local/work). #53 clo
 ## Blocked on Kyle
 - Nothing now. Summer design (U0b draft) will need Kyle's approval when it exists.
 
+## Push to Spring + Summer playable (Kyle 2026-10-09: "get the first and second season playable. After that we'll pause")
+- ElevenLabs MCP works (connector id 94648465…). Flow XOFEZioDAK1mj34PHBB4: 11 opening lines (voice "Daniel – The Gruff
+  Old British Wizard", eleven_v3) + 4 sfx (eleven_text_to_sound_v2); ~1,070 credits total. Files are on local/work:
+  assets/voice/intro/i01-i11.mp3 (the engine's setVoice naming), assets/sfx/intro/{rain,gate,coins,seal}.mp3. The rain
+  is only 2 s (requested 10 s): loop it, or regenerate with a set duration if Kyle likes the test. Card V1 wires it
+  behind ?vo=1. Test link once V1 merges: https://henry-the-robot.github.io/Ledger_and_Crown/game.html?vo=1
+- Repo renamed to Henry-The-Robot/Ledger_and_Crown (old name redirects for gh and git). Live site moved to
+  https://henry-the-robot.github.io/Ledger_and_Crown/ (the old URL is a 404).
+- Summer DESIGN.md approved to build (Lead review = section 0). 24 cards SM1-SM5, SU-*, then SU-R1 = v0.5.0.
+- Merging: the reviewer task `curiosity` is disabled, so only a Lead session merges the local/work PR. Each Kyle ping:
+  check CI, read the diff, merge.
+
 ## Decisions made and why (newest first)
+- 2026-10-06 (Kyle): test ElevenLabs voiceover + sound on the opening only; Kyle reviews, then decides for the whole
+  game. Card V1 (Builder) adds audio-file playback behind `?vo=1` (the live game is unchanged). The Lead generates the
+  11 opening lines (695 characters) + a few sound effects, once ElevenLabs is reachable from a Lead session. On 10-06
+  it was not: no connector, MCP tool or env key was visible.
+- 2026-10-06 (Kyle, via coordinator): the Lead runs no cron and no scheduled run. It acts only when Kyle writes or a
+  blocking help request is waiting: review PRs, adjust the plan, unblock Builders. My ask for a daily Lead run is withdrawn.
 - 2026-10-05: Kyle: "proceed as planned but push the builder to deliver more faster". Cards now run T1 → P4b → P5 →
   P6a → P6b → P7 → P8 → S7 (iPad fill + v0.4.7, first visible change) → S5; PLAN.json `speed_note` (loop to budget,
   one critic round, tests+goldens+lint gate); P6 story port is one card; U0b waits on curriculum fixes (C4.01-03,

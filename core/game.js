@@ -140,6 +140,8 @@
   let usePtr = 0;
   function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) { FX.sfx(ch === "mastered" ? "win" : "chime"); toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } } }
   // ---------- dialogue: one box, Promise-based; choices, a number field, highlights ----------
+  // the opening plays silent files-wise unless the URL has ?vo=1 (ElevenLabs voice and sound files; assets/voice/intro, assets/sfx/intro)
+  const playOpening = () => { try { Intro.setVoice(new URLSearchParams(location.search).get("vo") === "1" ? "assets/voice/intro" : null); } catch (e) {} return Intro.play(); };
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
@@ -265,7 +267,7 @@
     document.body.appendChild(p);
     p.onclick = e => { if (e.target === p) p.remove(); };
     $("pz-resume").onclick = () => p.remove();
-    if ($("pz-intro")) $("pz-intro").onclick = () => { p.remove(); if (window.Intro) Intro.play().then(() => { try { Music.setMood(moodNow()); } catch (e) {} }); };
+    if ($("pz-intro")) $("pz-intro").onclick = () => { p.remove(); if (window.Intro) playOpening().then(() => { try { Music.setMood(moodNow()); } catch (e) {} }); };
     $("pz-restart").onclick = () => location.reload();
     $("pz-map").onclick = () => { save(); location.href = "index.html"; };
     $("pz-feedback").onclick = () => copyFeedback();
@@ -943,7 +945,7 @@
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in
       const go = () => { hud(); if (storyOn) Story.start(); };
-      if (!sv && storyOn && window.Intro && Intro.wanted(q)) Intro.play().then(go); else go();
+      if (!sv && storyOn && window.Intro && Intro.wanted(q)) playOpening().then(go); else go();
     };
     if (saved && storyOn && !saved.s.over && !q.has("new")) { s = saved.s; hud(); dlg({ who: "maud", text: `Welcome back. Day ${saved.s.day}, chapter ${saved.story.ch}.`, choices: ["Continue", "Start a new game"] }).then(r => begin(r.i === 0 ? saved : null)); }
     // a finished season: coming back (a reload, a new tab) returns to the books, the Reeve's Court and the ending instead of silently starting over
