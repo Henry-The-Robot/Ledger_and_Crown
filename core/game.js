@@ -825,8 +825,12 @@
       if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
   // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close
-  const endBtn = () => storyOn ? `<p><button class="btn alt" id="goEnd">How it ends</button></p>` : "";
-  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); }
+  // SM5: after the books close, a button starts the next season through the loader. A failed Court still allows it (the carry record says so); a sold or insolvent farm does not.
+  const NEXT_LABEL = { "ch1/summer": "Begin Summer" }, nextId = () => SeasonLoader.next(SEASON), canBegin = () => storyOn && nextId() && NEXT_LABEL[nextId()] && s.outcome !== "insolvent" && s.outcome !== "sold";
+  const beginBtn = () => canBegin() ? `<button class="btn gold" id="goNext">${NEXT_LABEL[nextId()]}</button> ` : "";
+  function beginNext() { const id = nextId(); try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} Save.clearSlot(); location.search = "?season=" + id; } // Spring is frozen already (closeBooks); leaving clears its open slot
+  const endBtn = () => storyOn ? `<p>${beginBtn()}<button class="btn alt" id="goEnd">How it ends</button></p>` : "";
+  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"), n = $("goNext"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); if (n) n.onclick = beginNext; }
   function review() {
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {

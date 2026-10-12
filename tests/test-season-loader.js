@@ -16,6 +16,7 @@ ok(P({ search: "?sandbox&season=ch1/summer" }) === "ch1/summer", "?season= still
 ok(P({ search: "?season=nope" }) === "ch1/spring", "an unknown ?season= is ignored");
 ok(P({ search: "?season=ch1/summer", known: ["ch1/spring"] }) === "ch1/spring", "a season that is not registered cannot be forced");
 ok(L.prev("ch1/summer") === "ch1/spring" && L.prev("ch1/spring") === null, "summer starts from spring; spring has no earlier season");
-const tag = '<script data-season="ch1/summer" data-src="chapters/ch1/summer/x.js"></script>';
+ok(L.next("ch1/spring") === "ch1/summer" && L.next("ch1/summer") === null, "spring is followed by summer; summer has no next season yet");
+const tag ='<script data-season="ch1/summer" data-src="chapters/ch1/summer/x.js"></script>';
 const r = stamp(tag, "1.2.3"); ok(r.out.includes('data-src="chapters/ch1/summer/x.js?v=1.2.3"') && r.diffs.length === 1, "stamp.js stamps a season's data-src tag");
 process.exit(fail ? 1 : 0);

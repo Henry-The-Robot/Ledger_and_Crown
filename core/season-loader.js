@@ -15,7 +15,8 @@
     return ORDER[ORDER.length - 1];
   }
   const prev = id => { const i = ORDER.indexOf(id); return i > 0 ? ORDER[i - 1] : null; }; // the season whose closing record this one starts from
-  const api = { ORDER, pick, prev };
+  const next = id => { const i = ORDER.indexOf(id); return i >= 0 && i < ORDER.length - 1 ? ORDER[i + 1] : null; }; // the season after this one (SM5: "Begin Summer")
+  const api = { ORDER, pick, prev, next };
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root && root.document && root.Spring && root.Save) {
     let slot = null, closed = {};

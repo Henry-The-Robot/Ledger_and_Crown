@@ -4,10 +4,10 @@ type: system
 pack: platform
 season: all
 files: [core/season-loader.js, core/game.js, tools/stamp.js]
-symbols: [SeasonLoader, pick, prev, LC_SEASON]
+symbols: [SeasonLoader, pick, prev, next, LC_SEASON, beginNext, NEXT_LABEL]
 concepts: []
 sessions: []
-tests: [tests/test-season-loader.js, tests/season-loader.html]
+tests: [tests/test-season-loader.js, tests/season-loader.html, tests/begin-summer.html]
 links: [platform/version-stamp, platform/save]
 updated: 2026-10-12
 ---
@@ -24,6 +24,7 @@ A season's own scripts are tags in `game.html` shaped `<script data-season="ch1/
 |---|---|
 | `core/season-loader.js` · `pick` | Pure choice of the season id. Tested in node. |
 | `core/season-loader.js` · `prev` | The season whose closing record a season starts from. |
+| `core/season-loader.js` · `next` | The season after this one. `core/game.js` shows its button (`NEXT_LABEL`, "Begin Summer") beside "How it ends" when the books are closed and the farm is neither sold nor insolvent. `beginNext` clears the open slot and reloads with `?season=`. Test: `tests/begin-summer.html`. |
 | `core/game.js` · `start` | Ignores a save slot of another season. A later season starts from `Save.startFrom(prev)`. |
 | `tools/stamp.js` · `stamp` | Stamps `data-src` like `src`. |
 
