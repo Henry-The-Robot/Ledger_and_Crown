@@ -16,6 +16,7 @@
 - [platform/tests-and-ci](platform/tests-and-ci.md) — system · Tests and CI. Every pull request and every push to `master` runs the node tests and every browser test page.
 - [platform/transcript](platform/transcript.md) — system · The transcript (concepts and mastery). The transcript records what the player has done and explained, per concept.
 - [platform/verbs](platform/verbs.md) — system · Mechanic verbs (tag, bet, timeline). `core/verbs.js` holds things the player does instead of typing a sum.
+- [platform/season-loader](platform/season-loader.md) — system · The season loader. Picks the season, loads its scripts before game.js.
 - [platform/version-stamp](platform/version-stamp.md) — system · The version stamp. One version number, `version.js`.
 - [platform/wiki-lint](platform/wiki-lint.md) — system · The wiki lint. Checks every page of this wiki against the code.
 
