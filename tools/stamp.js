@@ -12,6 +12,7 @@ function stamp(text, v) {
   const diffs = [];
   const fix = (m, pre, url, q, post) => { if (!local(url)) return m; const want = `?v=${v}`; if (q !== want) diffs.push(`${url}${q || ""} -> ${url}${want}`); return pre + url + want + post; };
   let out = text.replace(/(<script\b[^>]*?\bsrc=")([^"?#]+)(\?[^"#]*)?(")/g, fix);
+  out = out.replace(/(<script\b[^>]*?\bdata-src=")([^"?#]+)(\?[^"#]*)?(")/g, fix); // SM4: a season's own script, written in by core/season-loader.js
   out = out.replace(/(<link\b[^>]*?\brel="stylesheet"[^>]*?\bhref=")([^"?#]+)(\?[^"#]*)?(")/g, fix);
   out = out.replace(/(<link\b[^>]*?\bhref=")([^"?#]+)(\?[^"#]*)?("[^>]*?\brel="stylesheet")/g, fix);
   out = out.replace(/(<a\b[^>]*?\bhref=")(game\.html)(\?[^"#]*)?(")/g, fix);
