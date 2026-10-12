@@ -11,6 +11,8 @@ ok(P({ slot: { season: "ch1/summer" } }) === "ch1/summer", "an open summer slot 
 ok(P({ slot: { season: "ch1/spring" }, closed: { "ch1/spring": {} } }) === "ch1/spring", "an open spring slot wins over the next unplayed season");
 ok(P({ search: "?season=ch1/spring", slot: { season: "ch1/summer" } }) === "ch1/spring", "?season= forces spring over a summer slot");
 ok(P({ search: "?season=ch1/summer" }) === "ch1/summer", "?season=ch1/summer forces summer for a new player");
+ok(P({ search: "?sandbox&new=1", closed: { "ch1/spring": {} } }) === "ch1/spring" && P({ search: "?fast", closed: { "ch1/spring": {} } }) === "ch1/spring", "?sandbox and ?fast stay on spring even when spring is closed");
+ok(P({ search: "?sandbox&season=ch1/summer" }) === "ch1/summer", "?season= still wins in sandbox");
 ok(P({ search: "?season=nope" }) === "ch1/spring", "an unknown ?season= is ignored");
 ok(P({ search: "?season=ch1/summer", known: ["ch1/spring"] }) === "ch1/spring", "a season that is not registered cannot be forced");
 ok(L.prev("ch1/summer") === "ch1/spring" && L.prev("ch1/spring") === null, "summer starts from spring; spring has no earlier season");
