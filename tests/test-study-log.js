@@ -6,8 +6,9 @@ let fail = 0;
 const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); if (!c) fail++; };
 const Study = require("../core/study/log.js");
 
-const DECODER = [path.join(__dirname, "..", "..", "..", "studio", "tools", "decode_result.py"), path.join(__dirname, "..", "..", "studio", "tools", "decode_result.py")].find(p => fs.existsSync(p));
-const decode = code => { const r = cp.spawnSync("python", ["-I", DECODER, code], { encoding: "utf8" }); return { status: r.status, rows: r.status === 0 ? JSON.parse(r.stdout) : null, err: r.stderr }; };
+// tests/decode_result.py is a verbatim copy of projects/studio/tools/decode_result.py (CI has only this repo); re-copy if the shared one changes.
+const DECODER = [path.join(__dirname, "decode_result.py")].find(p => fs.existsSync(p));
+const decode = code => { const r = cp.spawnSync(process.platform === "win32" ? "python" : "python3", ["-I", DECODER, code], { encoding: "utf8" }); return { status: r.status, rows: r.status === 0 ? JSON.parse(r.stdout) : null, err: r.stderr }; };
 const clock = () => { let t = 1000; return () => (t += 250); };
 
 ok(!!DECODER, "shared decoder found");
