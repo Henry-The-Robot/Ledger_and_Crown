@@ -54,6 +54,7 @@
 
     const self = {
       enabled,
+      clock() { return now(); }, // the log's own clock, so item timers and log rows agree
       setCode(c) { pc = cleanPc(c); return pc !== ""; }, // false = rejected; every row gets the final code
       start() { add("start"); },
       sceneStart(scene, concept) { add("scene_start", { scene, concept }); },
