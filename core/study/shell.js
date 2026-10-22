@@ -15,13 +15,17 @@
   // opts: { search, bank, seed, now, screenOut, scenes }
   function create(opts) {
     opts = opts || {};
-    const seed = opts.seed === undefined ? 1 : opts.seed | 0, screenLine = opts.screenOut === undefined ? Forms.DEFAULT_SCREEN_OUT : opts.screenOut;
+    let seed = opts.seed === undefined ? 1 : opts.seed | 0;
+    const screenLine = opts.screenOut === undefined ? Forms.DEFAULT_SCREEN_OUT : opts.screenOut;
     const log = Study.create({ search: opts.search, pc: "", seed, now: opts.now });
+    if (log.urlSeed() !== null) seed = log.urlSeed(); // the entry page's study seed shuffles the forms too
     const scenes = opts.scenes || PLACEHOLDER_SCENES, loaded = Forms.loadBank(opts.bank);
     let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, scoreA = null, screened = false;
 
     const open = f => { form = f; built = Forms.build(loaded.items, f, seed); run = Forms.run(log, built, f); answered = {}; };
     const done = () => { phase = "result"; run = null; built = []; log.end(); }; // nothing can change the log after the result
+
+    if (phase === "code" && log.urlCode()) { log.start(); log.input("code"); phase = "formA"; open("A"); } // the entry page sent the code: no second prompt
 
     const sh = {
       enabled: log.enabled,

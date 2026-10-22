@@ -7,10 +7,29 @@
   const FIELDS = ["t", "pc", "game", "build", "seed", "ev", "scene", "concept", "item", "form", "choice", "ok", "rt"];
   const EVENTS = ["start", "scene_start", "scene_end", "input", "outcome", "item_shown", "item_answer", "pause", "end"];
 
-  const PC_RE = /^[a-z0-9]{3,12}$/i; // a random code, never a name or an email
+  const PC_RE = /^[a-z0-9_-]{3,64}$/i; // a random code, never a name or an email; the entry page allows 4 to 64 (a Prolific id has 24)
   const cleanPc = c => (PC_RE.test(String(c || "")) ? String(c) : "");
   const cleanVal = v => (typeof v === "string" ? v.slice(0, 40) : v);
   const flagOn = search => /(?:^|[?&])study=1(?:&|$|#)/.test(String(search || ""));
+  const param = (search, k) => { const m = new RegExp("(?:^|[?&])" + k + "=([^&#]*)").exec(String(search || "")); try { return m ? decodeURIComponent(m[1]) : null; } catch (e) { return m ? m[1] : null; } };
+
+  // Entry page contract (projects/studio/tools/entry/README.md): ?study=1&pc&arm&order&seed. Arm and order are logged as received
+  // (only the allowed values); "edited" = they differ from what assign.js gives for this code and seed, or cannot be checked.
+  const assignMod = () => (typeof module !== "undefined" && module.exports ? require("./assign.js") : root.StudyAssign);
+  function readUrl(search) {
+    const pc = param(search, "pc"), arm = param(search, "arm"), order = param(search, "order"), seedRaw = param(search, "seed");
+    if (pc === null && arm === null && order === null && seedRaw === null) return null;
+    const u = { pc: pc === null ? "" : cleanPc(pc.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, "")), edited: false };
+    if (arm === "game" || arm === "reading") u.arm = arm;
+    if (order === "BC" || order === "CB") u.order = order;
+    if (seedRaw !== null && /^[0-9]{1,10}$/.test(seedRaw) && +seedRaw <= 2147483647) u.seed = +seedRaw;
+    if (pc !== null) { // the rule needs a code, a seed and both fields; anything missing or different is an edit
+      let a = null;
+      try { if (u.pc && u.seed !== undefined) a = assignMod().assign(u.pc, u.seed); } catch (e) { a = null; }
+      u.edited = !a || a.arm !== u.arm || a.order !== u.order;
+    }
+    return u;
+  }
 
   let crcTable = null;
   const crc32 = bytes => {
@@ -35,13 +54,16 @@
     opts = opts || {};
     const enabled = flagOn(opts.search !== undefined ? opts.search : (root.location && root.location.search));
     const now = opts.now || (() => Date.now());
-    const t0 = now(), seed = opts.seed | 0, build = opts.build || BUILD;
-    let pc = cleanPc(opts.pc), lastInput = null;
+    const t0 = now(), build = opts.build || BUILD;
+    const url = enabled ? readUrl(opts.search !== undefined ? opts.search : (root.location && root.location.search)) : null;
+    const seed = url && url.seed !== undefined ? url.seed : opts.seed | 0;
+    let pc = cleanPc(opts.pc) || (url ? url.pc : ""), lastInput = null;
     const log = [];
 
     const add = (ev, f) => {
       if (!enabled) return;
       const row = { t: Math.max(0, now() - t0), pc, game: GAME, build, seed, ev };
+      if (url) { if (url.arm) row.arm = url.arm; if (url.order) row.order = url.order; if (url.edited) row.edited = true; }
       f = f || {};
       for (const k of FIELDS) if (k in f && !(k in row) && f[k] !== undefined) row[k] = cleanVal(f[k]); // unknown fields (name, email...) are dropped
       log.push(row);
@@ -54,6 +76,8 @@
 
     const self = {
       enabled,
+      urlCode: () => (url ? url.pc : ""), // a valid code that came in the URL: the page does not ask again
+      urlSeed: () => (url && url.seed !== undefined ? url.seed : null),
       clock() { return now(); }, // the log's own clock, so item timers and log rows agree
       setCode(c) { pc = cleanPc(c); return pc !== ""; }, // false = rejected; every row gets the final code
       start() { add("start"); },
@@ -64,7 +88,7 @@
       itemShown(f) { add("item_shown", f); },
       itemAnswer(f) { if (!enabled) return; touch(); add("item_answer", f); },
       end() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("end"); },
-      rows() { return log.map(r => Object.assign({}, r, { pc })); },
+      rows() { return log.map(r => Object.assign({}, r, { pc })); }, // pc last: a late code reaches every row
       // Synchronous (node, tests) when a deflate function is injected or zlib is present; browsers use resultCodeAsync().
       resultCode(deflateSync) {
         if (!enabled || !log.length) return "";
