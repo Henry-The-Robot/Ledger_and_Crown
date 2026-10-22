@@ -14,7 +14,8 @@
     const active = () => {
       if (started === null) return 0;
       const end = ended ? ended : now();
-      const rows = log.rows(), pauses = rows.filter(r => r.ev === "pause").reduce((s, r) => s + (r.rt || 0), 0);
+      const rows = log.rows(), from = rows.findIndex(r => r.ev === "read_start"); // pauses in form A are not reading time
+      const pauses = rows.slice(from < 0 ? rows.length : from).filter(r => r.ev === "pause").reduce((s, r) => s + (r.rt || 0), 0);
       let open = 0; // a pause not yet written: the current gap, once it is over 60 s
       if (!ended) { const gap = end - lastSeen; if (gap > 60000) open = gap; }
       return Math.max(0, end - started - pauses - open);
@@ -36,6 +37,7 @@
       // The done button. False before 10 minutes of active time; the cap ends the reading by itself.
       finish() {
         if (started === null || ended) return false;
+        rd.activity(); // the click is activity: the gap before it is written as a pause once
         if (!rd.canFinish() && !rd.expired()) return false;
         ended = now(); log.readEnd(); return true;
       },

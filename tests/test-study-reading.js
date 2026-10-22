@@ -84,6 +84,27 @@ function toReading(extra) {
   ok(sh.rows().filter(r => r.ev === "pause").length === 1, "the idle time before the cap is logged as a pause");
 }
 
+// 5b. Critic fixes: a form A pause is not reading time; the cap pause is written once; the page cannot end the reading itself
+{
+  const c = { t: 0 };
+  const sh = Shell.create({ search: "?study=1", bank: Items, now: () => c.t, seed: 5, screenOut: 101 });
+  sh.submitCode("rd33cc");
+  sh.items().forEach((it, i) => { c.t += 1000; sh.show(i); c.t += 90000; sh.answer(i, 0); }); // 90 s per item: pauses in form A
+  sh.finishForm();
+  ok(sh.rows().filter(r => r.ev === "pause").length >= 1, "form A has pause rows (setup)");
+  const rd = sh.startReading(Fx.SECTIONS), t0 = c.t;
+  tick(c, rd, t0 + 10 * MIN);
+  ok(rd.activeMs() === 10 * MIN && sh.finishReading() === "formB", "form A pauses do not shorten reading: 10:00 active unlocks done");
+  ok(rd.finish === undefined, "the page's reader has no finish()");
+}
+{
+  const { c, sh } = toReading();
+  const rd = sh.startReading(Fx.SECTIONS), t0 = c.t;
+  c.t = t0 + 30 * MIN; sh.finishReading();
+  sh.items().forEach((it, i) => { c.t += 1000; sh.show(i); c.t += 1000; sh.answer(i, 0); });
+  ok(sh.rows().filter(r => r.ev === "pause" && r.rt === 30 * MIN).length === 1, "the idle gap before the cap is one pause row, not two");
+}
+
 // 6. Order and guards
 {
   const { sh } = toReading();

@@ -70,7 +70,9 @@
       // Control arm (card MBA-ST6): the reading page replaces the scenes. Reading ends at the done button; form B follows.
       startReading(sections) {
         if (phase !== "play" || reader) return null;
-        reader = Reading.create({ log, sections, now: opts.now }); reader.start(); return reader;
+        reader = Reading.create({ log, sections, now: opts.now }); reader.start();
+        const r = reader; // the page gets no finish(): only finishReading() ends the reading and moves the phase
+        return { sections: r.sections, show: r.show, activity: r.activity, activeMs: r.activeMs, sectionsSeen: r.sectionsSeen, canFinish: r.canFinish, expired: r.expired };
       },
       finishReading() {
         if (phase !== "play" || !reader || !reader.finish()) return false;

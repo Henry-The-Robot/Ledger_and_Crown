@@ -96,7 +96,7 @@
       activity() { if (enabled) touch(); },
       readStart() { if (enabled) { lastInput = now(); add("read_start"); } },
       readSection(scene) { add("read_section", { scene }); },
-      readEnd() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("read_end"); },
+      readEnd() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } lastInput = enabled ? now() : lastInput; add("read_end"); },
       itemShown(f) { add("item_shown", f); },
       itemAnswer(f) { if (!enabled) return; touch(); add("item_answer", f); },
       end() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("end"); },
