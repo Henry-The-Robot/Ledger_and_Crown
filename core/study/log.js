@@ -92,6 +92,11 @@
       sceneEnd(scene, concept) { add("scene_end", { scene, concept }); },
       input(choice, f) { if (!enabled) return; touch(); add("input", Object.assign({}, f, { choice })); },
       decision(f) { if (!enabled) return; lastInput = now(); add("outcome", f); }, // its rt already holds the thinking time: not a pause // one row per scored decision
+      // Reading arm (card MBA-ST6): activity() marks the learner as present without a row; a gap over 60 s becomes one pause row.
+      activity() { if (enabled) touch(); },
+      readStart() { if (enabled) { lastInput = now(); add("read_start"); } },
+      readSection(scene) { add("read_section", { scene }); },
+      readEnd() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("read_end"); },
       itemShown(f) { add("item_shown", f); },
       itemAnswer(f) { if (!enabled) return; touch(); add("item_answer", f); },
       end() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("end"); },

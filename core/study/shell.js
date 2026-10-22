@@ -5,6 +5,7 @@
   const isNode = typeof module !== "undefined" && module.exports;
   const req = n => (isNode ? require("./" + n) : root[n === "log.js" ? "Study" : "StudyForms"]);
   const Study = req("log.js"), Forms = req("forms.js");
+  const Reading = isNode ? require("./reading.js") : root.StudyReading;
 
   // PLACEHOLDER scenes until MBA-ST4 builds the real slice. Each scene is one scored decision with stakes in the final build.
   const PLACEHOLDER_SCENES = [
@@ -20,7 +21,7 @@
     const log = Study.create({ search: opts.search, pc: "", seed, now: opts.now });
     if (log.urlSeed() !== null) seed = log.urlSeed(); // the entry page's study seed shuffles the forms too
     const scenes = opts.scenes || PLACEHOLDER_SCENES, loaded = Forms.loadBank(opts.bank);
-    let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, scoreA = null, screened = false;
+    let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, reader = null, scoreA = null, screened = false;
 
     const open = f => { form = f; built = Forms.build(loaded.items, f, seed); run = Forms.run(log, built, f); answered = {}; };
     const done = () => { phase = "result"; run = null; built = []; log.end(); }; // nothing can change the log after the result
@@ -65,6 +66,15 @@
         decided[id] = true;
         log.decision({ scene: id, concept: sc.concept, choice, ok: choice === sc.options[sc.right], rt });
         log.sceneEnd(id, sc.concept); return true;
+      },
+      // Control arm (card MBA-ST6): the reading page replaces the scenes. Reading ends at the done button; form B follows.
+      startReading(sections) {
+        if (phase !== "play" || reader) return null;
+        reader = Reading.create({ log, sections, now: opts.now }); reader.start(); return reader;
+      },
+      finishReading() {
+        if (phase !== "play" || !reader || !reader.finish()) return false;
+        phase = "formB"; open("B"); return "formB";
       },
       finishPlay() {
         if (phase !== "play" || scenes.some(s => !decided[s.id])) return false;
