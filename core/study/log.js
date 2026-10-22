@@ -8,7 +8,7 @@
   const EVENTS = ["start", "scene_start", "scene_end", "input", "outcome", "item_shown", "item_answer", "pause", "end"];
 
   const PC_RE = /^[a-z0-9_-]{3,64}$/i; // a random code, never a name or an email; the entry page allows 4 to 64 (a Prolific id has 24)
-  const cleanPc = c => (PC_RE.test(String(c || "")) ? String(c) : "");
+  const cleanPc = c => (PC_RE.test(String(c || "")) ? String(c).toLowerCase() : ""); // lowercase, as the entry page and assign.js do
   const cleanVal = v => (typeof v === "string" ? v.slice(0, 40) : v);
   const flagOn = search => /(?:^|[?&])study=1(?:&|$|#)/.test(String(search || ""));
   const param = (search, k) => { const m = new RegExp("(?:^|[?&])" + k + "=([^&#]*)").exec(String(search || "")); try { return m ? decodeURIComponent(m[1]) : null; } catch (e) { return m ? m[1] : null; } };
@@ -23,11 +23,13 @@
     if (arm === "game" || arm === "reading") u.arm = arm;
     if (order === "BC" || order === "CB") u.order = order;
     if (seedRaw !== null && /^[0-9]{1,10}$/.test(seedRaw) && +seedRaw <= 2147483647) u.seed = +seedRaw;
-    if (pc !== null) { // the rule needs a code, a seed and both fields; anything missing or different is an edit
+    // The rule needs a code, a seed and both fields; anything missing or different is an edit. A code typed later is checked in setCode.
+    u.check = c => {
       let a = null;
-      try { if (u.pc && u.seed !== undefined) a = assignMod().assign(u.pc, u.seed); } catch (e) { a = null; }
-      u.edited = !a || a.arm !== u.arm || a.order !== u.order;
-    }
+      try { if (c && u.seed !== undefined) a = assignMod().assign(c, u.seed); } catch (e) { a = null; }
+      return !a || a.arm !== u.arm || a.order !== u.order;
+    };
+    if (pc !== null) u.edited = u.check(u.pc);
     return u;
   }
 
@@ -63,7 +65,7 @@
     const add = (ev, f) => {
       if (!enabled) return;
       const row = { t: Math.max(0, now() - t0), pc, game: GAME, build, seed, ev };
-      if (url) { if (url.arm) row.arm = url.arm; if (url.order) row.order = url.order; if (url.edited) row.edited = true; }
+      if (url) { if (url.arm) row.arm = url.arm; if (url.order) row.order = url.order; }
       f = f || {};
       for (const k of FIELDS) if (k in f && !(k in row) && f[k] !== undefined) row[k] = cleanVal(f[k]); // unknown fields (name, email...) are dropped
       log.push(row);
@@ -79,7 +81,12 @@
       urlCode: () => (url ? url.pc : ""), // a valid code that came in the URL: the page does not ask again
       urlSeed: () => (url && url.seed !== undefined ? url.seed : null),
       clock() { return now(); }, // the log's own clock, so item timers and log rows agree
-      setCode(c) { pc = cleanPc(c); return pc !== ""; }, // false = rejected; every row gets the final code
+      setCode(c) {
+        if (url && url.pc) return false; // the entry page's code stands
+        pc = cleanPc(c);
+        if (url && pc) url.edited = url.check(pc);
+        return pc !== "";
+      }, // false = rejected; every row gets the final code
       start() { add("start"); },
       sceneStart(scene, concept) { add("scene_start", { scene, concept }); },
       sceneEnd(scene, concept) { add("scene_end", { scene, concept }); },
@@ -88,7 +95,7 @@
       itemShown(f) { add("item_shown", f); },
       itemAnswer(f) { if (!enabled) return; touch(); add("item_answer", f); },
       end() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("end"); },
-      rows() { return log.map(r => Object.assign({}, r, { pc })); }, // pc last: a late code reaches every row
+      rows() { return log.map(r => Object.assign({}, r, { pc }, url && url.edited ? { edited: true } : {})); }, // a late code reaches every row, and so does the edited flag
       // Synchronous (node, tests) when a deflate function is injected or zlib is present; browsers use resultCodeAsync().
       resultCode(deflateSync) {
         if (!enabled || !log.length) return "";

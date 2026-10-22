@@ -12,6 +12,13 @@ const PIN = path.join(__dirname, "..", "..", "..", "studio", "tools", "entry", "
 let pinned = [];
 try { const j = JSON.parse(fs.readFileSync(PIN, "utf8")); pinned = Array.isArray(j) ? j : (j.rows || j.pinned || []); } catch (e) { /* CI has only this repo */ }
 
+// Pinned rows copied from PINNED.json (hashes computed outside this module): the copy of assign.js must agree.
+ok(Assign.assign("0123456789abcdef01234567", 20261022).arm === "reading" && Assign.assign("0123456789abcdef01234567", 20261022).order === "CB", "pinned row 1 (reading/CB)");
+ok(Assign.assign("p0001", 20261022).arm === "game" && Assign.assign("p0001", 20261022).order === "BC", "pinned row 2 (game/BC)");
+ok(Assign.assign("abcdefabcdefabcdefabcdef", 20261022).arm === "game" && Assign.assign("abcdefabcdefabcdefabcdef", 20261022).order === "CB", "pinned row 3 (game/CB)");
+const ORIG = path.join(__dirname, "..", "..", "..", "studio", "tools", "entry", "assign.js");
+if (fs.existsSync(ORIG)) ok(fs.readFileSync(ORIG, "utf8") === fs.readFileSync(path.join(__dirname, "..", "core", "study", "assign.js"), "utf8"), "core/study/assign.js is identical to the entry page's assign.js");
+
 const PC24 = "5f8a1c9e0b7d4a32e6c1f0d9"; // 24 hex characters, a Prolific id
 const SEED = 20261022;
 const good = Assign.assign(PC24, SEED);
@@ -53,6 +60,19 @@ ok(mail.rows()[0].pc === "", "an email-shaped code in the URL is refused");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("a".repeat(25)) === true, "a 25-character code is accepted (the entry page allows up to 64)");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("a".repeat(65)) === false, "a 65-character code is refused");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("ab") === false, "a 2-character code is still refused");
+
+// 3b. No pc in the URL: the typed code is checked against arm and order when it arrives, and is lowercased
+const tp = Log.create({ search: "?study=1&arm=" + good.arm + "&order=" + good.order + "&seed=" + SEED, now: clock() });
+tp.start(); tp.setCode(PC24.toUpperCase()); tp.input("code");
+ok(tp.rows().every(r => r.pc === PC24 && r.edited === undefined), "typed code is lowercased and matches arm and order: not edited");
+const tf = Log.create({ search: "?study=1&arm=" + other(good).arm + "&order=" + good.order + "&seed=" + SEED, now: clock() });
+tf.start(); tf.setCode(PC24);
+ok(tf.rows().every(r => r.edited === true), "typed code with a forged arm in the URL is flagged on every row");
+ok(Log.create({ search: url(PC24, good, SEED), now: clock() }).setCode("other123") === false, "setCode cannot replace a code from the URL");
+const bs = Log.create({ search: url(PC24, good, 4294967297), now: clock() }); bs.start();
+ok(bs.rows()[0].edited === true, "bad URL seed: flagged as edited (the log keeps its own seed)");
+const edge = "a".repeat(64);
+ok(Log.create({ search: "?study=1&pc=" + edge, now: clock() }).urlCode() === edge, "a 64-character code in the URL is accepted");
 
 // 4. The URL needs no pc/arm/order for the old flow: plain ?study=1 logs no arm, no order, no flag
 const plain = Log.create({ search: "?study=1", pc: "ab12", seed: 7, now: clock() }); plain.start();
