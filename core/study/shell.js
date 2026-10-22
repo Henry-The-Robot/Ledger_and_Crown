@@ -2,7 +2,8 @@
 // No saves, no menus, no other seasons. Headless state machine: study.html draws it; tests drive it directly.
 // Format: projects/studio/STUDY-LOG-SCHEMA.md. Needs log.js and forms.js (browser: loaded before this file).
 (function (root) {
-  const req = n => (typeof require === "function" ? require("./" + n) : root[n === "log.js" ? "Study" : "StudyForms"]);
+  const isNode = typeof module !== "undefined" && module.exports;
+  const req = n => (isNode ? require("./" + n) : root[n === "log.js" ? "Study" : "StudyForms"]);
   const Study = req("log.js"), Forms = req("forms.js");
 
   // PLACEHOLDER scenes until MBA-ST4 builds the real slice. Each scene is one scored decision with stakes in the final build.
@@ -20,7 +21,7 @@
     let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, scoreA = null, screened = false;
 
     const open = f => { form = f; built = Forms.build(loaded.items, f, seed); run = Forms.run(log, built, f); answered = {}; };
-    const done = () => { phase = "result"; log.end(); };
+    const done = () => { phase = "result"; run = null; built = []; log.end(); }; // nothing can change the log after the result
 
     const sh = {
       enabled: log.enabled,
@@ -36,7 +37,7 @@
       },
       show(i) { if (!run || !built[i]) return false; run.show(i); return true; },
       answer(i, choiceIndex) {
-        if (!run || !built[i] || i in answered) return false;
+        if (!run || !built[i] || i in answered || !(choiceIndex >= 0 && choiceIndex < built[i].options.length)) return false; // an invalid index is not an answer: the item stays open
         answered[i] = true; run.answer(i, choiceIndex); return true;
       },
       // Ends the current form. Form A: at or above the screen-out line the learner is screened out (no play, still a code).
@@ -52,7 +53,7 @@
       playScene(id) {
         const sc = scenes.find(s => s.id === id);
         if (phase !== "play" || !sc || played[id]) return false;
-        played[id] = true; log.sceneStart(id, sc.concept); return true;
+        played[id] = true; log.input("scene"); log.sceneStart(id, sc.concept); return true; // entering a scene is an input: thinking inside a scene is not a pause
       },
       decide(id, choice, rt) {
         const sc = scenes.find(s => s.id === id);

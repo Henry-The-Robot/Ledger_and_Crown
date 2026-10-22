@@ -71,4 +71,23 @@ ok(tt.rows().filter(r => r.ev === "pause").length === 1, "the 90 second gap is l
 // By hand: first input at 1,000; last event at 96,000; the pause is 95,000 - 4,000 = 91,000. 96,000 - 1,000 - 91,000 = 4,000.
 ok(tr === 4000, "time on task is 4,000 ms: first input to last event minus the 91 s pause (got " + tr + ")");
 
+// 7. Guards (critic round): invalid answer keeps the item open; nothing changes after the result; scenes need playScene first
+const g = mk(); g.submitCode("gd55ee");
+ok(g.answer(0, 99) === false && g.answer(0, -1) === false, "an out-of-range choice is not an answer");
+ok(g.finishForm() === false, "the form cannot finish while an item is open");
+answerForm(g, 3); g.finishForm();
+const n0 = g.rows().length, c0 = g.resultCode();
+ok(g.phase() === "result" && g.finishForm() === false && g.show(0) === false && g.answer(0, 0) === false, "after the result, finish, show and answer are refused");
+ok(g.rows().length === n0 && g.resultCode() === c0, "the log and the result code do not change after the result");
+const p = mk(); p.submitCode("pl66ff"); answerForm(p, 0); p.finishForm();
+ok(p.decide("ph-market", "price-high", 1) === false, "a decision before its scene starts is refused");
+p.playScene("ph-market"); p.decide("ph-market", "price-high", 1);
+ok(p.decide("ph-market", "price-low", 1) === false && p.rows().filter(r => r.ev === "outcome").length === 1, "a scene takes one decision only");
+ok(p.finishPlay() === false, "play cannot finish with a scene left");
+// time spent inside a scene (no input for 70 s, then the decision) must not be logged as a pause
+let t7 = 0; const sc = Shell.create({ search: "?study=1", bank: FIX, now: () => t7, seed: 3, screenOut: 101 });
+sc.submitCode("sc77gg"); sc.items().forEach((it, i) => { sc.show(i); t7 += 100; sc.answer(i, 0); }); sc.finishForm();
+t7 += 500; sc.playScene("ph-market"); t7 += 70000; sc.decide("ph-market", "price-high", 70000);
+ok(sc.rows().filter(r => r.ev === "pause").length === 0, "70 s of play inside a scene is not a pause");
+
 console.log(fail ? fail + " FAILED" : "ALL STUDY SHELL TESTS PASS"); process.exitCode = fail ? 1 : 0;

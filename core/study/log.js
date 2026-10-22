@@ -60,7 +60,7 @@
       sceneStart(scene, concept) { add("scene_start", { scene, concept }); },
       sceneEnd(scene, concept) { add("scene_end", { scene, concept }); },
       input(choice, f) { if (!enabled) return; touch(); add("input", Object.assign({}, f, { choice })); },
-      decision(f) { if (!enabled) return; touch(); add("outcome", f); }, // one row per scored decision
+      decision(f) { if (!enabled) return; lastInput = now(); add("outcome", f); }, // its rt already holds the thinking time: not a pause // one row per scored decision
       itemShown(f) { add("item_shown", f); },
       itemAnswer(f) { if (!enabled) return; touch(); add("item_answer", f); },
       end() { if (enabled) { const n = now(); if (lastInput !== null && n - lastInput > PAUSE_MS) add("pause", { rt: n - lastInput }); } add("end"); },
