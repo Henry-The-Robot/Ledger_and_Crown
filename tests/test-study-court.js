@@ -40,6 +40,13 @@ err(Object.assign({}, CFG, { claims: ["margin", "margin", "ownsNothing", "profit
   let e = ""; try { C.build({ statements: empty, clues: [], flags: {}, trust: {}, seed: 1, facts, study: CFG }); } catch (x) { e = x.message; }
   ok(/claim 'ownsNothing' does not apply/.test(e), "a claim that does not apply to the books fails: " + e); }
 
+// 3b. run() checks the study config before the hall opens (this stub document cannot mount: a TypeError would mean it got that far)
+const runErr = (study, re, msg) => C.run({ statements: st, clues: [], flags: {}, trust: {}, seed: 1, facts, study }).then(() => ok(false, msg + ": no error"), e => ok(re.test(e.message), msg + ": " + e.message));
+const pending = [
+  runErr(Object.assign({}, CFG, { claims: ["ownsNothing", "nope", "margin", "profitCash"] }), /unknown claim 'nope'/, "run() with an unknown claim fails before mounting"),
+  runErr({ pass: 1 }, /names no claims/, "run() with a config that has no claims fails with the clear error"),
+];
+
 // 4. The full game's Court is unchanged: nine claims, pass 6, no study-only claim, a retake differs
 const full = x => C.build({ statements: st, clues: [], flags: {}, trust: {}, seed: 1, attempt: x, facts });
 ok(C.PASS === 6 && C.TOTAL === 9 && full(0).claims.length === 9 && full(0).pass === 6 && full(0).of === 9, "the full Court still has nine claims and pass 6");
@@ -48,5 +55,4 @@ ok(!ids.some(i => i.includes("termsVsWages")), "the study-only claim never appea
 ok(full(0).claims.map(c => c.text).join() !== full(1).claims.map(c => c.text).join(), "a full-game retake (new attempt) still draws a different sitting");
 ok(full(0).claims.map(c => c.id).join() === C.build({ statements: st, clues: [], flags: {}, trust: {}, seed: 1, attempt: 0, facts, study: undefined }).claims.map(c => c.id).join(), "study: undefined behaves as the full game");
 
-console.log(fail ? "\n" + fail + " FAILED" : "\nall passed");
-process.exit(fail ? 1 : 0);
+Promise.all(pending).then(() => { console.log(fail ? "\n" + fail + " FAILED" : "\nall passed"); process.exit(fail ? 1 : 0); });

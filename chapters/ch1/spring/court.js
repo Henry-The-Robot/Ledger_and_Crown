@@ -275,6 +275,7 @@ window.Court = (function () {
   async function run(o) {
     if (o && o.s && !o.statements) { const g = o, r = await run(fromGame(o)); if (r && g.s) { g.s.exam = { passed: r.passed, score: r.score, attempts: r.attempts, certificate: r.certificate || null }; g.s.flags = g.s.flags || {}; Object.assign(g.s.flags, { courtPassed: !!r.passed, courtScore: r.score, courtAttempts: r.attempts }); if (r.flags) Object.assign(g.s.flags, { vaneFinal: r.flags.vaneFinal, examPassed: !!r.passed }); if (g.G && g.G.save) g.G.save(); } return r; }
     o = Object.assign({ flags: {}, trust: {}, farm: "Thornfield" }, o); if (!o.statements) throw new Error("Court.run needs statements (Books.close)");
+    if (o.study) build(o); // a bad study config or a claim that does not fit the books fails here, before the hall opens
     mount(); window.__courtCapture = e => e.stopPropagation(); document.addEventListener("keydown", keyGuard, true);
     const total = { mistakes: [], attempts: 0 }; let out = null;
     const study = o.study || null, of = study ? (study.of || study.claims.length) : TOTAL, pass = study ? (study.pass || of) : PASS;
@@ -283,7 +284,7 @@ window.Court = (function () {
       await say("maud", "The Crown's advocate will make " + (study ? of : "nine") + " claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and " + (study ? pass : "six") + " refuted will satisfy the court.", "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);
-        if (r.left) { out = { passed: false, left: true, score: r.results.filter(x => x && x.ok).length, mistakes: total.mistakes, attempts: total.attempts }; break; }
+        if (r.left) { out = { passed: false, left: true, score: r.results.filter(x => x && x.ok).length, of, results: r.results.filter(Boolean).map(x => ({ id: x.id, ok: x.ok })), mistakes: total.mistakes, attempts: total.attempts }; break; }
         const score = r.results.filter(x => x.ok).length, passed = score >= pass;
         const rows = r.results.map((x, i) => `<li class="${x.ok ? "ok" : "no"}">${x.ok ? "✔" : "✘"} ${esc(x.id)}</li>`).join("");
         if (!passed) { sfx("gavel"); const k = await screen(hall(`<div class="ct-stage plain"><div class="ct-sum"><h3>The court is not satisfied</h3><p class="big">${score} of ${of} refuted. ${pass} are needed.</p>${study ? "" : "<p>Nothing is lost here: the farm's fate is the Crown's verdict, not this hearing. Another sitting means a fresh set of claims about the same books.</p>"}</div><div class="ct-actions">${study ? "" : '<button class="ct-btn gold" data-k="retry">Another sitting</button>'}<button class="ct-btn ${study ? "gold" : ""}" data-k="leave">${study ? "See the verdict" : "Leave the hall"}</button></div></div>`)); if (k === "leave") { out = { passed: false, score, of, results: r.results.map(x => ({ id: x.id, ok: x.ok })), mistakes: total.mistakes, attempts: total.attempts }; break; } continue; }
