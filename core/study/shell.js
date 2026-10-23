@@ -6,6 +6,7 @@
   const req = n => (isNode ? require("./" + n) : root[n === "log.js" ? "Study" : "StudyForms"]);
   const Study = req("log.js"), Forms = req("forms.js");
   const Reading = isNode ? require("./reading.js") : root.StudyReading;
+  const Route = isNode ? require("./route.js") : root.StudyRoute;
 
   // PLACEHOLDER scenes until MBA-ST4 builds the real slice. Each scene is one scored decision with stakes in the final build.
   const PLACEHOLDER_SCENES = [
@@ -21,7 +22,7 @@
     const log = Study.create({ search: opts.search, pc: "", seed, now: opts.now });
     if (log.urlSeed() !== null) seed = log.urlSeed(); // the entry page's study seed shuffles the forms too
     const scenes = opts.scenes || PLACEHOLDER_SCENES, loaded = Forms.loadBank(opts.bank);
-    let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, reader = null, scoreA = null, screened = false;
+    let phase = log.enabled && !loaded.error ? "code" : "off", form = null, run = null, built = [], answered = {}, played = {}, decided = {}, reader = null, router = null, scoreA = null, screened = false;
 
     const open = f => { form = f; built = Forms.build(loaded.items, f, seed); run = Forms.run(log, built, f); answered = {}; };
     const done = () => { phase = "result"; run = null; built = []; log.end(); }; // nothing can change the log after the result
@@ -76,6 +77,20 @@
       },
       finishReading() {
         if (phase !== "play" || !reader || !reader.finish()) return false;
+        phase = "formB"; open("B"); return "formB";
+      },
+      // Scene runner (card MBA-ST7): the route file replaces the placeholder scenes. Returns the runner, or { error } for a bad route.
+      startRoute(route, known) {
+        if (phase !== "play" || router) return null;
+        const r = Route.create({ route, known, log, now: opts.now });
+        if (r.error) return { error: r.error };
+        router = r; r.start(); return r;
+      },
+      // Ends play when the route is done or the 30-minute mark passed; form B follows.
+      finishRoute() {
+        if (phase !== "play" || !router) return false;
+        const st = router.tick();
+        if (st !== "done" && st !== "stopped") return false;
         phase = "formB"; open("B"); return "formB";
       },
       finishPlay() {
