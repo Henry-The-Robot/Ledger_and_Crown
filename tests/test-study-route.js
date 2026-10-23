@@ -76,13 +76,18 @@ t = 2 * MIN; r.next(); t = 31 * MIN;
 ok(r.next() === "stopped" && r.reason() === "time" && log.rows[log.rows.length - 1] === "end:s1-bailiff" && !log.rows.includes("start:s3-bakery"), "next() after 30 minutes stops, closes the step, opens none");
 
 // 6. The real route file loads and its order follows the file; a route edit needs no code change
-const real = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "study-route.json"), "utf8"));
+// The route file lives in the Agent System (projects/mba-game), outside the game repo: CI has only the repo, so section 6 skips there.
+const routeFile = path.join(__dirname, "..", "..", "study-route.json");
+const real = fs.existsSync(routeFile) ? JSON.parse(fs.readFileSync(routeFile, "utf8")) : null;
+if (!real) console.log("skip section 6: study-route.json is not beside the repo");
+else {
 const knownReal = { records: ["ch1", "ch2", "ch3", "ch4", "ch4b", "tvm", "ch7", "ch5", "close"], scenes: ["hobb_extension"] };
 const rr = Route.create({ route: real, known: knownReal, now });
 ok(!rr.error && rr.count === real.route.length, "study-route.json loads: " + (rr.error || rr.count + " steps"));
 const swapped = JSON.parse(JSON.stringify(real)); swapped.route.reverse();
 const rs = Route.create({ route: swapped, known: knownReal, now }); rs.start();
 ok(rs.current().id === real.route[real.route.length - 1].id, "reordering the file reorders the play with no code change");
+}
 
 // 7. Through the shell: the route replaces the placeholder scenes; the stop leads to form B
 const mk = () => Shell.create({ search: "?study=1", bank: FIX, now, seed: 11, screenOut: 80 });
