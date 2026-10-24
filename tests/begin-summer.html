@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Begin Summer</title></head>
+<body><pre id="out">running</pre>
+<!-- SM5: after Spring's books close, a "Begin Summer" button starts Summer through the loader. Spring is frozen, its slot is cleared, Summer day 1 shows Spring's closing cash. -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = (qs) => new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?" + qs; f.onload = () => res(f); document.body.appendChild(f); });
+(async () => {
+  try {
+    localStorage.clear();
+    let f = await load("new=1&fast&seed=3"), w = f.contentWindow; await sleep(800);
+    w.Story.state.stage = "done"; w.G.closeDlg();
+    const g = w.G.s; let n = 0; while (!g.over && n++ < 60) { w.Bot.careful.day(g); w.Spring.sleep(g); }
+    const cash = Math.round(g.bal.cash);
+    w.G.closeBooks(); await sleep(500);
+    const btn = w.document.getElementById("goNext");
+    out.push(`Spring ended and the books closed: ${g.over && !!w.Save.load().closed["ch1/spring"]}`);
+    out.push(`a Begin Summer button shows after the books close: ${!!btn && /Begin Summer/.test(btn.textContent)}`);
+    const reloaded = new Promise(res => { f.onload = () => res(); });
+    btn.click(); await reloaded; await sleep(800); w = f.contentWindow;
+    out.push(`the page reloaded into Summer: ${w.LC_SEASON === "ch1/summer" && w.Spring.Season.current === "ch1/summer"}`);
+    out.push(`Spring's open slot is cleared and its record is kept: ${w.Save.slot() === null && !!w.Save.load().closed["ch1/spring"]}`);
+    out.push(`Summer day 1 shows Spring's closing cash (${cash}): ${w.G.s.day === 1 && Math.round(w.G.s.bal.cash) === cash}`);
+    f.remove();
+  } catch (e) { out.push("THROWN " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

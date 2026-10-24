@@ -16,6 +16,7 @@
 - [platform/tests-and-ci](platform/tests-and-ci.md) — system · Tests and CI. Every pull request and every push to `master` runs the node tests and every browser test page.
 - [platform/transcript](platform/transcript.md) — system · The transcript (concepts and mastery). The transcript records what the player has done and explained, per concept.
 - [platform/verbs](platform/verbs.md) — system · Mechanic verbs (tag, bet, timeline). `core/verbs.js` holds things the player does instead of typing a sum.
+- [platform/season-loader](platform/season-loader.md) — system · The season loader. Picks the season, loads its scripts before game.js.
 - [platform/version-stamp](platform/version-stamp.md) — system · The version stamp. One version number, `version.js`.
 - [platform/wiki-lint](platform/wiki-lint.md) — system · The wiki lint. Checks every page of this wiki against the code.
 
@@ -32,6 +33,7 @@
 - [ch1/lessons-weeks3-4](ch1/lessons-weeks3-4.md) — lesson · Lessons, story chapters 6-9 (Tomas's terms to the close). The middle and end of the story.
 - [ch1/market-day](ch1/market-day.md) — system · Market Day (days 7, 14, 21). Three times a spring (days 7, 14, 21) the village holds a fair.
 - [ch1/practice](ch1/practice.md) — system · Practice (the daily problem). Once a day the teacher sets one small problem on the player's own books.
+- [ch1/summer-settings](ch1/summer-settings.md) — data · Summer settings (the Summer season data). Summer's numbers as data: the King's order and tally, buyer terms, the water bill, the mill wing, the demand curve and the test plot.
 - [ch1/spring-settings](ch1/spring-settings.md) — data · Spring settings (the R constants). `R` is the one object that holds every number of Season 1: prices, wages, loan terms, the Duke's orders, the calendar of events and the Crown's debt.
 - [ch1/standing-orders](ch1/standing-orders.md) — system · Standing orders (the notice-board contracts). Each morning from day 3 to 26 the notice board posts one or two repeatable contracts from the regular buyers (Ashby, Hobb, Mira).
 - [ch1/village-scenes](ch1/village-scenes.md) — system · Village scenes (days 9-28). Twelve short, optional, one-time conversations.

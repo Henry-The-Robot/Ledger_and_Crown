@@ -7,7 +7,7 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26;
   let VW = 320, VH = 200; // the view in map pixels: fixed on a desktop, sized to the screen on an iPad (see fit)
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
-  const q = new URLSearchParams(location.search), SEASON = "ch1/spring"; // saves live in core/save.js (one versioned blob, lc_save_v4)
+  const q = new URLSearchParams(location.search), SEASON = window.LC_SEASON || "ch1/spring"; // SM4: core/season-loader.js sets LC_SEASON; saves live in core/save.js (one versioned blob, lc_save_v4)
   // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
   const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
   if (TOUCH) document.body.classList.add("touch");
@@ -311,7 +311,7 @@
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
     const fl = cfg.floor != null ? cfg.floor : S.R.unitCost; // WS3: the floor is the walk-away line, drawn on the price track
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
-    while (round < 4) {
+    while (round < (cfg.rounds || 4)) {
       const lev = [];
       if (fairBest > theirs && !used.fair) lev.push("fair"); if (s.trust[o.who] >= 6 && !used.rec) lev.push("rec");
       const labels = ["Ask my price", `Accept ${theirs} a sack`].concat(lev.map(l => l === "fair" ? `"The fair pays ${fairBest}"` : `"I always deliver on time"`), ["Walk away"]);
@@ -825,8 +825,12 @@
       if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
   // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close
-  const endBtn = () => storyOn ? `<p><button class="btn alt" id="goEnd">How it ends</button></p>` : "";
-  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); }
+  // SM5: after the books close, a button starts the next season through the loader. A failed Court still allows it (the carry record says so); a sold or insolvent farm does not.
+  const NEXT_LABEL = { "ch1/summer": "Begin Summer" }, nextId = () => SeasonLoader.next(SEASON), canBegin = () => storyOn && nextId() && NEXT_LABEL[nextId()] && s.outcome !== "insolvent" && s.outcome !== "sold";
+  const beginBtn = () => canBegin() ? `<button class="btn gold" id="goNext">${NEXT_LABEL[nextId()]}</button> ` : "";
+  function beginNext() { const id = nextId(); try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} Save.clearSlot(); location.search = "?season=" + id; } // Spring is frozen already (closeBooks); leaving clears its open slot
+  const endBtn = () => storyOn ? `<p>${beginBtn()}<button class="btn alt" id="goEnd">How it ends</button></p>` : "";
+  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"), n = $("goNext"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); if (n) n.onclick = beginNext; }
   function review() {
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
@@ -936,11 +940,11 @@
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   function start() {
-    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s ? sl : null; } catch (e) { return null; } })();
+    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
+      else s = S.newGame({ carry: SeasonLoader.prev(SEASON) ? Save.startFrom(SeasonLoader.prev(SEASON)) : undefined, story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in
