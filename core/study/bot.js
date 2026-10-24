@@ -63,7 +63,7 @@
         let steps = Sel.select(get(st.record).steps, st.select, records);
         steps = Sel.overrideVerbs(steps, st.verbs);
         walk(steps, policy, acc);
-        Object.keys(st.verbs || {}).forEach(v => { if (st.verbs[v].reveal === "now") { acc.sec += RATES.revealSec; acc.events.push({ verb: "reveal" }); } }); // plan: the bet's reveal comes from the forecast at once
+        Object.keys(st.verbs || {}).forEach(v => { if (st.verbs[v].reveal === "now") { acc.sec += RATES.revealSec; acc.events.push({ op: "reveal-now" }); } }); // not a verb event: it must not count as S9's close-record reveal // plan: the bet's reveal comes from the forecast at once
         (st.after || []).forEach(x => { if (x.check) walk([x], policy, acc); else if (x.practice) { acc.sec += RATES.practiceSec; acc.events.push({ op: "practice", concept: x.concept }); } });
       } else if (st.kind === "deposit") {
         acc.sec = (st.minutes || 0) * 60; source = "route"; // the offer, the lesson text and the check: sized in the route (plan row S6)
@@ -78,8 +78,7 @@
       }
       rows.push({ id: st.id, kind: st.kind, concept: st.concept || "", minutes: acc.sec / 60, source, events: acc.events, unknown: acc.unknown });
     }
-    const lessonCount = route.route.filter(s => s.kind !== "frame").length;
-    const glue = Math.max(0, lessonCount - 3) * RATES.transitionSec / 60; // the plan counts 10 transitions at 3 s
+    const glue = route.transitionMinutes !== undefined ? route.transitionMinutes : 0; // the route file states it: 10 transitions at 3 s (plan section 1)
     const total = rows.reduce((a, r) => a + r.minutes, 0) + glue;
     return { rows, glueMinutes: glue, totalMinutes: total, coverage: coverage(route, rows), unknown: [].concat(...rows.map(r => r.unknown)), known };
   }
