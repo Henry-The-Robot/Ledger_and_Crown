@@ -32,18 +32,19 @@
         continue;
       }
       if (s.end && !s.master) continue;
+      if (s.master) { acc.sec += RATES.tapSec; continue; } // a mastery stamp is a box the player taps past (the study path earns it)
       if (s.speak !== undefined || s.tell !== undefined) {
         acc.sec += RATES.tapSec + readSec(words(s.text !== undefined ? s.text : s.tell));
         if (btnCount(s.buttons) > 1) acc.sec += RATES.decisionSec;
       } else if (s.page !== undefined) acc.sec += RATES.tapSec;
       else if (s.quiz !== undefined) { acc.sec += RATES.quizSec; if (policy === "wrong") acc.sec += RATES.wrongCheckSec; }
       else if (s.verb) {
-        let sec = VERB_SEC[s.verb];
-        if (sec === undefined) { sec = RATES.verbDefaultSec; acc.unknown.push(s.verb); }
         const a = s.args || {};
-        if (s.verb === "haggle" && a.rounds === 1) sec = 25; // one fixed round (plan section 1)
+        let sec = VERB_SEC[s.verb];
         if (s.verb === "timeline") sec = a.mode === "predict" ? 90 : 30;
-        if (s.verb === "reveal" || s.verb === "pickLine") sec += 0; // flat per plan
+        if (sec === undefined) { sec = RATES.verbDefaultSec; acc.unknown.push(s.verb); }
+        if (s.verb === "haggle" && a.rounds === 1) sec = 25; // one fixed round (plan section 1)
+        sec += readSec(words(a.text !== undefined ? a.text : a.prompt)); // the verb's own prompt or caption is read on top of its action time
         acc.sec += sec; acc.events.push({ verb: s.verb });
         if (s.verb === "buySeeds" && a.credit) acc.events.push({ verb: "loan-credit" });
       } else if (s.check) { acc.sec += RATES.checkSec + readSec(words(s.check.text)); acc.events.push({ op: "check" }); if (policy === "wrong") acc.sec += RATES.wrongCheckSec; }
@@ -62,6 +63,7 @@
         let steps = Sel.select(get(st.record).steps, st.select, records);
         steps = Sel.overrideVerbs(steps, st.verbs);
         walk(steps, policy, acc);
+        Object.keys(st.verbs || {}).forEach(v => { if (st.verbs[v].reveal === "now") { acc.sec += RATES.revealSec; acc.events.push({ verb: "reveal" }); } }); // plan: the bet's reveal comes from the forecast at once
         (st.after || []).forEach(x => { if (x.check) walk([x], policy, acc); else if (x.practice) { acc.sec += RATES.practiceSec; acc.events.push({ op: "practice", concept: x.concept }); } });
       } else if (st.kind === "deposit") {
         acc.sec = (st.minutes || 0) * 60; source = "route"; // the offer, the lesson text and the check: sized in the route (plan row S6)
