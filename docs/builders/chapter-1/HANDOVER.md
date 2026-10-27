@@ -1,6 +1,9 @@
 # HANDOVER — Chapter 1 builder — updated 2026-10-10 by game-builder (Sonnet)
 
-## Latest (2026-10-10)
+## Latest (2026-10-27)
+S7 closed: the fit() code, `tests/ipad-fill.html` and the v0.4.7 CHANGELOG line were built earlier. Pushed `local/work`, CI green, card done. No card is ready now. Screenshots were not retaken (no Playwright locally; CI runs the test).
+
+## Earlier (2026-10-10)
 SM2 done: `chapters/ch1/summer/season.js` (registered `ch1/summer`; wiki `ch1/summer-settings`; `tests/test-summer-season.js`). SM3 done: `newGame({carry})` and `Save.startFrom(prev)` (`tests/test-summer-start.js`). Both CI green. Next card: `python infra/plan_cards.py next mba-game`. Summer numbers are [Guessing] until bot runs tune them; Summer inherits Spring's engine keys.
 
 ## State in one paragraph (older, 2026-10-09)
