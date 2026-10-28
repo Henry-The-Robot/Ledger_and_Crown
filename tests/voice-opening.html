@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Opening voice</title></head><body><pre id="out">running</pre>
-<!-- V1: game.html?vo=1 plays the ElevenLabs voice and sound files under the opening; without ?vo=1 nothing changes; Skip stops every playing file; a line waits for the one before it.
+<!-- V1 (default on since 10-27): game.html plays the ElevenLabs voice files under the opening; ?vo=0 turns them off; Skip stops every playing file; a line waits for the one before it.
      Audio is faked here (no sound in CI): the fake records each file, whether it plays and whether it was paused. -->
 <script>
 const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
@@ -8,12 +8,12 @@ function spy(w) { const made = []; if (w.FX) w.FX.ctx = () => null; // force the
   w.Audio = function (src) { const a = { src, playing: false, paused: true, ended: false, loop: false, volume: 1, ls: {}, play() { a.playing = true; a.paused = false; return Promise.resolve(); }, pause() { a.paused = true; a.playing = false; }, addEventListener(n, fn) { (a.ls[n] = a.ls[n] || []).push(fn); }, finish() { a.ended = true; a.paused = true; (a.ls.ended || []).forEach(fn => fn()); } }; made.push(a); return a; }; return made; }
 (async () => { try {
   const errs = [];
-  // 1. ?vo=1: Begin starts the opening; the first voice file and the rain loop are created and playing
-  let f = await load("?vo=1&intro=1&new=1&savetest=1"), w = f.contentWindow, d = w.document; w.addEventListener("error", e => errs.push(e.message)); await sleep(400);
+  // 1. default (no vo parameter): Begin starts the opening; the first voice file is created and playing
+  let f = await load("?intro=1&new=1&savetest=1"), w = f.contentWindow, d = w.document; w.addEventListener("error", e => errs.push(e.message)); await sleep(400);
   let made = spy(w); out.push(`the opening waits at the gate: ${!!d.getElementById("in-gate")}`);
   d.getElementById("in-go").click(); await sleep(1800);
   const names = made.map(a => a.src.split("/").slice(-1)[0]);
-  out.push(`with ?vo=1 an Audio element for i01.mp3 was created and plays: ${names.includes("i01.mp3") && made[names.indexOf("i01.mp3")].playing}`);
+  out.push(`by default an Audio element for i01.mp3 was created and plays: ${names.includes("i01.mp3") && made[names.indexOf("i01.mp3")].playing}`);
   out.push(`the opening keeps its built-in sounds (no sound-effect files): ${!made.some(a => /\/sfx\//.test(a.src))}`);
   // jump to just before line i08 (47.0 s) with i07 playing: i08 must wait
   made.forEach(a => { if (/voice/.test(a.src)) a.finish(); }); w.Intro.debug.seek(40.5); await sleep(120); w.Intro.debug.release(); await sleep(200);
@@ -28,10 +28,10 @@ function spy(w) { const made = []; if (w.FX) w.FX.ctx = () => null; // force the
   out.push(`${live} files were playing; after Skip none is: ${live > 0 && made.every(a => !a.playing)}`);
   out.push(`the overlay is gone: ${!d.getElementById("intro")}`);
   f.remove();
-  // 2. no ?vo=1: no audio file is requested
-  f = await load("?intro=1&new=1&savetest=1"); w = f.contentWindow; d = w.document; w.addEventListener("error", e => errs.push(e.message)); await sleep(400);
+  // 2. ?vo=0: no audio file is requested
+  f = await load("?vo=0&intro=1&new=1&savetest=1"); w = f.contentWindow; d = w.document; w.addEventListener("error", e => errs.push(e.message)); await sleep(400);
   made = spy(w); d.getElementById("in-go").click(); await sleep(1800); d.getElementById("in-skip").click(); await sleep(300);
-  out.push(`without ?vo=1 no voice or sound file is requested: ${made.length === 0}`);
+  out.push(`with ?vo=0 no voice or sound file is requested: ${made.length === 0}`);
   f.remove();
   // 3. iPad path: with a WebAudio context the files play as decoded buffers through the shared context (an <audio> element started by a timer is silent on iPad Safari)
   f = await load("?vo=1&intro=1&new=1&savetest=1"); w = f.contentWindow; d = w.document; w.addEventListener("error", e => errs.push(e.message)); await sleep(400);

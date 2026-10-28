@@ -140,8 +140,8 @@
   let usePtr = 0;
   function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) { FX.sfx(ch === "mastered" ? "win" : "chime"); toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } } }
   // ---------- dialogue: one box, Promise-based; choices, a number field, highlights ----------
-  // the opening plays silent files-wise unless the URL has ?vo=1 (ElevenLabs voice and sound files; assets/voice/intro, assets/sfx/intro)
-  const playOpening = () => { try { Intro.setVoice(new URLSearchParams(location.search).get("vo") === "1" ? "assets/voice/intro" : null); } catch (e) {} return Intro.play(); };
+  // the opening plays the ElevenLabs narrator by default (Kyle, 10-27); ?vo=0 turns the voice files off (assets/voice/intro)
+  const playOpening = () => { try { Intro.setVoice(new URLSearchParams(location.search).get("vo") === "0" ? null : "assets/voice/intro"); } catch (e) {} return Intro.play(); };
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
