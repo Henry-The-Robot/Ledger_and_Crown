@@ -27,12 +27,13 @@ let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); i
 
   // Voice: switch, queue, start/stop (clip faked)
   { const clips = []; const mk = () => V.create({ clip: (src) => { const x = { src, played: false, stopped: false, play() { x.played = true; }, stop() { x.stopped = true; } }; clips.push(x); return x; } });
-    const v = mk();
+    const v = mk(); v.setFiles(["sc/n0-0.mp3", "sc/n0-1.mp3", "sc/n7.mp3"]);
     ok(v.configure("") === false && v.configure("?study=1") === true && v.configure("?vo=1") === true && v.configure("?study=1&vo=0") === false && v.configure("?vo=0") === false, "configure: off by default; on with ?study=1 or ?vo=1; ?vo=0 wins");
     v.configure("?vo=0"); v.mark("sc", "n0"); ok(v.start() === null && clips.length === 0, "?vo=0: start() makes no clip");
     v.configure("?vo=1"); v.mark("sc", ["n0-0", "n0-1"]); const a = v.start(); ok(a === "n0-0" && clips[0].src === "assets/voice/sc/n0-0.mp3" && clips[0].played, "a run: the first box plays sc/n0-0.mp3");
     v.start(); ok(clips[0].stopped && clips[1].src === "assets/voice/sc/n0-1.mp3", "the next box stops the one before and plays n0-1");
     ok(v.start() === null && clips[1].stopped && clips.length === 2, "a box nobody marked plays nothing and stops the last voice");
+    v.mark("sc", "n9"); ok(v.start() === null && clips.length === 2, "a marked box that is not in the files list asks for nothing");
     v.mark("sc", "n5"); v.mark("sc", null); ok(v.start() === null, "mark with null clears the queue");
     v.mark("sc", "n7"); v.start(); v.stop(); ok(clips[2].stopped, "stop() stops the playing box (tap past)"); }
 
@@ -42,5 +43,7 @@ let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); i
     const keys = have.map(b => b.scene + "/" + b.id); ok(new Set(keys).size === keys.length && have.length > 40, "LINES-study.json: " + have.length + " boxes, ids unique per scene");
     ok(have.every(b => b.scene && b.id && b.who && typeof b.text === "string" && b.text.length), "every entry has scene, id, who and text");
     const steps = require("../tools/study-route-steps.json"); ok(steps.every(s => have.some(b => b.scene === (s.record || s.scene)) || s.record === "close"), "every route lesson and scene with boxes is in the list"); }
+  { const have = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "assets", "voice", "FILES.json"), "utf8"));
+    ok(JSON.stringify(have) === JSON.stringify(require("../tools/voice-lines.js").files()), "FILES.json lists the box voice files that exist (run node tools/voice-lines.js after adding files)"); }
   process.exit(fail ? 1 : 0);
 })();

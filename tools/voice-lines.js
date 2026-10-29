@@ -18,7 +18,14 @@ function build() {
   return out;
 }
 if (require.main === module) {
-  const file = path.join(__dirname, "..", "assets", "voice", "LINES-study.json"), list = build();
-  fs.writeFileSync(file, JSON.stringify(list, null, 1) + "\n"); console.log("wrote " + list.length + " lines to " + file);
+  const dir = path.join(__dirname, "..", "assets", "voice"), list = build();
+  fs.writeFileSync(path.join(dir, "LINES-study.json"), JSON.stringify(list, null, 1) + "\n"); fs.writeFileSync(path.join(dir, "FILES.json"), JSON.stringify(files(), null, 1) + "\n");
+  console.log("wrote " + list.length + " lines and " + files().length + " files");
 }
-module.exports = { build };
+// The box voice files that exist: "<scene>/<box id>.mp3" under assets/voice (the opening's own folder, intro, is not a scene).
+function files() {
+  const dir = path.join(__dirname, "..", "assets", "voice"), out = [];
+  fs.readdirSync(dir, { withFileTypes: true }).forEach(d => { if (d.isDirectory() && d.name !== "intro") fs.readdirSync(path.join(dir, d.name)).forEach(f => { if (/\.mp3$/.test(f)) out.push(d.name + "/" + f); }); });
+  return out.sort();
+}
+module.exports = { build, files };

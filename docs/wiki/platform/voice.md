@@ -13,7 +13,7 @@ updated: 2026-10-28
 ---
 
 ## What it does
-A dialogue box in a scene can play a voice file. The file is `assets/voice/<scene id>/<box id>.mp3`. A box with no file is silent and logs no error.
+A dialogue box in a scene can play a voice file. The file is `assets/voice/<scene id>/<box id>.mp3`. A box with no file is silent, asks the server for nothing and logs no error: `core/voice.js` plays only the files listed in `assets/voice/FILES.json` (`tools/voice-lines.js` writes it; run it after adding files).
 
 ## Where
 | File · symbol | What |
