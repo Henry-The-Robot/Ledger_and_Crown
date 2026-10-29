@@ -29,7 +29,8 @@ function problems(route) {
   return out;
 }
 
-const routeFile = path.join(__dirname, "..", "..", "study-route.json");
+const dmgIds = (route, drop) => { const r = JSON.parse(JSON.stringify(route)); r.route = r.route.filter(s => !drop.includes(s.id)); return Bot.play(r, Lessons.BY).coverage.missing.join(); };
+const routeFile =path.join(__dirname, "..", "..", "study-route.json");
 if (!fs.existsSync(routeFile)) console.log("SKIP real route: study-route.json is not beside the repo (CI has the repo only)");
 else {
   const route = JSON.parse(fs.readFileSync(routeFile, "utf8"));
@@ -41,6 +42,10 @@ else {
   ok(right.totalMinutes >= 20 && right.totalMinutes <= 30, "a bot that answers right plays it in 20-30 minutes: " + right.totalMinutes.toFixed(1));
   ok(wrong.totalMinutes <= route.stopMinutes + 2, "a bot that answers wrong still ends near the 30-minute mark: " + wrong.totalMinutes.toFixed(1));
   ok(CONCEPTS.every(c => right.coverage.hit[c] > 0), "each of S1..S10 is played with stakes at least once: " + CONCEPTS.map(c => c + "=" + (right.coverage.hit[c] || 0)).join(" "));
+  ok(Math.abs(right.totalMinutes - route.modeledMinutes) <= 2, "the bot total is within 2 minutes of the route's modeledMinutes " + route.modeledMinutes);
+  const hops = route.route.filter(s => s.kind !== "advance").length - 1;
+  ok(Math.abs(route.transitionMinutes - hops * 3 / 60) <= 0.25, "transitionMinutes " + route.transitionMinutes + " matches " + hops + " scene changes at 3 s");
+  ok(dmgIds(route, ["s5-extension"]).includes("S5") && dmgIds(route, ["s9-s10-close"]).includes("S10"), "dropping the S5 step or the close step fails that concept (S8 also has a court claim)");
   ok(route.route[0].kind === "frame" && route.route[0].seconds <= 90, "the story frame is one step of 90 seconds or less");
   ok(route.route[route.route.length - 1].kind === "court", "the slice ends at the mini-Court");
   ok(!(route.optional["opt-1"] || {}).on, "opt-1 (the guarantee) is off in study 1");
