@@ -942,10 +942,12 @@
   // A forced later season (?season=ch1/summer) with no closed Spring starts from the canonical heir. In the browser Save.heir() has no file system, so load the frozen heir first.
   function start() {
     const prev = SeasonLoader.prev(SEASON);
-    if (!prev || Save.heir() || typeof fetch !== "function") return run();
+    if (!prev || Save.heir() || typeof XMLHttpRequest !== "function") return run();
     let closedPrev = false; try { closedPrev = !!Save.load().closed[prev]; } catch (e) {}
     if (closedPrev) return run();
-    fetch("tests/golden/heir-ch1-spring.json").then(r => (r.ok ? r.json() : null)).then(o => { if (o) Save.setHeir(o); }).catch(() => {}).then(run);
+    // Synchronous on purpose: the frame loop reads the game state as soon as start() returns, so it must exist by then. Rare path, one small file.
+    try { const x = new XMLHttpRequest(); x.open("GET", "tests/golden/heir-ch1-spring.json", false); x.send(); if (x.status === 200 || (x.status === 0 && x.responseText)) Save.setHeir(JSON.parse(x.responseText)); } catch (e) {}
+    run();
   }
   function run() {
     const saved =(() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();

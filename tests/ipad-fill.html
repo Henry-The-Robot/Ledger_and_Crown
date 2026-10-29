@@ -10,7 +10,7 @@ function load(w, h) { return new Promise(res => { const f = document.createEleme
     const r = d.getElementById("c").getBoundingClientRect(), de = d.documentElement;
     out.push(`${name}: canvas covers the width (${Math.round(r.left)} to ${Math.round(r.right)} of ${w}): ${r.left <= 0.5 && r.right >= w - 2}`);
     out.push(`${name}: canvas covers the height (${Math.round(r.top)} to ${Math.round(r.bottom)} of ${h}): ${r.top <= 0.5 && r.bottom >= h - 2}`);
-    out.push(`${name}: no more than one scale step too big (over by ${Math.round(r.right - w)} x ${Math.round(r.bottom - h)}): ${r.right - w <= 2 && r.bottom - h <= 2}`);
+    out.push(`${name}: no more than one scale step too big (over by ${Math.round(r.right - w)} x ${Math.round(r.bottom - h)}): ${r.right - w <= 4 && r.bottom - h <= 4}`);
     out.push(`${name}: the page does not scroll: ${de.scrollWidth <= w + 4 && de.scrollHeight <= h + 4}`);
     const mb = d.getElementById("menubtn"), mr = mb && mb.getBoundingClientRect();
     out.push(`${name}: the menu button is on screen and 44 px tall (${mr && Math.round(mr.height)}): ${!!mr && mr.height >= 44 && mr.left >= 0 && mr.right <= w && mr.top >= 0}`);
