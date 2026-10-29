@@ -4,7 +4,8 @@ Cards MBA-ST1 to ST4, ST6 to ST8 are done; `core/study/route.js` (the scene runn
 ## Live / branch state
 Branch `local/work`, PR 59 (Henry-The-Robot/Ledger_and_Crown). The helpers are not wired into a page yet: no `study.html` exists.
 ## Next 3 actions
-1. MBA-ST10: the study bot, which uses `select.js` and `route.js` to play `study-route.json` and report minutes.
+0. 2026-10-28: ST4 (`tests/test-study-scenes.js`) and FX1 (PR 59 fixes) are done and CI is green. Next card: MBA-VO1 (voice playback). Open ask to the Lead: ipad-fill tolerance stays 4 px (2 px fails in CI).
+1. MBA-ST10 (done earlier): the study bot, which uses `select.js` and `route.js` to play `study-route.json` and report minutes.
 2. A `study.html` page that draws `StudyShell`, calls `StudySelect.select` per lesson step and applies `StudyMode` (hide the ids in `HIDDEN_UI`, drop saves, call `holdQuiet`). Not carded; ask the Lead.
 3. The runner must apply the route's `ship` op through `Mode.openOrderFor` and `Mode.autoShip`; the `check` and `practice` steps use `Sel.checkStep` and `Sel.gradeCheck`.
 ## Failure lesson
