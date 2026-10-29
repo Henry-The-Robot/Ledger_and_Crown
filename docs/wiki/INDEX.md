@@ -10,6 +10,7 @@
 - [platform/opening](platform/opening.md) — system · The opening (core/intro.js). A 75-second animated prologue on a 320 by 180 canvas.
 - [platform/save](platform/save.md) — system · Save and browser storage. The game keeps all player data in `localStorage`.
 - [platform/map-props](platform/map-props.md) — system · Map prop layer (P8). Props as data, a sprite registry, `when` rules.
+- [platform/voice](platform/voice.md) — system · Voice for dialogue boxes (core/voice.js). Box ids, ?vo switch, LINES-study.json.
 - [platform/cutscene](platform/cutscene.md) — system · Cutscene engine (P7). Shots, lines, cues, skip, journal; the opening is its first cutscene.
 - [platform/scene-player](platform/scene-player.md) — system · Scene player and scene records. A scene is a data record; core/scene.js plays it.
 - [platform/sound](platform/sound.md) — system · Sound (music and effects). All sound is made with WebAudio in code.

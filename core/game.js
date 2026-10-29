@@ -145,6 +145,7 @@
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
+      try { if (window.Voice) Voice.start(); } catch (e) {} // MBA-VO1: the voice file of this box, if the scene marked one
       const d = $("dlg"), who = o.who, nm = who ? S.NAMES[who] || who : "", ht = who && s.trust[who] != null ? hearts(s.trust[who]) : "";
       spot(o.spot); d.classList.remove("kb"); d.classList.toggle("hasin", !!o.input);
       d.innerHTML = `${who && A.people[who] ? "<canvas width=16 height=16></canvas>" : ""}<div class="dc${o.input ? " withpad" : ""}"><div><span class="nm">${cap(nm)}</span><span class="ht">${ht}</span></div><div class="tx">${o.text}</div>` +
@@ -152,7 +153,7 @@
       if (who && A.people[who]) d.querySelector("canvas").getContext("2d").drawImage(A.people[who].down[0], 0, 0);
       addSignButtons(d);
       (o.choices || ["Next"]).forEach((c, i) => { const b = document.createElement("button"), lab = c.label || c; b.innerHTML = `<kbd>${i + 1}</kbd>${lab}`; b.disabled = !!c.disabled;
-        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb", "hasin"); spot(null); res({ i, v }); };
+        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb", "hasin"); spot(null); try { if (window.Voice) Voice.stop(); } catch (e) {} res({ i, v }); };
         d.querySelector(".ch").appendChild(b); });
       if (o.input) numberPad(d, (o.choices || ["Next"])[0]); // the pad goes after the choice buttons, so button order (and the number keys) stay as they were
       d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false;

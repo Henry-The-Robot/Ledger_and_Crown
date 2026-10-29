@@ -131,7 +131,7 @@
   const maybe = (id, opts) => { try { return REG[id] && typeof document !== "undefined" && document.body && wanted() ? play(id, Object.assign({ autostart: true }, opts)) : null; } catch (e) { return null; } };
   const api = {
     wanted, maybe, register: def => { REG[def.id] = def; return def; }, get: id => REG[id], play, replay: (id, opts) => play(id, opts), journal, timeline, cuesUpTo, validate, manifest, frame: (def, t) => frame(def, t),
-    setVoice: (base, ext) => { voiceBase = base || null; if (ext) voiceExt = ext; }, end: how => end(how || "skipped"), get active() { return active; }, get state() { return st; }, ease, prog,
+    setVoice: (base, ext) => { voiceBase = base || null; if (ext) voiceExt = ext; }, clip, end: how => end(how || "skipped"), get active() { return active; }, get state() { return st; }, ease, prog,
   };
   if (typeof window !== "undefined") window.Cutscene = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;

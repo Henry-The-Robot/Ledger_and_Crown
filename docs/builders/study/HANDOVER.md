@@ -1,6 +1,7 @@
 # HANDOVER — Study kit builder — updated 2026-10-23 by sonnet-game-builder
 ## State in one paragraph
 Cards MBA-ST1 to ST4, ST6 to ST8 are done; `core/study/route.js` (the scene runner, ST7) is done. Card MBA-ST9 adds `core/study/select.js` (record selection, verb overrides, three-option checks, frame) and `core/study/mode.js` (study switches: quiet, auto-ship, hidden menus, no saves, notices). Both are pure and off without `?study=1`. Two one-line hooks sit in the game: `ch4bBet` reads `reveal: "now"` (story.js) and `haggle` reads `rounds` (game.js, default 4). Test: `tests/test-study-mode.js`.
+MBA-VO1 (2026-10-28): done. `core/voice.js` plays `assets/voice/<scene>/<box id>.mp3` for scene boxes (on with `?study=1` or `?vo=1`, off with `?vo=0`). `assets/voice/LINES-study.json` lists 52 boxes; regenerate with `node tools/voice-lines.js`. Gap: boxes built in code (verbs, Court) have no id. Tests: `tests/test-voice.js`, `tests/voice-lines.html`. Wiki: `platform/voice`.
 ## Live / branch state
 Branch `local/work`, PR 59 (Henry-The-Robot/Ledger_and_Crown). The helpers are not wired into a page yet: no `study.html` exists.
 ## Next 3 actions

@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Voice for dialogue boxes</title></head><body><pre id="out">running</pre>
+<!-- MBA-VO1: a scene's dialogue box plays assets/voice/<scene id>/<box id>.mp3 through the shared WebAudio context; tapping past stops it;
+     a box with no file is silent and throws nothing; ?vo=0 (and the default outside the study build) requests no file. WebAudio and fetch are faked here (no sound in CI).
+     Run: node tests/run-html.js tests/voice-lines.html 60000 -->
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+const load = q => new Promise(r => { const f = document.createElement("iframe"); f.style.cssText = "width:1194px;height:834px;border:0"; f.src = "../game.html" + q; document.body.appendChild(f); f.onload = () => r(f); });
+// A fake shared context and a fake fetch. Only the first file asked for exists; every later file is a 404.
+function fake(w) {
+  const made = [], reqs = [], errs = []; w.addEventListener("error", e => errs.push(e.message)); w.addEventListener("unhandledrejection", e => errs.push(String(e.reason)));
+  w.FX.ctx = () => ({ state: "running", destination: {}, resume() {}, createGain() { return { gain: { value: 1 }, connect() {} }; },
+    createBufferSource() { const n = { buffer: null, loop: false, started: false, stopped: false, connect() {}, start() { n.started = true; }, stop() { n.stopped = true; if (n.onended) n.onended(); } }; made.push(n); return n; },
+    decodeAudioData(b, res) { res({ fake: true }); } });
+  let first = null;
+  w.fetch = u => { if (/assets\/voice\//.test(u)) { reqs.push(u); if (first === null) first = u; return Promise.resolve(u === first ? { ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) } : { ok: false, status: 404 }); } return Promise.reject(new Error("offline")); };
+  return { made, reqs, errs };
+}
+const boot = async q => { const f = await load("?new=1&intro=0&touch=0" + q), w = f.contentWindow; await sleep(500); const k = fake(w); w.Story.testScene("none"); w.G.closeDlg(); return Object.assign({ f, w, d: w.document }, k); };
+const tap = x => { const b = x.d.querySelector("#dlg .ch button"); if (b) b.click(); return !!b; };
+(async () => { try {
+  // 1. ?vo=1: the first marked box of a scene plays its file as a decoded buffer
+  let x = await boot("&vo=1"); x.w.G.s.day = 9;
+  out.push(`voice is on with ?vo=1: ${x.w.Voice.on === true}`);
+  x.w.Story.testScene("cost"); await sleep(400);
+  const m = x.reqs[0] && x.reqs[0].match(/assets\/voice\/([^/]+)\/(n[\w-]+)\.mp3$/);
+  out.push(`the first box asks for assets/voice/<scene id>/<box id>.mp3 (${x.reqs[0]}): ${!!m}`);
+  out.push(`it plays through WebAudio: ${x.made.length === 1 && x.made[0].started && !x.made[0].stopped}`);
+  tap(x); await sleep(300);
+  out.push(`tapping past stops it: ${x.made[0].stopped}`);
+  out.push(`the next box has no file: it asked for one (${x.reqs.length >= 2}), started no sound (${x.made.length === 1}) and threw nothing (${x.errs.length === 0}${x.errs.length ? " " + x.errs[0] : ""})`);
+  for (let i = 0; i < 4; i++) { tap(x); await sleep(200); }
+  out.push(`the scene goes on with no JS errors: ${x.errs.length === 0}`); x.f.remove();
+  // 2. ?vo=0: no file is requested
+  x = await boot("&vo=0"); x.w.G.s.day = 9; x.w.Story.testScene("cost"); await sleep(400); tap(x); await sleep(200);
+  out.push(`?vo=0: voice is off (${x.w.Voice.on === false}) and no file is requested (${x.reqs.length === 0}) and nothing plays (${x.made.length === 0})`); x.f.remove();
+  // 3. no parameter, not the study build: voice stays off, so the live game asks for no file
+  x = await boot(""); x.w.G.s.day = 9; x.w.Story.testScene("cost"); await sleep(400);
+  out.push(`default game: voice is off (${x.w.Voice.on === false}) and no file is requested (${x.reqs.length === 0})`); x.f.remove();
+} catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); } document.getElementById("out").textContent = out.join("\n"); })();
+</script></body></html>
