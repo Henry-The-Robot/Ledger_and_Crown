@@ -1,0 +1,42 @@
+[
+ {
+  "id": "s1-bailiff",
+  "record": "ch1"
+ },
+ {
+  "id": "s2-first-seed",
+  "record": "ch2"
+ },
+ {
+  "id": "s3-bakery",
+  "record": "ch3"
+ },
+ {
+  "id": "s4-hobb",
+  "record": "ch4"
+ },
+ {
+  "id": "s4-bet",
+  "record": "ch4b"
+ },
+ {
+  "id": "s5-extension",
+  "scene": "hobb_extension"
+ },
+ {
+  "id": "s7-on-account",
+  "record": "tvm"
+ },
+ {
+  "id": "s7-ezra",
+  "record": "ch7"
+ },
+ {
+  "id": "s8-wages-day",
+  "record": "ch5"
+ },
+ {
+  "id": "s9-s10-close",
+  "record": "close"
+ }
+]

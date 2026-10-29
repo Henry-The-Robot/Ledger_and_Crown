@@ -7,7 +7,7 @@
   const S = Spring, B = Books, TR = Transcript, A = Art, T = 16, MW = 50, MH = 26;
   let VW = 320, VH = 200; // the view in map pixels: fixed on a desktop, sized to the screen on an iPad (see fit)
   const $ = id => document.getElementById(id), cv = $("c"), ctx = cv.getContext("2d");
-  const q = new URLSearchParams(location.search), SEASON = "ch1/spring"; // saves live in core/save.js (one versioned blob, lc_save_v4)
+  const q = new URLSearchParams(location.search), SEASON = window.LC_SEASON || "ch1/spring"; // SM4: core/season-loader.js sets LC_SEASON; saves live in core/save.js (one versioned blob, lc_save_v4)
   // iPad and other touch devices (iPadOS Safari reports itself as a Mac, so also test for touch points); ?touch=1 forces it for testing, ?touch=0 turns it off
   const TOUCH = q.get("touch") === "1" || (q.get("touch") !== "0" && (matchMedia("(pointer: coarse)").matches || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1)));
   if (TOUCH) document.body.classList.add("touch");
@@ -140,11 +140,12 @@
   let usePtr = 0;
   function drainUses() { while (usePtr < s.uses.length) { const u = s.uses[usePtr++], ch = TR.use(u.id, u.well, s.day); if (ch) { FX.sfx(ch === "mastered" ? "win" : "chime"); toast(ch === "mastered" ? `Mastered: ${TR.name(u.id)} ★` : `Transcript: ${TR.name(u.id)} (${ch})`); } } }
   // ---------- dialogue: one box, Promise-based; choices, a number field, highlights ----------
-  // the opening plays silent files-wise unless the URL has ?vo=1 (ElevenLabs voice and sound files; assets/voice/intro, assets/sfx/intro)
-  const playOpening = () => { try { Intro.setVoice(new URLSearchParams(location.search).get("vo") === "1" ? "assets/voice/intro" : null); } catch (e) {} return Intro.play(); };
+  // the opening plays the ElevenLabs narrator by default (Kyle, 10-27); ?vo=0 turns the voice files off (assets/voice/intro)
+  const playOpening = () => { try { Intro.setVoice(new URLSearchParams(location.search).get("vo") === "0" ? null : "assets/voice/intro"); } catch (e) {} return Intro.play(); };
   const dlgOpen = () => $("dlg").style.display === "flex";
   function dlg(o) { // o: {who, text, choices:[label|{label,disabled}], input, spot} -> Promise<{i, v}>
     return new Promise(res => {
+      try { if (window.Voice) Voice.start(); } catch (e) {} // MBA-VO1: the voice file of this box, if the scene marked one
       const d = $("dlg"), who = o.who, nm = who ? S.NAMES[who] || who : "", ht = who && s.trust[who] != null ? hearts(s.trust[who]) : "";
       spot(o.spot); d.classList.remove("kb"); d.classList.toggle("hasin", !!o.input);
       d.innerHTML = `${who && A.people[who] ? "<canvas width=16 height=16></canvas>" : ""}<div class="dc${o.input ? " withpad" : ""}"><div><span class="nm">${cap(nm)}</span><span class="ht">${ht}</span></div><div class="tx">${o.text}</div>` +
@@ -152,7 +153,7 @@
       if (who && A.people[who]) d.querySelector("canvas").getContext("2d").drawImage(A.people[who].down[0], 0, 0);
       addSignButtons(d);
       (o.choices || ["Next"]).forEach((c, i) => { const b = document.createElement("button"), lab = c.label || c; b.innerHTML = `<kbd>${i + 1}</kbd>${lab}`; b.disabled = !!c.disabled;
-        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb", "hasin"); spot(null); res({ i, v }); };
+        b.onclick = () => { const v = o.input ? parseFloat(($("num").value || "").replace(/[^0-9.\-]/g, "")) : null; d.style.display = "none"; d.classList.remove("kb", "hasin"); spot(null); try { if (window.Voice) Voice.stop(); } catch (e) {} res({ i, v }); };
         d.querySelector(".ch").appendChild(b); });
       if (o.input) numberPad(d, (o.choices || ["Next"])[0]); // the pad goes after the choice buttons, so button order (and the number keys) stay as they were
       d.style.display = "flex"; keys.up = keys.down = keys.left = keys.right = false;
@@ -311,7 +312,7 @@
     let theirs = cfg.open, walk = cfg.walk + (s.trust[o.who] >= 7 ? 1 : 0), used = {}, line = (o.say || cfg.line) + (o.deposit ? ` <i>(${Math.round(o.deposit * 100)}% paid up front.)</i>` : ""), round = 0;
     const fl = cfg.floor != null ? cfg.floor : S.R.unitCost; // WS3: the floor is the walk-away line, drawn on the price track
     const fairBest = Math.max(0, ...Object.keys(fairSeen).filter(k => k !== o.who).map(k => fairSeen[k]));
-    while (round < 4) {
+    while (round < (cfg.rounds || 4)) {
       const lev = [];
       if (fairBest > theirs && !used.fair) lev.push("fair"); if (s.trust[o.who] >= 6 && !used.rec) lev.push("rec");
       const labels = ["Ask my price", `Accept ${theirs} a sack`].concat(lev.map(l => l === "fair" ? `"The fair pays ${fairBest}"` : `"I always deliver on time"`), ["Walk away"]);
@@ -825,8 +826,12 @@
       if (r.dataset.line === target) { rows.forEach(x => { x.onclick = null; x.classList.remove("pick"); }); window.__pick = undefined; res(tries); } // resolves with the number of wrong taps first
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
   // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close
-  const endBtn = () => storyOn ? `<p><button class="btn alt" id="goEnd">How it ends</button></p>` : "";
-  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); }
+  // SM5: after the books close, a button starts the next season through the loader. A failed Court still allows it (the carry record says so); a sold or insolvent farm does not.
+  const NEXT_LABEL = { "ch1/summer": "Begin Summer" }, nextId = () => SeasonLoader.next(SEASON), canBegin = () => storyOn && nextId() && NEXT_LABEL[nextId()] && s.outcome !== "insolvent" && s.outcome !== "sold";
+  const beginBtn = () => canBegin() ? `<button class="btn gold" id="goNext">${NEXT_LABEL[nextId()]}</button> ` : "";
+  function beginNext() { const id = nextId(); try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} Save.clearSlot(); location.search = "?season=" + id; } // Spring is frozen already (closeBooks); leaving clears its open slot
+  const endBtn = () => storyOn ? `<p>${beginBtn()}<button class="btn alt" id="goEnd">How it ends</button></p>` : "";
+  function wire() { const a = $("again"), g = $("goEzra"), e = $("goEnd"), n = $("goNext"); if (a) a.onclick = restart; if (g) g.onclick = review; if (e) e.onclick = () => Story.showEnding(Endings.ending(s)); if (n) n.onclick = beginNext; }
   function review() {
     const qs = B.review(closing.st), before = S.terms(s); let i = 0, right = 0; const ez = $("ez");
     function next() {
@@ -935,12 +940,22 @@
     restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
+  // A forced later season (?season=ch1/summer) with no closed Spring starts from the canonical heir. In the browser Save.heir() has no file system, so load the frozen heir first.
   function start() {
-    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s ? sl : null; } catch (e) { return null; } })();
+    const prev = SeasonLoader.prev(SEASON);
+    if (!prev || Save.heir() || typeof XMLHttpRequest !== "function") return run();
+    let closedPrev = false; try { closedPrev = !!Save.load().closed[prev]; } catch (e) {}
+    if (closedPrev) return run();
+    // Synchronous on purpose: the frame loop reads the game state as soon as start() returns, so it must exist by then. Rare path, one small file.
+    try { const x = new XMLHttpRequest(); x.open("GET", "tests/golden/heir-ch1-spring.json", false); x.send(); if (x.status === 200 || (x.status === 0 && x.responseText)) Save.setHeir(JSON.parse(x.responseText)); } catch (e) {}
+    run();
+  }
+  function run() {
+    const saved =(() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
-      else s = S.newGame({ story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
+      else s = S.newGame({ carry: SeasonLoader.prev(SEASON) ? Save.startFrom(SeasonLoader.prev(SEASON)) : undefined, story: storyOn, bonus: Math.min(100, (window.Codex ? Codex.prestige() : 0) * 10), seed: q.has("seed") ? +q.get("seed") : storyOn ? Save.newSeed() : 0 });
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in

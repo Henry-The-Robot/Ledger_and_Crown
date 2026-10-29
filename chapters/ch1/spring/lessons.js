@@ -84,7 +84,7 @@
     { keep: { id: "equation", term: "Assets = Liabilities + Owner's equity", line: "What you own, minus what you owe, is yours. It can be below zero.", example: "Day 1: {assets} = {liab} + ({equity}).{guessNote}" } },
     { verb: "parchClose" }, { to: [1, "harvest2"] },
   ] };
-  // ---------- chapter 2: first seed (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
+  // ---------- first seed (record ch2) (C1.04: cost becomes inventory, not an expense yet) — WS3: no typed question; Maud says one line ----------
   R.ch2 = { id: "ch2", steps: [
     { calc: "ch2Facts" },
     { speak: "tomas", text: "My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is {sc} a packet. One packet plants one plot; a plot gives {per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman." },
@@ -98,7 +98,7 @@
     { keep: { id: "inventory", term: "Inventory", line: "Buying seed isn't spending: Cash becomes Inventory, at cost, until it's sold.", example: "Day {day}: 6 packets, Cash −{six}, Inventory +{six} ({inv0} → {inv1})." } },
     { remember: ["planted0", { var: "planted" }] }, { to: [3, "plant2"] },
   ] };
-  // ---------- chapter 3: the bakery (C1.01, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
+  // ---------- the bakery (record ch3) (C1.01, C0.02: revenue, COGS, gross profit, margin) — WS3: the typed floor becomes the walk-away line ----------
   R.ch3 = { id: "ch3", steps: [
     { calc: "ch3Setup" },
     { speak: "ashby", text: "So you're Edric's heir. You've his chin and none of his luck, dear. I need six sacks for the ovens. Seven a sack, Cash on the nail." },
