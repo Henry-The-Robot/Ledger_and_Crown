@@ -6,7 +6,7 @@ season: summer
 files: [chapters/ch1/summer/season.js, core/engine.js]
 symbols: [king, buyerTerms, waterBill, millWing, demand, testPlot, scarce, gift, banner]
 concepts: []
-sessions: [C2.09, C5.01, C16.11, C1.06, C4.01, C4.03, C3.09]
+sessions: [C2.09, C5.01, C16.11, C1.06, C4.01, C4.03, C3.09, C7.01, C14.06, C12.02, C12.09, C2.03]
 tests: [tests/test-summer-season.js]
 links: [ch1/spring-settings]
 updated: 2026-10-10

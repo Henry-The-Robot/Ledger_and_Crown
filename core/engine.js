@@ -78,7 +78,7 @@
       Object.keys(c.relations || {}).forEach(n => { s.trust[n] = c.relations[n]; });
       s.flags = Object.assign({}, c.flags); s.carried = c.season;
     }
-    post(s, "open", "Opening balances: the estate as Uncle Edric left it", { cash, inv, loan: -loan, crown: -crown, capital: -(cash + inv - loan - crown) });
+    post(s, "open", opt.carry ? "Opening balances: carried from the close of the season before" : "Opening balances: the estate as Uncle Edric left it", { cash, inv, loan: -loan, crown: -crown, capital: -(cash + inv - loan - crown) });
     s.opening = Object.assign({}, s.bal);
     makeOffers(s);
     if (opt.carry) { note(s, "Summer, day 1. Cash " + cash + ", " + loan + " owed to Ezra, and " + crown.toLocaleString("en-US") + " owed to the Crown at Midwinter."); return s; }

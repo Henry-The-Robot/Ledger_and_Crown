@@ -7,8 +7,8 @@
   const FIELDS = ["t", "pc", "game", "build", "seed", "ev", "scene", "concept", "item", "form", "choice", "ok", "rt"];
   const EVENTS = ["start", "scene_start", "scene_end", "input", "outcome", "item_shown", "item_answer", "pause", "end"];
 
-  const PC_RE = /^[a-z0-9_-]{3,64}$/i; // a random code, never a name or an email; the entry page allows 4 to 64 (a Prolific id has 24)
-  const cleanPc = c => (PC_RE.test(String(c || "")) ? String(c).toLowerCase() : ""); // lowercase, as the entry page and assign.js do
+  // The one rule for a participant code is assign.js normalize (4 to 64 ASCII letters, digits, - and _; a Prolific id has 24): called, never copied.
+  const cleanPc = c => { try { return assignMod().normalize(String(c || "")); } catch (e) { return ""; } }; // normalize also lowercases, as the entry page does
   const cleanVal = v => (typeof v === "string" ? v.slice(0, 40) : v);
   const flagOn = search => /(?:^|[?&])study=1(?:&|$|#)/.test(String(search || ""));
   const param = (search, k) => { const m = new RegExp("(?:^|[?&])" + k + "=([^&#]*)").exec(String(search || "")); try { return m ? decodeURIComponent(m[1]) : null; } catch (e) { return m ? m[1] : null; } };

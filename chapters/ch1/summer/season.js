@@ -13,7 +13,7 @@
     // Edric's water bill (SU3, C1.06 interest expense differs from the cash coupon): a bill left unpaid, with interest. Recording it restates the books.
     waterBill: { principal: 60, yearsUnpaid: 2, interestRate: 0.08, cashPaid: 0 }, // interest owed = principal x ((1 + rate)^years - 1)
     // The mill wing (SU5, C4.03 corrected): unit cost = (fixed + variable x volume) / volume, so scale pays only if sales follow. Break-even volume V solves
-    // price x V - (fixedAfter + varAfter x V) = price x v0 - (fixedBefore + varBefore x v0) (55,882 in the session's units, not 61,800).
+    // price x V - (fixedAfter + varAfter x V) = price x v0 - (fixedBefore + varBefore x v0) By hand: before, 17x50 - (500 + 10x50) = -150; after, 9V - 700 = -150, so V = 550/9 = 61.1 in the data's own units (volume 50 before, 100 after).
     millWing: { price: 17, before: { fixed: 500, varCost: 10, volume: 50 }, after: { fixed: 700, varCost: 8, volume: 100 } }, // session units 1:1000; before unit cost 20, after 15
     // The stall price test (SU5, C4.01 corrected): daily sales q = a - b x price. At the reference price 8 the elasticity is b x 8 / q = -1.09 (elastic), so a rise loses more volume than it gains.
     demand: { a: 92, b: 6, refPrice: 8, elasticity: -1.09, testDays: 6 }, // q(8) = 44; revenue peaks at a / (2b) = 7.67, below the old price

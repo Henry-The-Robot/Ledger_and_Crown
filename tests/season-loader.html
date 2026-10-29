@@ -13,6 +13,7 @@ const load = (qs) => new Promise(res => { const f = document.createElement("ifra
     out.push(`summer: LC_SEASON is ch1/summer: ${w.LC_SEASON === "ch1/summer"}`);
     out.push(`summer: the active season is ch1/summer: ${w.Spring.Season.current === "ch1/summer"}`);
     out.push(`summer: a game exists on day 1: ${!!w.G.s && w.G.s.day === 1}`);
+    out.push(`summer: no closed Spring, so the game starts from the canonical heir (carried is ch1/spring): ${w.G.s.carried === "ch1/spring"}`);
     f.remove(); localStorage.clear();
     f = await load("new=1&fast&seed=3"); w = f.contentWindow; await sleep(800);
     out.push(`default: Spring as before: ${w.LC_SEASON === "ch1/spring" && w.Spring.Season.current === "ch1/spring" && w.G.s.day === 1}`);

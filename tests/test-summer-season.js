@@ -9,7 +9,9 @@ ok(Season.list().includes("ch1/summer") && Season.current === "ch1/spring", "Sum
 Season.use("ch1/summer"); ok(Season.current === "ch1/summer" && S.R.days === 28 && S.R.king.sacks === 120, "Season.use('ch1/summer') makes Summer active (28 days, King's order 120 sacks)");
 { const k = Su.king, face = k.sacks * k.price, weeks = k.tallyDays / 7; ok(face === 1200 && weeks === 6 && near(face * (1 - weeks * k.tallyDiscount), 984, 1e-9), "tally: face 1200, 42 days = 6 weeks, sold at 984"); }
 { const w = Su.waterBill; ok(near(w.principal * (Math.pow(1 + w.interestRate, w.yearsUnpaid) - 1), 9.984, 1e-9), "water bill interest is 9.984 on 60 for 2 years at 8%"); }
-{ const m = Su.millWing, uc = x => (x.fixed + x.varCost * x.volume) / x.volume; ok(uc(m.before) === 20 && uc(m.after) === 15, "mill wing: unit cost 20 before, 15 after (C4.03)"); }
+{ const m = Su.millWing, pb = m.price * m.before.volume - (m.before.fixed + m.before.varCost * m.before.volume), V = (m.after.fixed + pb) / (m.price - m.after.varCost);
+  ok(pb === -150 && Math.abs(V - 550 / 9) < 1e-9 && Math.abs(V - 61.1) < 0.05, "mill wing: profit before is -150 (hand), break-even volume after is 550/9 = 61.1, not 55.9 or 61.8"); }
+{ const m = Su.millWing, uc =x => (x.fixed + x.varCost * x.volume) / x.volume; ok(uc(m.before) === 20 && uc(m.after) === 15, "mill wing: unit cost 20 before, 15 after (C4.03)"); }
 { const d = Su.demand, q = d.a - d.b * d.refPrice, e = d.b * d.refPrice / q; ok(q === 44 && near(e, 1.09, 0.005) && d.elasticity === -1.09, "demand: 44 sold at 8, elasticity -1.09 (C4.01 corrected)");
   ok(d.a / (2 * d.b) < d.refPrice, "revenue peaks below the reference price, so a price rise loses revenue"); }
 ok(Su.testPlot.goodOdds > 0 && Su.testPlot.goodOdds < 1 && Su.buyerTerms.days === 14, "test-plot odds are a probability; buyers ask 14 days");

@@ -939,8 +939,16 @@
     restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
+  // A forced later season (?season=ch1/summer) with no closed Spring starts from the canonical heir. In the browser Save.heir() has no file system, so load the frozen heir first.
   function start() {
-    const saved = (() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
+    const prev = SeasonLoader.prev(SEASON);
+    if (!prev || Save.heir() || typeof fetch !== "function") return run();
+    let closedPrev = false; try { closedPrev = !!Save.load().closed[prev]; } catch (e) {}
+    if (closedPrev) return run();
+    fetch("tests/golden/heir-ch1-spring.json").then(r => (r.ok ? r.json() : null)).then(o => { if (o) Save.setHeir(o); }).catch(() => {}).then(run);
+  }
+  function run() {
+    const saved =(() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)

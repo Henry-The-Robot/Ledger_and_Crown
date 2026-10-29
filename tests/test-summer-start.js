@@ -9,7 +9,9 @@ Save._use({ store: fakeStore(), clock: () => "2026-10-10T10:00:00.000Z" });
 const owe = (s, k) => -s.bal[k];
 { const h = Save.startFrom("ch1/spring"), s = S.newGame({ carry: h });
   ok(h.ending === "heir" && s.bal.cash === 8 && owe(s, "loan") === 100 && owe(s, "crown") === 1250, "no Spring record: Summer day 1 takes the heir (cash 8, Ezra 100, Crown 1250)");
-  ok(s.trust.maud === 2 && s.trust.ashby === 4 && s.carried === "ch1/spring", "the heir's relations carry over (Maud 2, Ashby 4)"); }
+  ok(s.trust.maud === 2 && s.trust.ashby === 4 && s.carried === "ch1/spring", "the heir's relations carry over (Maud 2, Ashby 4)");
+  ok(/carried/.test(s.journal[0].memo) && !/Uncle Edric/.test(s.journal[0].memo), "a carried season's opening memo says carried, not Uncle Edric's estate");
+  ok(/Uncle Edric/.test(S.newGame({ story: false }).journal[0].memo), "a fresh Spring's opening memo still names Uncle Edric's estate"); }
 { const g = S.newGame({ story: true, seed: 3 }); let n = 0; while (!g.over && n++ < 40) { Bot.careful.day(g); S.sleep(g); }
   Save.closeSeason("ch1/spring", g, { examPassed: false, score: 0, attempts: 0 });
   const rec = Save.startFrom("ch1/spring"), s = S.newGame({ carry: rec });

@@ -57,6 +57,9 @@ const bigSeed = Log.create({ search: url(PC24, good, 4294967297), now: clock() }
 ok(bigSeed.rows()[0].edited === true, "a seed outside 0 to 2147483647 is flagged as edited");
 const mail = Log.create({ search: "?study=1&pc=kyle%40x.com&arm=game&order=BC&seed=1", now: clock() }); mail.start();
 ok(mail.rows()[0].pc === "", "an email-shaped code in the URL is refused");
+const short3 = Log.create({ search: "?study=1&pc=abc&arm=game&order=BC&seed=1", now: clock() }); short3.start();
+ok(short3.rows()[0].pc === "", "a 3-character code is refused when read from the URL (assign.js needs 4 to 64)");
+ok(Log.create({ search: "?study=1", now: clock() }).setCode("abc") === false, "a 3-character code typed in is refused");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("a".repeat(25)) === true, "a 25-character code is accepted (the entry page allows up to 64)");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("a".repeat(65)) === false, "a 65-character code is refused");
 ok(Log.create({ search: "?study=1", now: clock() }).setCode("ab") === false, "a 2-character code is still refused");

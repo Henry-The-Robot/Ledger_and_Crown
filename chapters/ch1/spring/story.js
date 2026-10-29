@@ -92,7 +92,7 @@ window.Story = (function () {
       return { b, cost, cash: b.cash, sacks: s0.sacks, sackVal: s0.sacks * cost, plots: plots.length, cropVal: plots.reduce((a, p) => a + p.crop.cost, 0), assets: b.assets, liab: b.liab, equity: b.equity, eqFmt: LV.fmt(b.equity), eqWord: b.equity < 0 ? "below zero" : "thin" }; },
     ch1Right: v => { const right = (v.c === 1) === (v.b.equity < 0); return { right, guessNote: right ? "" : " You guessed more; the page says less." }; },
     farm: () => ({ farm: farmName() }), over: () => ({ over: !!G.s.over }),
-    // chapter 2
+    // First seed (day 1, after the bailiff)
     ch2Facts: () => ({ sc: S.R.seedCost, per: S.R.sacksPerPlot, three: 3 * S.R.seedCost, six: 6 * S.R.seedCost }), inv0: () => ({ inv0: G.s.bal.inv }),
     ch2After: () => ({ day: G.s.day, inv1: G.s.bal.inv, planted: G.s.plots.filter(p => p.crop).length }),
     // chapters 3 and 4
