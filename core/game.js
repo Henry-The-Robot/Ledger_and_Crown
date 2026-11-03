@@ -527,9 +527,10 @@
   function tomas() {
     const t = S.terms(s), owed = -s.bal.ap, b0 = s.bills[0];
     const buy = (n, acct) => () => commit(c => S.buySeeds(c, n, acct), r => r.ok ? tomas() : say("tomas", r.msg));
-    say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. ${t.apDays ? `On account: 14 days, or 2% off within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
-      ["Buy 3 for Cash (36)", buy(3, false), s.bal.cash < 36], ["Buy 9 for Cash (108)", buy(9, false), s.bal.cash < 108],
-      [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
+    const c3 = S.seedCash(3), c9 = S.seedCash(9), full9 = 9 * S.R.seedCost;
+    say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. Cash now gets 2% off. ${t.apDays ? `On account: pay in 14 days, and you still get the 2% if you pay within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
+      [`Buy 3 for Cash (${c3})`, buy(3, false), s.bal.cash < c3], [`Buy 9 for Cash (${c9})`, buy(9, false), s.bal.cash < c9],
+      [`Buy 9 on account (${full9} due day ${s.day + (t.apDays || 0)}; ${c9} if paid by day ${s.day + S.R.discDays})`, buy(9, true), !t.apDays || owed + full9 > t.apLimit],
       ["Sprinkler: 80 Cash", () => commit(c => S.buySprinkler(c), r => say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg)), s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
       ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),

@@ -201,16 +201,20 @@
     post(s, "cogs", `Cost of the ${n} sacks sold`, { cogs: c, inv: -c });
     s.week.revenue += v; s.week.cogs += c; s.week.sacksSold += n; return ok();
   }
-  function buySeeds(s, n, onAccount) {
+  const cashDisc = n => Math.round(n * R.seedCost * R.discPct), seedCash = n => n * R.seedCost - cashDisc(n); // what n packets cost in Cash today
+  // opt.list: pay the list price (the first-seed lesson keeps "Cash down 36, Inventory up 36" exact; the 2% comes later in the shop)
+  function buySeeds(s, n, onAccount, opt) {
     const cost = n * R.seedCost, t = terms(s);
     if (onAccount) {
       if (!t.apDays) return err("Tomas wants Cash now: you've paid him late.");
       const owed = -s.bal.ap; if (owed + cost > t.apLimit) return err(`Tomas's limit is ${t.apLimit}; you owe him ${owed}.`);
       const b = { id: s.nextId++, amount: cost, due: s.day + t.apDays, discBy: s.day + R.discDays, disc: Math.round(cost * R.discPct), late: false }; s.bills.push(b);
       post(s, "seed", `Bought ${n} seed packets from Tomas on account (bill due day ${b.due}; 2% off if paid by day ${b.discBy})`, { inv: cost, ap: -cost }); use(s, "equation");
-    } else {
-      if (s.bal.cash < cost) return err(`That's ${cost}; Cash is ${s.bal.cash}.`);
-      post(s, "seed", `Bought ${n} seed packets from Tomas for Cash`, { inv: cost, cash: -cost });
+    } else { // Kyle 11-03: Cash now earns the same 2% as paying the bill early ("2/7, net 14"), so on account costs 2% more if paid late
+      const disc = opt && opt.list ? 0 : cashDisc(n), pay = cost - disc;
+      if (s.bal.cash < pay) return err(`That's ${pay}; Cash is ${s.bal.cash}.`);
+      if (disc) post(s, "seed", `Bought ${n} seed packets from Tomas for Cash (${pay} for ${cost} of standard cost: the ${disc} off is the 2% for paying now)`, { inv: cost, cash: -pay, cogs: -disc });
+      else post(s, "seed", `Bought ${n} seed packets from Tomas for Cash`, { inv: cost, cash: -cost });
     }
     s.seeds += n; return ok();
   }
@@ -456,6 +460,6 @@
   }
 
   root.Spring = { R, Season, roll, eventsFor, eventDay, pellDays, pedlarDays, marketPrice, spotPrice, traderPrice, ACCTS, NAMES, OFFERS, newGame, post, balanceSheet, terms, rain, stage, sprinkled, committed, sacksComing, openOrders,
-    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, payBills, payOneBill, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
+    weekBills, billsDue, nextWeekEnd, forecast, discNow, addOffer, setPrice, factor, act, accept, decline, deliver, sellSpot, buySeeds, seedCash, payBills, payOneBill, buySprinkler, wager, wagerWin, sprinklerFacts, buyFence, crownFund, frostFacts, NOTICE_DAYS, preview, notice, answerNotice, marketOutlook, rescue, refusePell, buyPoison, ratLoss, warning, borrow, repay, loanFacts, sleep, coach };
   if (typeof module !== "undefined") module.exports = root.Spring;
 })(typeof window !== "undefined" ? window : globalThis);

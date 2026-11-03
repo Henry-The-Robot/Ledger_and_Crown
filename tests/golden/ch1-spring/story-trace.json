@@ -3910,7 +3910,7 @@
    [
     "say",
     "maud",
-    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 488.",
     null,
     null
    ],
@@ -3926,14 +3926,14 @@
    [
     "say",
     "maud",
-    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    "Inventory 496 ÷ cost of goods sold 488 × 17 days = 17 days: how long grain sits before it sells.",
     null,
     null
    ],
    [
     "say",
     "maud",
-    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    "Payables 180 ÷ 488 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
     null,
     [
      "h-ap"
@@ -3998,9 +3998,9 @@
    },
    "game": {
     "day": 17,
-    "cash": 281,
+    "cash": 297,
     "bal": {
-     "cash": 281,
+     "cash": 297,
      "ar": 324,
      "inv": 496,
      "equip": 0,
@@ -4010,7 +4010,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -1098,
-     "cogs": 504,
+     "cogs": 488,
      "upkeep": 90,
      "depreciation": 0,
      "fines": 0,
@@ -4199,9 +4199,9 @@
    },
    "game": {
     "day": 23,
-    "cash": 291,
+    "cash": 310,
     "bal": {
-     "cash": 291,
+     "cash": 310,
      "ar": 1563,
      "inv": 76,
      "equip": 0,
@@ -4211,7 +4211,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -2580,
-     "cogs": 1104,
+     "cogs": 1085,
      "upkeep": 135,
      "depreciation": 0,
      "fines": 0,
@@ -9382,7 +9382,7 @@
    [
     "say",
     "maud",
-    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 488.",
     null,
     null
    ],
@@ -9398,14 +9398,14 @@
    [
     "say",
     "maud",
-    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    "Inventory 496 ÷ cost of goods sold 488 × 17 days = 17 days: how long grain sits before it sells.",
     null,
     null
    ],
    [
     "say",
     "maud",
-    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    "Payables 180 ÷ 488 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
     null,
     [
      "h-ap"
@@ -9470,9 +9470,9 @@
    },
    "game": {
     "day": 17,
-    "cash": 281,
+    "cash": 297,
     "bal": {
-     "cash": 281,
+     "cash": 297,
      "ar": 324,
      "inv": 496,
      "equip": 0,
@@ -9482,7 +9482,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -1098,
-     "cogs": 504,
+     "cogs": 488,
      "upkeep": 90,
      "depreciation": 0,
      "fines": 0,
@@ -9671,9 +9671,9 @@
    },
    "game": {
     "day": 23,
-    "cash": 291,
+    "cash": 310,
     "bal": {
-     "cash": 291,
+     "cash": 310,
      "ar": 1563,
      "inv": 76,
      "equip": 0,
@@ -9683,7 +9683,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -2580,
-     "cogs": 1104,
+     "cogs": 1085,
      "upkeep": 135,
      "depreciation": 0,
      "fines": 0,
@@ -14948,7 +14948,7 @@
    [
     "say",
     "maud",
-    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 504.",
+    "Your books can say it in days. Over 17 days you sold 1098 and the grain you sold cost 488.",
     null,
     null
    ],
@@ -14964,14 +14964,14 @@
    [
     "say",
     "maud",
-    "Inventory 496 ÷ cost of goods sold 504 × 17 days = 17 days: how long grain sits before it sells.",
+    "Inventory 496 ÷ cost of goods sold 488 × 17 days = 17 days: how long grain sits before it sells.",
     null,
     null
    ],
    [
     "say",
     "maud",
-    "Payables 180 ÷ 504 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
+    "Payables 180 ÷ 488 × 17 days = 6 days: how long Tomas lets you wait. That one is free credit.",
     null,
     [
      "h-ap"
@@ -15036,9 +15036,9 @@
    },
    "game": {
     "day": 17,
-    "cash": 281,
+    "cash": 297,
     "bal": {
-     "cash": 281,
+     "cash": 297,
      "ar": 324,
      "inv": 496,
      "equip": 0,
@@ -15048,7 +15048,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -1098,
-     "cogs": 504,
+     "cogs": 488,
      "upkeep": 90,
      "depreciation": 0,
      "fines": 0,
@@ -15237,9 +15237,9 @@
    },
    "game": {
     "day": 23,
-    "cash": 291,
+    "cash": 310,
     "bal": {
-     "cash": 291,
+     "cash": 310,
      "ar": 1563,
      "inv": 76,
      "equip": 0,
@@ -15249,7 +15249,7 @@
      "crown": -1250,
      "capital": 1054,
      "revenue": -2580,
-     "cogs": 1104,
+     "cogs": 1085,
      "upkeep": 135,
      "depreciation": 0,
      "fines": 0,

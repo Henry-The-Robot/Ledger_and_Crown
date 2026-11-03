@@ -177,7 +177,7 @@ window.Story = (function () {
     clearStamp: () => { document.querySelectorAll(".vstamp").forEach(x => x.remove()); },
     nameFarm: async () => { await nameFarm(); LV.P.title = farmName(); LV.parch(); },
     craneOffer: (a) => craneOffer(a), craneOff: () => { LV.craneOn = false; }, parchClose: () => { LV.parchClose(); },
-    buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit)),
+    buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit, { list: !!a.list })),
     haggle: (a, v) => GL.haggle(v.o, { open: a.open, walk: a.walk, floor: v.cost, line: a.line, rounds: a.rounds }),
     timeline: a => LV.timeline(a),
     // WS3: the Hobb bet. The player predicts the chest from the timeline (cards, no Cash line), stakes real coin, and is told the answer on the morning after Hobb pays.
