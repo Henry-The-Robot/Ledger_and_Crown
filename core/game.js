@@ -827,7 +827,8 @@
       else { tries++; $("mline").innerHTML = `<b>Maud:</b> ${text}<br><i class="hintline">Not that one. ${hints[Math.min(tries - 1, hints.length - 1)]}</i>`; } }; }); }); }
   // WS6: the ending (Sold out / Seized / Bridged / Free) after the books close
   // SM5: after the books close, a button starts the next season through the loader. A failed Court still allows it (the carry record says so); a sold or insolvent farm does not.
-  const NEXT_LABEL = { "ch1/summer": "Begin Summer" }, nextId = () => SeasonLoader.next(SEASON), canBegin = () => storyOn && nextId() && NEXT_LABEL[nextId()] && s.outcome !== "insolvent" && s.outcome !== "sold";
+  // Summer is not built yet (its cards are paused, Kyle 10-17): the button shows only with ?next=1 until the Summer release (Lead, 11-02)
+  const NEXT_LABEL = q.get("next") === "1" ? { "ch1/summer": "Begin Summer" } : {}, nextId = () => SeasonLoader.next(SEASON), canBegin = () => storyOn && nextId() && NEXT_LABEL[nextId()] && s.outcome !== "insolvent" && s.outcome !== "sold";
   const beginBtn = () => canBegin() ? `<button class="btn gold" id="goNext">${NEXT_LABEL[nextId()]}</button> ` : "";
   function beginNext() { const id = nextId(); try { if (!Save.load().closed[SEASON]) Save.closeSeason(SEASON, s, { examPassed: false, score: 0, attempts: 0 }); } catch (e) {} Save.clearSlot(); location.search = "?season=" + id; } // Spring is frozen already (closeBooks); leaving clears its open slot
   const endBtn = () => storyOn ? `<p>${beginBtn()}<button class="btn alt" id="goEnd">How it ends</button></p>` : "";

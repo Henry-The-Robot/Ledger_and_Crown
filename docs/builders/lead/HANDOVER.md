@@ -21,7 +21,14 @@ study kit) is cleared by the D3 decision. **Voice:** only the narrator's 11 open
 "Daniel"). On 10-27 the Lead made it default-on (`core/game.js:143-144`, `?vo=0` = off) — in local/work, so the live
 site gets it when #59 merges. Kyle: we pay for ElevenLabs and do not use it → voice the study-slice cast.
 
-## Next 3 actions
+## Update 11-02 (Lead)
+- MBA-FX1, MBA-ST4 and MBA-VO1 are built. PR #59 has 41 commits; CI is green; the Lead reviewed the shipping-path diff.
+- Review fix: "Begin Summer" opened an unbuilt Summer. It now shows only with `?next=1`. Version stamped 0.4.12.
+- These edits wait for the scheduled sync; the manual sync was denied again. Merge #59 after CI is green on them.
+- Gap found: no page loads the study version. New card MBA-ST11 (study.html, both arms) is first. MBA-VO2 fixes the voice line list.
+- Coverage: Spring covers 15 of 177 MBA sessions (8 percent). The other 162 are planned for later seasons.
+
+## Next 3 actions (10-27; see the update above)
 1. When the Builder pushes MBA-FX1, read the diff. Confirm CI is green. The Lead edited `tests/voice-opening.html`;
    CI has not run it yet. The reviewer's next pass must list no CRITICAL or MAJOR. Then merge #59.
 2. Review MBA-ST4 (study scenes, CLEP concept list in `STUDY-SLICE-2026-10.md` section 4). Then review MBA-VO1.

@@ -8,7 +8,7 @@ const load = (qs) => new Promise(res => { const f = document.createElement("ifra
 (async () => {
   try {
     localStorage.clear();
-    let f = await load("new=1&fast&seed=3"), w = f.contentWindow; await sleep(800);
+    let f = await load("new=1&fast&seed=3&next=1"), w = f.contentWindow; await sleep(800);
     w.Story.state.stage = "done"; w.G.closeDlg();
     const g = w.G.s; let n = 0; while (!g.over && n++ < 60) { w.Bot.careful.day(g); w.Spring.sleep(g); }
     const cash = Math.round(g.bal.cash);
