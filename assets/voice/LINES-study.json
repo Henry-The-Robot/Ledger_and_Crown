@@ -1,0 +1,314 @@
+[
+ {
+  "scene": "ch1",
+  "id": "n1",
+  "who": "crane",
+  "text": "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me."
+ },
+ {
+  "scene": "ch1",
+  "id": "n4",
+  "who": "crane",
+  "text": "Now the other column, the one people prefer not to read. I brought the papers myself."
+ },
+ {
+  "scene": "ch1",
+  "id": "n6",
+  "who": "crane",
+  "text": "Before I stamp it, heir: do you own more than you owe, or less?"
+ },
+ {
+  "scene": "ch1",
+  "id": "n9-t-n0",
+  "who": "crane",
+  "text": "You have a head for it. That is not a compliment, heir; it is a diagnosis."
+ },
+ {
+  "scene": "ch1",
+  "id": "n9-e-n0",
+  "who": "crane",
+  "text": "Less. Much less, and I am required to say it plainly."
+ },
+ {
+  "scene": "ch1",
+  "id": "n11",
+  "who": "crane",
+  "text": "The writ requires a name for the land. Item: what shall I write?"
+ },
+ {
+  "scene": "ch1",
+  "id": "n14",
+  "who": "crane",
+  "text": "Item: {farm}. Entered on the writ, and not to be changed without a form."
+ },
+ {
+  "scene": "ch1",
+  "id": "n19",
+  "who": "maud",
+  "text": "That was Crane. Don't mind him: he counts everything twice because he's frightened of nearly everything."
+ },
+ {
+  "scene": "ch1",
+  "id": "n20",
+  "who": "maud",
+  "text": "What you own minus what you owe is yours, and yours is {eqWord}. That's why we work."
+ },
+ {
+  "scene": "ch1",
+  "id": "n21",
+  "who": "maud",
+  "text": "Profit is an opinion. Cash is a fact."
+ },
+ {
+  "scene": "ch1",
+  "id": "n23",
+  "who": "maud",
+  "text": "The far field's ripe. Harvest it (walk up, press E or tap Act) and Ashby the baker will buy."
+ },
+ {
+  "scene": "ch2",
+  "id": "n1",
+  "who": "tomas",
+  "text": "My friend! Edric's heir! Sit, sit, no, don't sit, buy! Seed is {sc} a packet. One packet plants one plot; a plot gives {per} sacks of wheat. I wouldn't say that if it weren't true, and I would say it if it were, which is a rare quality in a salesman."
+ },
+ {
+  "scene": "ch2",
+  "id": "n2",
+  "who": "maud",
+  "text": "Let me buy the first three, so you can see where the coin goes."
+ },
+ {
+  "scene": "ch2",
+  "id": "n4",
+  "who": "maud",
+  "text": "Cash went down {three} and Inventory went up {three}: changed shape, not spent.<br>Seed only becomes a cost when the grain is sold."
+ },
+ {
+  "scene": "ch2",
+  "id": "n6",
+  "who": "tomas",
+  "text": "Six more?"
+ },
+ {
+  "scene": "ch3",
+  "id": "n1",
+  "who": "ashby",
+  "text": "So you're Edric's heir. You've his chin and none of his luck, dear. I need six sacks for the ovens. Seven a sack, Cash on the nail."
+ },
+ {
+  "scene": "ch3",
+  "id": "n2",
+  "who": "maud",
+  "text": "Each sack cost you {cost}: {seedCost} of seed for {per} sacks, so at 7 you keep {m7} a sack. That's gross profit: {m7} out of every 7 is {p7}%, your margin."
+ },
+ {
+  "scene": "ch3",
+  "id": "n4",
+  "who": "maud",
+  "text": "Before you name a price: what's your cost floor? The lowest you'd take for a sack before it loses money."
+ },
+ {
+  "scene": "ch3",
+  "id": "n5",
+  "who": "ashby",
+  "text": "Times are hard, dear. Would you take 6?"
+ },
+ {
+  "scene": "ch3",
+  "id": "n6",
+  "who": "maud",
+  "text": "Work it out before you answer. Your margin at 6, in %?"
+ },
+ {
+  "scene": "ch3",
+  "id": "n9",
+  "who": "maud",
+  "text": "Your cost floor, {cost}, is the red line on the price track: sell below it and the sack costs you more than it earns. Name your price and she'll counter; you can always walk away."
+ },
+ {
+  "scene": "ch3",
+  "id": "n10",
+  "who": "maud",
+  "text": "That red line is your walk-away point: your best alternative, less what it costs to take it. Today it is your cost; a better buyer would raise it."
+ },
+ {
+  "scene": "ch3",
+  "id": "n12-t-n0",
+  "who": "ashby",
+  "text": "Come back when you've thought it over."
+ },
+ {
+  "scene": "ch3",
+  "id": "n14",
+  "who": "ashby",
+  "text": "{price} it is. Ship them from your crate and I'll pay on the spot."
+ },
+ {
+  "scene": "ch4",
+  "id": "n1",
+  "who": "maud",
+  "text": "Before you go in: know your cost floor. And listen for when he pays."
+ },
+ {
+  "scene": "ch4",
+  "id": "n2",
+  "who": "hobb",
+  "text": "...Edric's heir. Hm. Nine sacks. I pay... fourteen days after delivery. Same as always. Same as your uncle."
+ },
+ {
+  "scene": "ch4",
+  "id": "n3",
+  "who": "maud",
+  "text": "Your uncle loved Hobb, and Hobb always paid. Eventually."
+ },
+ {
+  "scene": "ch4",
+  "id": "n5-t-n0",
+  "who": "hobb",
+  "text": "Suit yourself. The offer stands till tomorrow."
+ },
+ {
+  "scene": "ch4b",
+  "id": "n1",
+  "who": "maud",
+  "text": "The Ledger says you earned {v} today: Revenue. Look at the chest: it didn't move."
+ },
+ {
+  "scene": "ch4b",
+  "id": "n2-t-n0",
+  "who": "maud",
+  "text": "Hobb's {v} joins your Accounts receivable: everything people owe you, {arNow} in all. Hobb's part is due day {due}. Two books, and Edric only read one."
+ },
+ {
+  "scene": "ch4b",
+  "id": "n2-e-n0",
+  "who": "maud",
+  "text": "The {v} is your Accounts receivable now: Hobb owes it, due day {due}. Two books, and Edric only read one."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n0-0",
+  "who": "hobb",
+  "text": "I... have a thing to ask. I'd rather be hit with the wheel."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n0-1",
+  "who": "hobb",
+  "text": "The road washed out. Three weeks of flour stuck on the wrong side of a river. My customers can't pay me. So I can't pay you."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n0-2",
+  "who": "hobb",
+  "text": "I'm asking for seven more days on the {amt} I owe you. I'll pay... eventually. I always have."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n1",
+  "who": "hobb",
+  "text": "He has taken his hat off, which he does for funerals."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n1-o0-n3-0",
+  "who": "hobb",
+  "text": "...Thank you. You'll... not regret it. Probably."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n1-o0-n4",
+  "who": "maud",
+  "text": "You just lent Hobb money: not coin, but time. A receivable is a loan you didn't price, so what did you charge him for the week?"
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n1-o1-n2-0",
+  "who": "hobb",
+  "text": "...Fair. A man pays what he owes. I'll find it."
+ },
+ {
+  "scene": "hobb_extension",
+  "id": "n1-o2-n3-0",
+  "who": "hobb",
+  "text": "Half... today. Half in a week. That's... better than I asked for. You're your uncle's heir and also not."
+ },
+ {
+  "scene": "tvm",
+  "id": "n1-t-n0",
+  "who": "tomas",
+  "text": "I can't put more on your account while you owe me this much. Pay what I'm owed first."
+ },
+ {
+  "scene": "tvm",
+  "id": "n2-t-n0",
+  "who": "tomas",
+  "text": "Seed again? Same terms: the full bill in {apDays} days, or {disc}% off if you pay within {discDays}."
+ },
+ {
+  "scene": "tvm",
+  "id": "n2-e-n0",
+  "who": "tomas",
+  "text": "On account: the full bill in {apDays} days, or {disc}% off if you pay within {discDays}."
+ },
+ {
+  "scene": "tvm",
+  "id": "n3-t-n0",
+  "who": "maud",
+  "text": "Ezra's rate was {tvmRate}% a week when you last bought. Today it is {rate}%. Same discount, different Cash. I won't say whether that changes the answer."
+ },
+ {
+  "scene": "tvm",
+  "id": "n3-e-n0",
+  "who": "maud",
+  "text": "A discount for paying early is an interest rate in disguise. Ezra charges {rate}% a week for Cash. I won't say which is cheaper: buy, then move the bill and see."
+ },
+ {
+  "scene": "tvm",
+  "id": "n5",
+  "who": "tomas",
+  "text": "How many on account?"
+ },
+ {
+  "scene": "tvm",
+  "id": "n9-t-n0",
+  "who": "tomas",
+  "text": "{msg}"
+ },
+ {
+  "scene": "tvm",
+  "id": "n14",
+  "who": "maud",
+  "text": "{tookPhrase} A week of that Cash from Ezra at {rate}% would cost {carryX}, so {cheaperPhrase}."
+ },
+ {
+  "scene": "tvm",
+  "id": "n15-t-n0",
+  "who": "maud",
+  "text": "The rate is not fixed. Watch what it does."
+ },
+ {
+  "scene": "ch7",
+  "id": "n1",
+  "who": "ezra",
+  "text": "Come in. Sit. You want coin; everyone does, eventually. My rate is {rate0}% a week. It is not a judgement, only a price. Show me your forecast first, and I shall see how much I believe it."
+ },
+ {
+  "scene": "ch5",
+  "id": "n1-t-n0",
+  "who": "maud",
+  "text": "Jory walked off last night: {walkedWages} in wages and the chest couldn't find them. The crops went unwatered. The Ledger said profit. The chest said no."
+ },
+ {
+  "scene": "ch5",
+  "id": "n1-e-n0",
+  "who": "maud",
+  "text": "Wages went out last night. Closer than the Ledger makes it look."
+ },
+ {
+  "scene": "ch5",
+  "id": "n3",
+  "who": "tomas",
+  "text": "I only mark up my seed 50%. Honest trade."
+ }
+]

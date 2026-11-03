@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Season loader: ?season=ch1/summer</title></head>
+<body><pre id="out">running</pre>
+<!-- SM4: game.html?season=ch1/summer picks Summer (R is Summer's, LC_SEASON is set) and reaches day 1 with no JS error; with no ?season= it is Spring as before. -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = (qs) => new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; const errs = []; f.__errs = errs;
+  f.src = "../game.html?" + qs; f.onload = () => { try { f.contentWindow.addEventListener("error", e => errs.push(e.message)); } catch (e) {} res(f); }; document.body.appendChild(f); });
+(async () => {
+  try {
+    localStorage.clear();
+    let f = await load("new=1&fast&seed=3&season=ch1/summer"), w = f.contentWindow; await sleep(800);
+    out.push(`summer: LC_SEASON is ch1/summer: ${w.LC_SEASON === "ch1/summer"}`);
+    out.push(`summer: the active season is ch1/summer: ${w.Spring.Season.current === "ch1/summer"}`);
+    out.push(`summer: a game exists on day 1: ${!!w.G.s && w.G.s.day === 1}`);
+    out.push(`summer: no closed Spring, so the game starts from the canonical heir (carried is ch1/spring): ${w.G.s.carried === "ch1/spring"}`);
+    f.remove(); localStorage.clear();
+    f = await load("new=1&fast&seed=3"); w = f.contentWindow; await sleep(800);
+    out.push(`default: Spring as before: ${w.LC_SEASON === "ch1/spring" && w.Spring.Season.current === "ch1/spring" && w.G.s.day === 1}`);
+    f.remove();
+    out.push(`no JS error after load: ${f.__errs.length === 0 && true}`);
+  } catch (e) { out.push("THROWN " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

@@ -20,6 +20,9 @@
 // Text may hold {name} (any variable) and {name|money} (thousands). {amt} and {half} are the open invoice (set by `bind: { invoice: who }`) and half of it, rounded down.
 // An unknown {name} throws, so a typo cannot reach a player.
 // `need` (a condition on state s): { flag: key } | { invoiceOpen: who }  (an open invoice of theirs, due after today).
+// Voice (MBA-VO1): every dialogue box has a stable id from its place in the record: n<step> for one box, n<step>-<line> for a run of lines, and
+// n<step>-o<option>- / -t- / -e- / -c<case>- in front of the ids inside a choice, an if or a pick. Its voice file is assets/voice/<record id>/<box id>.mp3.
+// boxes(rec) lists every box a record can show; play() tells window.Voice (core/voice.js) which box comes next.
 (function () {
   const open = (s, who) => (s.invoices || []).find(v => v.who === who && v.due > s.day) || (s.invoices || []).find(v => v.who === who) || null;
   function need(cond, s) {
@@ -47,15 +50,18 @@
     throw new Error("scene: unknown test " + JSON.stringify(cond));
   }
   const btn = (b, v) => typeof b === "string" ? fill(b, v) : Object.assign({ label: fill(b.label, v) }, b.off ? { disabled: !!v[b.off] } : {});
-  // returns true when a step ended the scene (`end`), so every caller stops too
-  async function steps(list, rec, c, v) {
-    for (const st of list) {
-      if (st.say != null) await c.lines(st.say, st.lines.map(t => fill(t, v)));
+  const mark = (rec, ids) => { try { if (typeof window !== "undefined" && window.Voice) window.Voice.mark(rec.id, ids); } catch (e) {} }; // ids: the box ids that open next, in order; null clears
+  // returns true when a step ended the scene (`end`), so every caller stops too. `pre` is the voice-id prefix of the list.
+  async function steps(list, rec, c, v, pre) {
+    pre = pre || "";
+    for (let k = 0; k < list.length; k++) {
+      const st = list[k], at = pre + "n" + k;
+      if (st.say != null) { mark(rec, st.lines.map((t, j) => at + "-" + j)); await c.lines(st.say, st.lines.map(t => fill(t, v))); }
       else if (st.ask != null) {
-        const k = await c.ask(st.ask, fill(st.text, v), st.options.map(o => fill(o.label, v)));
-        if (await steps((st.options[k] || st.options[st.options.length - 1]).then || [], rec, c, v)) return true;
+        mark(rec, [at]); const i = await c.ask(st.ask, fill(st.text, v), st.options.map(o => fill(o.label, v))), o = st.options[i] ? i : st.options.length - 1;
+        if (await steps(st.options[o].then || [], rec, c, v, at + "-o" + o + "-")) return true;
       }
-      else if (st.maud != null) await c.maud(fill(st.maud, v));
+      else if (st.maud != null) { mark(rec, [at]); await c.maud(fill(st.maud, v)); }
       else if (st.flag) c.flag(st.flag[0], st.flag[1]);
       else if (st.trust) c.trust(st.trust[0], st.trust[1]);
       else if (st.clue) c.clue();
@@ -65,15 +71,15 @@
         const inv = open(c.s, st.who), half = inv ? Math.floor(inv.amount / 2) : 0;
         if (inv) { c.S.post(c.s, "collect", st.note, { cash: half, ar: -half }); inv.amount -= half; inv.due += st.days; }
       }
-      else if (st.tell != null) await c.tell(fill(st.tell, v), st.spot);
-      else if (st.speak != null) { const r = await c.speak(st.speak, fill(st.text, v), st.buttons && st.buttons.map(b => btn(b, v))); if (st.as) v[st.as] = r; }
-      else if (st.quiz != null) await c.quiz(Object.assign({}, st, { text: fill(st.quiz, v), hints: (st.hints || []).map(t => fill(t, v)), answer: v[st.answer], work: st.work && fill(st.work, v), how: st.how && fill(st.how, v) }), v);
+      else if (st.tell != null) { mark(rec, [at]); await c.tell(fill(st.tell, v), st.spot); }
+      else if (st.speak != null) { mark(rec, [at]); const r = await c.speak(st.speak, fill(st.text, v), st.buttons && st.buttons.map(b => btn(b, v))); if (st.as) v[st.as] = r; }
+      else if (st.quiz != null) { mark(rec, [at]); await c.quiz(Object.assign({}, st, { text: fill(st.quiz, v), hints: (st.hints || []).map(t => fill(t, v)), answer: v[st.answer], work: st.work && fill(st.work, v), how: st.how && fill(st.how, v) }), v); }
       else if (st.calc) Object.assign(v, c.calc(st.calc, v));
       else if (st.set) v[st.set[0]] = st.set[1];
       else if (st.let) v[st.let[0]] = fill(st.let[1], v);
       else if (st.remember) c.remember(st.remember[0], st.remember[1] && st.remember[1].var ? v[st.remember[1].var] : st.remember[1]);
-      else if (st.if !== undefined && !st.keep && !st.master) { if (await steps(test(st.if, v) ? st.then || [] : st.else || [], rec, c, v)) return true; }
-      else if (st.pick) { if (await steps(st.cases[v[st.pick]] || st.cases[st.cases.length - 1], rec, c, v)) return true; }
+      else if (st.if !== undefined && !st.keep && !st.master) { const yes = test(st.if, v); if (await steps(yes ? st.then || [] : st.else || [], rec, c, v, at + (yes ? "-t-" : "-e-"))) return true; }
+      else if (st.pick) { const ci = st.cases[v[st.pick]] ? v[st.pick] : st.cases.length - 1; if (await steps(st.cases[ci], rec, c, v, at + "-c" + ci + "-")) return true; }
       else if (st.keep) c.keep(deep(st.keep, v));
       else if (st.addEx) c.addEx(st.addEx[0], fill(st.addEx[1], v));
       else if (st.pin) c.pin(...st.pin.map(x => typeof x === "string" ? fill(x, v) : x));
@@ -86,8 +92,26 @@
     }
     return false;
   }
-  async function play(rec, c, init) { return !(await steps(rec.steps, rec, c, Object.assign(vars(rec, c.s), init || {}))); }
-  const api = { play, need, vars, fill };
+  // Every dialogue box a record can show, in order, with its voice id: [{ scene, id, who, text }]. The text is the record's own ({names} not filled).
+  function boxes(rec) {
+    const out = [], add = (id, who, text) => out.push({ scene: rec.id, id, who, text });
+    (function walk(list, pre) {
+      list.forEach((st, k) => {
+        const at = pre + "n" + k;
+        if (st.say != null) st.lines.forEach((t, j) => add(at + "-" + j, st.say, t));
+        else if (st.ask != null) { add(at, st.ask, st.text); st.options.forEach((o, i) => walk(o.then || [], at + "-o" + i + "-")); }
+        else if (st.maud != null) add(at, "maud", st.maud);
+        else if (st.tell != null) add(at, "maud", st.tell);
+        else if (st.speak != null) add(at, st.speak, st.text);
+        else if (st.quiz != null) add(at, "maud", st.quiz);
+        else if (st.if !== undefined && !st.keep && !st.master) { walk(st.then || [], at + "-t-"); walk(st.else || [], at + "-e-"); }
+        else if (st.pick) st.cases.forEach((cs, i) => walk(cs, at + "-c" + i + "-"));
+      });
+    })(rec.steps, "");
+    return out;
+  }
+  async function play(rec, c, init) { const ended = await steps(rec.steps, rec, c, Object.assign(vars(rec, c.s), init || {})); mark(rec, null); return !ended; }
+  const api = { play, need, vars, fill, boxes };
   if (typeof window !== "undefined") window.SceneKit = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

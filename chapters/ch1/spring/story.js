@@ -92,7 +92,7 @@ window.Story = (function () {
       return { b, cost, cash: b.cash, sacks: s0.sacks, sackVal: s0.sacks * cost, plots: plots.length, cropVal: plots.reduce((a, p) => a + p.crop.cost, 0), assets: b.assets, liab: b.liab, equity: b.equity, eqFmt: LV.fmt(b.equity), eqWord: b.equity < 0 ? "below zero" : "thin" }; },
     ch1Right: v => { const right = (v.c === 1) === (v.b.equity < 0); return { right, guessNote: right ? "" : " You guessed more; the page says less." }; },
     farm: () => ({ farm: farmName() }), over: () => ({ over: !!G.s.over }),
-    // chapter 2
+    // First seed (day 1, after the bailiff)
     ch2Facts: () => ({ sc: S.R.seedCost, per: S.R.sacksPerPlot, three: 3 * S.R.seedCost, six: 6 * S.R.seedCost }), inv0: () => ({ inv0: G.s.bal.inv }),
     ch2After: () => ({ day: G.s.day, inv1: G.s.bal.inv, planted: G.s.plots.filter(p => p.crop).length }),
     // chapters 3 and 4
@@ -178,12 +178,12 @@ window.Story = (function () {
     nameFarm: async () => { await nameFarm(); LV.P.title = farmName(); LV.parch(); },
     craneOffer: (a) => craneOffer(a), craneOff: () => { LV.craneOn = false; }, parchClose: () => { LV.parchClose(); },
     buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit)),
-    haggle: (a, v) => GL.haggle(v.o, { open: a.open, walk: a.walk, floor: v.cost, line: a.line }),
+    haggle: (a, v) => GL.haggle(v.o, { open: a.open, walk: a.walk, floor: v.cost, line: a.line, rounds: a.rounds }),
     timeline: a => LV.timeline(a),
     // WS3: the Hobb bet. The player predicts the chest from the timeline (cards, no Cash line), stakes real coin, and is told the answer on the morning after Hobb pays.
     ch4bBet: (a, v) => { const V = LV, n = v.n, last = () => { const r = S.forecast(G.s, n); return r[r.length - 1]; };
       const tl = { label: a.tlLabel, open: () => V.timeline({ mode: "show", n, hideLine: true, title: a.tlTitle, maud: a.tlMaud }) };
-      return V.bet({ prompt: a.prompt, docs: [tl, DOC.ledger], how: a.how, stake: { min: 0, max: 5 }, tol: 0, answer: () => last().close, reveal: { day: v.revealDay }, kind: "hobb", explain: () => a.explain }); },
+      return V.bet({ prompt: a.prompt, docs: [tl, DOC.ledger], how: a.how, stake: { min: 0, max: 5 }, tol: 0, answer: () => last().close, reveal: a.reveal === "now" ? "now" : { day: v.revealDay }, kind: "hobb", explain: () => a.explain }); },
     markupBet: (a, v) => LV.bet({ prompt: a.prompt, docs: [DOC.notebook], how: a.how, stake: { min: 0, max: 2 }, tol: 1, answer: () => v.m, reveal: "now", kind: "markup", explain: () => a.explain }),
     costScene: () => costScene(),
     tvm: a => tvmScene(a.again),
