@@ -37,6 +37,11 @@ site gets it when #59 merges. Kyle: we pay for ElevenLabs and do not use it → 
   After MBA-VO2 writes LINES-study.json, the Lead generates every Maud and Crane line (about 43-146 credits a line).
 - Expert-review outreach draft asked of the coordinator (help.py, 11-02).
 
+- 11-02 late: MBA-SV1 reviewed. Lead fix: the Home Screen card shows on touch devices only; "Got it" hides it 7 days.
+  v0.4.13 merged (PR #60), CI green, including save-backup.html. The merge also carried the Builder's unfinished,
+  unlinked MBA-ST11 files (study.html, core/study/page.js). They are reachable by URL only; finish ST11 before linking.
+- Lesson: the Builder and the Lead share one checkout. Before a sync, run `git status` to see whose files are in it.
+
 ## Next 3 actions (10-27; see the update above)
 1. When the Builder pushes MBA-FX1, read the diff. Confirm CI is green. The Lead edited `tests/voice-opening.html`;
    CI has not run it yet. The reviewer's next pass must list no CRITICAL or MAJOR. Then merge #59.

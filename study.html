@@ -39,13 +39,13 @@
 (function () {
   const q = location.search, root = document.getElementById("study-root");
   const go = (route, host) => {
-    window.__study = StudyPage.mount(root, { search: q, bank: StudyFixtureItems, sections: StudyReadingFixture.SECTIONS, route, known: host && host.known, gameHost: host });
+    window.__study = StudyPage.mount(root, { search: q, bank: StudyFixtureItems, sections: StudyReadingFixture.SECTIONS, route, known: host && (() => host.known), gameHost: host });
   };
   if (StudyPage.armOf(q) !== "game") return go(null, null);
   // Game arm: the route file and the game scripts load only for this arm, so the reading arm never carries the game.
   fetch("study-route.json").then(r => r.json()).then(route => {
-    if (!window.StudyGame) { const s = document.createElement("script"); s.src = "core/study/game-host.js"; s.onload = () => go(route, StudyGame.host(q)); s.onerror = () => go(route, null); document.head.appendChild(s); }
-    else go(route, StudyGame.host(q));
+    if (!window.StudyGame) { const s = document.createElement("script"); s.src = "core/study/game-host.js"; s.onload = () => go(route, StudyGame.host(q, route)); s.onerror = () => go(route, null); document.head.appendChild(s); }
+    else go(route, StudyGame.host(q, route));
   }, () => go(null, null));
 })();
 </script>

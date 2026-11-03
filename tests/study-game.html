@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Study page: the game arm on the real game (MBA-ST11)</title></head>
+<body><pre id="out">running</pre><div id="frames"></div>
+<!-- MBA-ST11: study.html opens the real game in a frame; a bot (the pump from smoke-story.html) plays every step of study-route.json through the real scene player,
+     verbs, dialog and Mini-Court, and the page must reach the result code with every step in the log. -->
+<script src="../core/study/assign.js"></script><script src="../core/study/forms.js"></script><script src="../core/study/fixture-items.js"></script>
+<script>
+const out = [], errs = [], sleep = ms => new Promise(r => setTimeout(r, ms)), SEED = 20261022, PC = "p0001";
+const a = StudyAssign.assign(PC, SEED);
+const url = `../study.html?study=1&pc=${PC}&arm=${a.arm}&order=${a.order}&seed=${SEED}`;
+const rec = []; // what the pump did, for the failure message
+
+function pump(w) { // do the one thing the game screen is asking for; true if something was done
+  const d = w.document, panel = d.getElementById("panel"), dlg = d.getElementById("dlg");
+  if (d.getElementById("nfok")) { d.getElementById("nfok").click(); return true; }
+  const court = d.getElementById("court");
+  if (court) { // the Mini-Court: present the first card on each claim, then click through the screens (passing is not the test; reaching the verdict is)
+    const present = court.querySelector('[data-a="present"]:not([disabled])'); if (present) { present.click(); return true; }
+    const step = court.querySelector('.ct-btn[data-k]:not([disabled]), .ct-btn[data-a="next"]:not([disabled])'); if (step) { step.click(); return true; }
+    const sel = court.querySelector('.ct-card[data-a="sel"]'); if (sel) { sel.click(); return true; }
+    return false;
+  }
+  if (panel.style.display !== "none") {
+    const click = id => { const b = d.getElementById(id); if (b) { b.click(); return true; } };
+    if (d.getElementById("tlLow") && w.__tl) { d.getElementById("tlLow").value = w.__tl.low; d.getElementById("tlDay").value = w.__tl.day; return click("tlok"); }
+    if (click("tlok2") || click("tlok")) return true;
+    const pcl = d.querySelector("#panelBody .pclose"); if (pcl) { pcl.click(); return true; }
+    if (click("pgok") || click("rnext") || click("pclose")) return true;
+    const ins = d.querySelectorAll("#panelBody input.fc"); if (d.getElementById("bok")) { ins.forEach(x => x.value = x.dataset.ans); return click("bok"); }
+    if (w.__pick) { const r = d.querySelector(`#cft tr[data-line="${w.__pick}"]`); if (r) { r.click(); return true; } }
+    return false;
+  }
+  if (dlg.style.display === "flex") {
+    const btns = [...dlg.querySelectorAll("button")].filter(b => !b.disabled), num = d.getElementById("num");
+    if (!btns.length) return false;
+    if (num && w.__want !== undefined) { num.value = w.__want; btns[0].click(); return true; }
+    if (num) { const ac = btns.find(b => /Accept/.test(b.textContent)); (ac || btns[0]).click(); return true; }
+    const pref = btns.find(b => /Offer \d+ \(half\)|^.?\d?Continue|Accept/.test(b.textContent)); (pref || btns[0]).click(); return true;
+  }
+  return false;
+}
+
+(async () => {
+  try {
+    const f = document.createElement("iframe"); f.style.width = "1194px"; f.style.height = "834px"; f.src = url; document.getElementById("frames").appendChild(f);
+    await new Promise(r => { f.onload = r; });
+    const sw = f.contentWindow; sw.addEventListener("error", e => errs.push("study: " + e.message)); sw.addEventListener("unhandledrejection", e => errs.push("study rejection: " + (e.reason && e.reason.message || e.reason)));
+    await sleep(300);
+    // form A: all wrong, so the learner is not screened out
+    const built = StudyForms.build(StudyFixtureItems.items, "A", SEED);
+    for (let i = 0; i < built.length; i++) { sw.document.querySelector(`.sp-opt[data-i="${(built[i].answerIndex + 1) % built[i].options.length}"]`).click(); await sleep(20); }
+    const study = sw.__study, steps = [];
+    // the game frame
+    let gf = null; for (let i = 0; i < 100 && !gf; i++) { gf = sw.document.getElementById("sp-frame"); await sleep(100); }
+    const w = gf.contentWindow; w.addEventListener("error", e => errs.push("game: " + e.message)); w.addEventListener("unhandledrejection", e => errs.push("game rejection: " + (e.reason && e.reason.message || e.reason)));
+    for (let i = 0; i < 200 && !(w.G && w.G.s && w.StudyFrame && w.StudyFrame.state); i++) await sleep(100);
+    w.__fastVerbs = true; w.G.fast = true;
+    out.push(`the real game is ready inside the study page (day ${w.G.s.day}): ${!!(w.G && w.G.s)}`);
+    const t0 = Date.now(); let last = "";
+    while (Date.now() - t0 < 80000 && study.shell.phase() === "play") { // run-html.js gives a page 90 s in CI
+      const r = study.runner, cur = r && r.state() === "playing" && r.current() && r.current().id; if (cur && cur !== last) { steps.push(cur + "@d" + w.G.s.day); last = cur; }
+      if (errs.length) break;
+      const bad = sw.document.getElementById("study-root").innerText; if (/went wrong|could not start/.test(bad)) { errs.push("page: " + bad.replace(/\s+/g, " ").slice(0, 160)); break; }
+      if (w.Verbs && w.Verbs.tagging) { w.Verbs.tapDecoy(); w.Verbs.tapNext(); await sleep(4); continue; }
+      if (!pump(w)) await sleep(8); else await sleep(2);
+    }
+    out.push(`steps played: ${steps.join(" > ")}`);
+    out.push(`no script errors in the page or the game: ${errs.length === 0}`);
+    if (errs.length) out.push("errors: " + errs.slice(0, 3).join(" | "));
+    out.push(`the page left the play phase (${study.shell.phase()}): ${study.shell.phase() !== "play"}`);
+    await sleep(600);
+    const rows = study.shell.rows(), started = rows.filter(r => r.ev === "scene_start").map(r => r.scene), ended = rows.filter(r => r.ev === "scene_end").map(r => r.scene);
+    const want = (await (await fetch("../study-route.json")).json()).route.filter(s => s.kind !== "frame").map(s => s.id);
+    out.push(`the log holds a scene_start and a scene_end for each of the ${want.length} non-frame route steps: ${want.every(id => started.includes(id) && ended.includes(id))}`);
+    out.push(`the log holds outcome rows for the checks and problems (${rows.filter(r => r.ev === "outcome").length}): ${rows.filter(r => r.ev === "outcome").length >= 3}`);
+    out.push(`after the route the page asks form B: ${study.shell.phase() === "formB"}`);
+    const builtB = StudyForms.build(StudyFixtureItems.items, "B", SEED);
+    for (let i = 0; i < builtB.length && study.shell.phase() === "formB"; i++) { sw.document.querySelector(`.sp-opt[data-i="${builtB[i].answerIndex}"]`).click(); await sleep(20); }
+    await sleep(500);
+    const box = sw.document.getElementById("sp-result");
+    out.push(`the page ends on the result screen with a code: ${study.shell.phase() === "result" && !!box && /\.[0-9a-f]{4}$/.test(box.value)}`);
+  } catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

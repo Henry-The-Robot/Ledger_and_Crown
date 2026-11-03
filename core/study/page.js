@@ -82,7 +82,7 @@
       draw(`<main class="sp" data-phase="play" data-arm="game"><div id="sp-game"></div></main>`);
       if (playing) return;
       playing = true;
-      const r = shell.startRoute(opts.route, opts.known);
+      const r = shell.startRoute(opts.route, typeof opts.known === "function" ? opts.known() : opts.known); // a function: the game host reads the names from the loaded game
       if (!r || r.error) { playing = false; draw(`<main class="sp" data-phase="play"><h1>The game could not start</h1><p>${esc(r ? r.error : "no route")}</p></main>`); return; }
       route = r;
       const host = opts.gameHost;
@@ -98,8 +98,8 @@
         <textarea id="sp-result" readonly rows="6" aria-label="Your result code"></textarea><button type="button" id="sp-copy">Copy the code</button></main>`);
       const box = el.querySelector("#sp-result");
       const put = c => { box.value = c; box.dataset.ready = c ? "1" : "0"; };
-      put(shell.resultCode());
-      shell.resultCodeAsync().then(c => { if (c) put(c); }, () => {});
+      put(""); // the browser deflates asynchronously (log.js resultCodeAsync); the sync form throws here
+      shell.resultCodeAsync().then(c => { if (c) put(c); else box.value = "No code could be made. Tell the researcher."; }, () => { box.value = "No code could be made. Tell the researcher."; });
       el.querySelector("#sp-copy").addEventListener("click", () => {
         box.select();
         try { if (root.navigator && root.navigator.clipboard) root.navigator.clipboard.writeText(box.value); else document.execCommand("copy"); } catch (e) { /* the box is selected: the learner can copy it by hand */ }

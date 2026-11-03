@@ -527,9 +527,10 @@
   function tomas() {
     const t = S.terms(s), owed = -s.bal.ap, b0 = s.bills[0];
     const buy = (n, acct) => () => commit(c => S.buySeeds(c, n, acct), r => r.ok ? tomas() : say("tomas", r.msg));
-    say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. ${t.apDays ? `On account: 14 days, or 2% off within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
-      ["Buy 3 for Cash (36)", buy(3, false), s.bal.cash < 36], ["Buy 9 for Cash (108)", buy(9, false), s.bal.cash < 108],
-      [`Buy 9 on account`, buy(9, true), !t.apDays || owed + 108 > t.apLimit],
+    const c3 = S.seedCash(3), c9 = S.seedCash(9), full9 = 9 * S.R.seedCost;
+    say("tomas", `Seed is 12 a packet; a plot gives 3 sacks. Cash now gets 2% off. ${t.apDays ? `On account: pay in 14 days, and you still get the 2% if you pay within 7.` : "Cash only for you now."}${owed ? `<br>You owe me ${owed}${b0 ? `, due day ${b0.due}` : ""}.` : ""}`, [
+      [`Buy 3 for Cash (${c3})`, buy(3, false), s.bal.cash < c3], [`Buy 9 for Cash (${c9})`, buy(9, false), s.bal.cash < c9],
+      [`Buy 9 on account (${full9} due day ${s.day + (t.apDays || 0)}; ${c9} if paid by day ${s.day + S.R.discDays})`, buy(9, true), !t.apDays || owed + full9 > t.apLimit],
       ["Sprinkler: 80 Cash", () => commit(c => S.buySprinkler(c), r => say("tomas", r.ok ? "Waters the 8 plots around it every morning, and seed planted there starts a day ahead. While it's in the field the hands save 20 a week hauling water. Set it on an empty tilled plot with plenty of neighbours: one on the edge waters fewer." : r.msg)), s.bal.cash < 80],
       ["Is a sprinkler worth it?", sprinklerAdvice],
       ...(!s.fenced && s.day <= S.eventDay(s, "pigs") ? [[`Fence the field: ${S.R.fenceCost} Cash`, () => commit(c => S.buyFence(c), r => say("tomas", r.ok ? "There. My pigs won't get through that. It's a cost of running the farm, so it goes in the Ledger as upkeep, not as something you own." : r.msg)), s.bal.cash < S.R.fenceCost]] : []),
@@ -859,7 +860,7 @@
     ez.insertAdjacentHTML("beforeend", endBtn());
     wire(); save();
     // WS6 finale slot: if the Ledger Duel (court.js, another builder) is loaded it runs now; otherwise the close + verdict above stand
-    if (storyOn && window.Court && Court.run && s.outcome !== "insolvent" && !(s.exam && s.exam.passed)) await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
+    if (storyOn && !window.__studyFrame && window.Court && Court.run && s.outcome !== "insolvent" && !(s.exam && s.exam.passed)) await Court.run({ G: window.G, s, Story, Endings, st: closing.st, verdict: S.crownFund(s).verdict, ending: Endings.ending(s) });
     try { const f = s.flags || {}; if (f.courtPassed !== undefined) Save.markExam(SEASON, { passed: !!f.courtPassed, score: f.courtScore, attempts: f.courtAttempts }); } catch (e) {} // the exam is the Court's result; Ezra's review never sets it
   }
   function reveal(k, text) { return new Promise(res => { (k === "bs" ? ["bs0", "bs1"] : [k]).forEach(x => $("sec-" + x) && $("sec-" + x).classList.remove("veil"));
@@ -897,7 +898,7 @@
   // ---------- save (every morning and at each chapter step) ----------
   let persistAsked = false; // Save.persist runs on the first save of a page load; the profile remembers a shown hint, so it shows once ever
   function askPersist() { if (persistAsked) return; persistAsked = true; Save.persist().then(r => { if (r && r.hint) { (window.__hints = window.__hints || []).push(r.hint); toast(r.hint); } }).catch(() => {}); }
-  function save() { if (!storyOn || fast && !q.has("savetest")) return; try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); askPersist(); } catch (e) {} }
+  function save() { if (!storyOn || window.__studyFrame || fast && !q.has("savetest")) return; /* MBA-ST11: the study keeps no saves */ try { Save.saveSlot(SEASON, { s, story: Story.state, calm, usePtr, fairSeen }); askPersist(); } catch (e) {} }
   // ---------- drawing ----------
   const cam = { x: 0, y: 0 };
   function blit(img, x, y) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y)); }
@@ -983,7 +984,7 @@
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
     dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
     backupNow, restoreText, saveHealth, installCard, restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
-    set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
+    runScene, set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   // A forced later season (?season=ch1/summer) with no closed Spring starts from the canonical heir. In the browser Save.heir() has no file system, so load the frozen heir first.
   function start() {
@@ -996,7 +997,7 @@
     run();
   }
   function run() {
-    const saved =(() => { try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
+    const saved =(() => { if (window.__studyFrame) return null; try { const sl = Save.slot(); return sl && sl.s && sl.season === SEASON ? sl : null; } catch (e) { return null; } })();
     const begin = (sv) => {
       if (sv) { s = sv.s; calm = sv.calm || 0; usePtr = sv.usePtr || 0; fairSeen = sv.fairSeen || {}; }
       // WS6 item 9: a story game draws its event days from a seed saved in the game (?seed=N forces one; no seed = the canonical calendar for sandbox and bots)
@@ -1004,8 +1005,8 @@
       if (window.Verbs) Verbs.init(G);
       if (storyOn) Story.init(G, sv && sv.story); else goal("");
       // a brand-new story game opens with the animated prologue (intro.js); Continue, sandbox and test runs go straight in
-      const go = () => { hud(); if (storyOn) Story.start(); };
-      if (!sv && storyOn && window.Intro && Intro.wanted(q)) playOpening().then(go); else go();
+      const go = () => { hud(); if (window.__studyFrame) return window.StudyFrame.ready(G); if (storyOn) Story.start(); }; // MBA-ST11: the study page drives the story step by step
+      if (!sv && storyOn && !window.__studyFrame && window.Intro && Intro.wanted(q)) playOpening().then(go); else go();
     };
     if (saved && storyOn && !saved.s.over && !q.has("new")) { s = saved.s; hud(); dlg({ who: "maud", text: `Welcome back. Day ${saved.s.day}, chapter ${saved.story.ch}.`, choices: ["Continue", "Start a new game"] }).then(r => begin(r.i === 0 ? saved : null)); }
     // a finished season: coming back (a reload, a new tab) returns to the books, the Reeve's Court and the ending instead of silently starting over

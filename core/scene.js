@@ -87,7 +87,7 @@
       else if (st.page != null) await c.page(st.page);
       else if (st.master) { if (st.if === undefined || test(st.if, v)) c.master(st.master); }
       else if (st.end) return true;
-      else if (st.verb) { const r = await c.verb(st.verb, deep(st.args || {}, v), v, st.lazy); if (st.as) v[st.as] = r; }
+      else if (st.verb) { if (st.verb === "reveal" && st.args && st.args.text) mark(rec, [at]); const r = await c.verb(st.verb, deep(st.args || {}, v), v, st.lazy); if (st.as) v[st.as] = r; }
       else throw new Error("scene " + rec.id + ": unknown step " + JSON.stringify(st));
     }
     return false;
@@ -106,6 +106,7 @@
         else if (st.quiz != null) add(at, "maud", st.quiz);
         else if (st.if !== undefined && !st.keep && !st.master) { walk(st.then || [], at + "-t-"); walk(st.else || [], at + "-e-"); }
         else if (st.pick) st.cases.forEach((cs, i) => walk(cs, at + "-c" + i + "-"));
+        else if (st.verb === "reveal" && st.args && st.args.text) add(at, "maud", st.args.text); // the reveal verb opens one Maud box
       });
     })(rec.steps, "");
     return out;

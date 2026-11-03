@@ -97,6 +97,8 @@
         if (phase !== "play" || scenes.some(s => !decided[s.id])) return false;
         phase = "formB"; open("B"); return "formB";
       },
+      // One scored decision inside a route step (a check, a typed problem): the host passes { scene, concept, choice, ok, rt }.
+      outcome(f) { if (phase !== "play") return false; log.decision(f); return true; },
       resultCode() { return phase === "result" ? log.resultCode() : ""; },
       resultCodeAsync() { return phase === "result" ? log.resultCodeAsync() : Promise.resolve(""); },
       // Time on task = first input to end (or the last event), minus each pause over 60 seconds.

@@ -42,7 +42,14 @@ let fail = 0; const ok = (c, m) => { console.log((c ? "ok   " : "FAIL ") + m); i
     ok(JSON.stringify(have) === JSON.stringify(want), "LINES-study.json is current (run node tools/voice-lines.js after a lesson text changes)");
     const keys = have.map(b => b.scene + "/" + b.id); ok(new Set(keys).size === keys.length && have.length > 40, "LINES-study.json: " + have.length + " boxes, ids unique per scene");
     ok(have.every(b => b.scene && b.id && b.who && typeof b.text === "string" && b.text.length), "every entry has scene, id, who and text");
-    const steps = require("../tools/study-route-steps.json"); ok(steps.every(s => have.some(b => b.scene === (s.record || s.scene)) || s.record === "close"), "every route lesson and scene with boxes is in the list"); }
+    const route = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "study-route.json"), "utf8")).route, sceneOf = s => s.kind === "frame" ? "study-frame" : s.kind === "scene" ? s.scene : s.kind === "lesson" && s.record === "close" ? "close" : s.id;
+    const miss = route.filter(s => s.kind !== "advance" && !have.some(b => b.scene === sceneOf(s))).map(s => s.id); ok(!miss.length, "every route step with boxes is in the list, none exempt" + (miss.length ? " (missing: " + miss.join(", ") + ")" : ""));
+    const ids = sc => have.filter(b => b.scene === sc).map(b => b.id), dep = route.find(s => s.kind === "deposit"), ez = route.find(s => s.id === "s7-ezra");
+    ok(ids(dep.id).includes("deposit") && ids(dep.id).filter(i => /^check/.test(i)).length === 3, "the deposit step lists the offer box and its check (question, yes, no)");
+    ok(["check0", "check0-yes", "check0-no"].every(i => ids(ez.id).includes(i)), "an after-check lists its question and both answers");
+    ok(ids("court").join() === "intro-0,intro-1", "the Court lists its two opening boxes");
+    ok(have.some(b => b.scene === "study-frame" && b.who === "crane") && have.some(b => b.scene === "close"), "the frame and the close record are listed");
+    ok(have.some(b => b.id.startsWith("practice")) && have.filter(b => b.dynamic).every(b => /^practice\d+$/.test(b.id)), "typed practice problems are listed and only they are dynamic"); }
   { const have = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "assets", "voice", "FILES.json"), "utf8"));
     ok(JSON.stringify(have) === JSON.stringify(require("../tools/voice-lines.js").files()), "FILES.json lists the box voice files that exist (run node tools/voice-lines.js after adding files)"); }
   process.exit(fail ? 1 : 0);

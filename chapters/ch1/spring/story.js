@@ -177,7 +177,7 @@ window.Story = (function () {
     clearStamp: () => { document.querySelectorAll(".vstamp").forEach(x => x.remove()); },
     nameFarm: async () => { await nameFarm(); LV.P.title = farmName(); LV.parch(); },
     craneOffer: (a) => craneOffer(a), craneOff: () => { LV.craneOn = false; }, parchClose: () => { LV.parchClose(); },
-    buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit)),
+    buySeeds: (a, v) => G.act(() => S.buySeeds(G.s, Number(a.n != null ? a.n : v.n), a.credit, { list: !!a.list })),
     haggle: (a, v) => GL.haggle(v.o, { open: a.open, walk: a.walk, floor: v.cost, line: a.line, rounds: a.rounds }),
     timeline: a => LV.timeline(a),
     // WS3: the Hobb bet. The player predicts the chest from the timeline (cards, no Cash line), stakes real coin, and is told the answer on the morning after Hobb pays.
@@ -191,11 +191,11 @@ window.Story = (function () {
       return LV.timeline({ mode: "play", bill, n: Math.max(14, bill.due - G.s.day + 1), title: a.title, footNote: note, maud: a.maud }); },
     tvmSettle: (a, v) => { if (v.r2.paidNow) G.act(() => S.payBills(G.s)); else if (v.r2.day < v.bill.due) G.s.payPlan = { day: v.r2.day }; },
     // The loan must actually arrive: Ezra's limit counts what you already owe, so only offer what he will lend, and if the engine refuses, say why and ask again (it used to fail silently).
-    loan: async (a, v, lazy) => { let borrowed = 0, intro = v.intro;
+    loan: async (a, v, lazy) => { let borrowed = 0, intro = v.intro; const two = a.buttons.length === 2; // the study route offers two buttons: Borrow 100, Nothing today
       for (;;) {
         const room = S.terms(G.s).loanLimit + G.s.bal.loan;
-        const c = await GL.say("ezra", room < 200 ? K.fill(lazy.short, Object.assign({}, v, { intro, roomShown: Math.max(0, room), owed: -G.s.bal.loan })) : intro, [{ label: a.buttons[0], disabled: room < 100 }, { label: a.buttons[1], disabled: room < 200 }, a.buttons[2]]);
-        if (c === 2) break; const amt = c ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
+        const c = await GL.say("ezra", room < 200 ? K.fill(lazy.short, Object.assign({}, v, { intro, roomShown: Math.max(0, room), owed: -G.s.bal.loan })) : intro, two ? [{ label: a.buttons[0], disabled: room < 100 }, a.buttons[1]] : [{ label: a.buttons[0], disabled: room < 100 }, { label: a.buttons[1], disabled: room < 200 }, a.buttons[2]]);
+        if (c === (two ? 1 : 2)) break; const amt = c && !two ? 200 : 100, got = G.act(() => S.borrow(G.s, amt));
         if (got.ok) { borrowed = amt; break; }
         intro = K.fill(lazy.retry, { msg: got.msg });
       }
@@ -375,6 +375,8 @@ window.Story = (function () {
   const quietOffers = () => st && st.ch <= 4; // no stray orders while the first lessons run
   // Edric's letters in the order you found them (earliest day first); "The thing I signed" is always last, after the Court
   const letterOrder = () => { const d = (st && st.pageDays) || {}, last = LETTERS.indexOf("The thing I signed"); return (st ? st.pages : []).slice().sort((a, b) => (a === last) - (b === last) || (d[a] == null ? 99 : d[a]) - (d[b] == null ? 99 : d[b]) || a - b); };
-  return { init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
+  // MBA-ST11: the study page plays a record it built itself (study/frame.js). Same guard as any scene: one at a time, a dropped chain ends quietly.
+  const playRec = (rec, init) => run(async () => { await K.play(rec, ctx, init); });
+  return { playRec, init, start, onTalk, letterOrder, after, close, quietOffers, letter: page, LETTERS, goalTexts: () => GOALS, get state() { return st; }, get busy() { return busy; }, unstick, TITLES, WEEKS, PAGES, fresh, weekCard, weekOf, pin, farmName,
     testScene, noteDeposit, keepFloor, tidyClue, craneOffer, caseBoard, deskItems, deskNote, showEnding, testEnding, nameFarm, tvmFacts, cashBookRows, costScene, pvScene, tables: { CALC, VERB }, cut }; // WS6 hooks used by game.js and the tests; letter/LETTERS are #28's
 })();

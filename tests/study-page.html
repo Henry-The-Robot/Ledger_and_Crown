@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Study page (MBA-ST11)</title></head>
+<body><pre id="out">running</pre><div id="host"></div>
+<!-- MBA-ST11: the study page plays both arms start to end with a bot's answers; a 3-character code is refused; a screened-out learner ends after form A.
+     The page is mounted straight into #host with a fake clock; one iframe checks that study.html itself loads. -->
+<script src="../core/study/assign.js"></script><script src="../core/study/log.js"></script><script src="../core/study/forms.js"></script><script src="../core/study/reading.js"></script>
+<script src="../core/study/route.js"></script><script src="../core/study/shell.js"></script><script src="../core/study/fixture-items.js"></script><script src="../core/study/reading-fixture.js"></script><script src="../core/study/page.js"></script>
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms)), SEED = 20261022;
+const PC = { game: "p0001", reading: "0123456789abcdef01234567" }; // pinned rows of the entry page: game/BC and reading/CB at SEED
+let clock = 1000000; const now = () => clock;
+const $ = (sel, root) => (root || document).querySelector(sel);
+const click = async el => { el.click(); await sleep(15); };
+
+// The bot's answers: it knows the right option because it builds the same form from the same seed (forms.js) and reads the answerIndex.
+const bank = StudyFixtureItems;
+const answerForm = async (host, form, right) => {
+  const built = StudyForms.build(bank.items, form, SEED);
+  for (let i = 0; i < built.length; i++) {
+    const want = right ? built[i].answerIndex : (built[i].answerIndex + 1) % built[i].options.length;
+    await click($(`.sp-opt[data-i="${want}"]`, host));
+  }
+};
+const counts = rows => rows.reduce((m, r) => (m[r.ev] = (m[r.ev] || 0) + 1, m), {});
+const fresh = () => { const h = document.getElementById("host"); h.innerHTML = ""; return h; };
+const urlFor = arm => { const a = StudyAssign.assign(PC[arm], SEED); return `?study=1&pc=${PC[arm]}&arm=${a.arm}&order=${a.order}&seed=${SEED}`; };
+
+(async () => {
+  try {
+    const route = await (await fetch("../study-route.json")).json();
+    const known = { records: route.route.filter(s => s.kind === "lesson").map(s => s.record), scenes: route.route.filter(s => s.kind === "scene").map(s => s.scene) };
+
+    // 1. The pinned codes give the arms the test relies on (an independent check of the fixture, not of the page)
+    out.push(`pinned code p0001 is the game arm: ${StudyAssign.assign(PC.game, SEED).arm === "game"}`);
+    out.push(`pinned code 0123...4567 is the reading arm: ${StudyAssign.assign(PC.reading, SEED).arm === "reading"}`);
+
+    // 2. Game arm start to end (a stub host walks every step; the real host is tested by the game-host card checks)
+    {
+      const h = fresh(), page = StudyPage.mount(h, { search: urlFor("game"), bank, route, known, now, tickMs: 5, gameHost: { play: async ({ runner }) => { while (runner.state() === "playing") { clock += 20000; runner.next(); await sleep(2); } } } });
+      out.push(`a code in the URL skips the code screen: ${page.shell.phase() === "formA" && $("[data-phase=formA]", h) !== null}`);
+      await answerForm(h, "A", false);
+      await sleep(60);
+      const afterPlay = page.shell.phase();
+      await sleep(60); clock += 1000;
+      out.push(`game arm reaches form B after the route: ${page.shell.phase() === "formB" || afterPlay === "formB"}`);
+      await answerForm(h, "B", true);
+      out.push(`game arm ends on the result screen: ${page.shell.phase() === "result" && $("[data-phase=result]", h) !== null}`);
+      await sleep(250);
+      const code = $("#sp-result", h).value;
+      out.push(`the result code is shown: ${code.length > 20 && /\.[0-9a-f]{4}$/.test(code)}`);
+      const c = counts(page.shell.rows()), steps = route.route.filter(s => s.kind !== "frame").length;
+      out.push(`the log holds a scene_start for every non-frame step (${steps}): ${c.scene_start === steps}`);
+      out.push(`the log holds a scene_end for every non-frame step: ${c.scene_end === steps}`);
+      out.push(`the log holds all 6 form answers (3 on A, 3 on B): ${c.item_answer === 6}`);
+      out.push(`the log ends with an end row: ${page.shell.rows()[page.shell.rows().length - 1].ev === "end"}`);
+      out.push(`every row carries the code and the arm: ${page.shell.rows().every(r => r.pc === PC.game && r.arm === "game")}`);
+    }
+
+    // 3. Reading arm start to end: the done button stays locked before 10 minutes of active time, then unlocks
+    {
+      clock += 5000;
+      const h = fresh(), page = StudyPage.mount(h, { search: urlFor("reading"), bank, sections: StudyReadingFixture.SECTIONS, now, tickMs: 5 });
+      await answerForm(h, "A", false);
+      await sleep(30);
+      out.push(`reading arm shows the reading page after form A: ${page.shell.phase() === "play" && $("[data-arm=reading]", h) !== null}`);
+      const done = $("#sp-done", h);
+      out.push(`the done button is locked at the start: ${done.disabled === true}`);
+      for (let i = 0; i < 9; i++) { clock += 50000; window.dispatchEvent(new Event("scroll")); await sleep(10); }
+      out.push(`the done button is still locked after 7.5 minutes: ${$("#sp-done", h).disabled === true}`);
+      for (let i = 0; i < 4; i++) { clock += 50000; window.dispatchEvent(new Event("scroll")); await sleep(10); }
+      await sleep(30);
+      out.push(`the done button unlocks after 10 minutes of activity: ${$("#sp-done", h).disabled === false}`);
+      await click($("#sp-done", h)); await sleep(20);
+      out.push(`the reading arm moves to form B: ${page.shell.phase() === "formB"}`);
+      await answerForm(h, "B", true);
+      await sleep(250);
+      out.push(`reading arm ends on the result screen: ${page.shell.phase() === "result" && $("#sp-result", h).value.length > 20}`);
+      const c = counts(page.shell.rows());
+      out.push(`the reading log has read_start and read_end: ${c.read_start === 1 && c.read_end === 1}`);
+      out.push(`the reading log has no game scene rows: ${!c.scene_start}`);
+      out.push(`every row carries the reading arm: ${page.shell.rows().every(r => r.arm === "reading")}`);
+    }
+
+    // 4. A screened-out learner (all of form A right) ends after form A with a result code, and never plays
+    {
+      clock += 5000;
+      const h = fresh(), page = StudyPage.mount(h, { search: urlFor("game"), bank, route, known, now, tickMs: 5, gameHost: { play: async () => { throw new Error("played"); } } });
+      await answerForm(h, "A", true);
+      await sleep(30);
+      out.push(`a screened-out learner goes to the result: ${page.shell.phase() === "result" && page.shell.screenedOut()}`);
+      await sleep(250);
+      out.push(`the screened-out result still shows a code: ${$("#sp-result", h).value.length > 20}`);
+      const c = counts(page.shell.rows());
+      out.push(`the screened-out log has form A only and no scenes: ${c.item_answer === 3 && !c.scene_start && !c.read_start}`);
+    }
+
+    // 5. A 3-character code is refused; a good one is accepted
+    {
+      const h = fresh(), a = StudyAssign.assign(PC.game, SEED), page = StudyPage.mount(h, { search: `?study=1&arm=${a.arm}&order=${a.order}&seed=${SEED}`, bank, route, known, now, tickMs: 5 });
+      out.push(`no code in the URL shows the code screen: ${page.shell.phase() === "code" && $("#sp-pc", h) !== null}`);
+      $("#sp-pc", h).value = "abc"; $("#sp-code", h).dispatchEvent(new Event("submit", { cancelable: true })); await sleep(10);
+      out.push(`a 3-character code is refused: ${page.shell.phase() === "code"}`);
+      out.push(`the refusal is shown to the learner: ${/not accepted/.test($("#sp-err", h).textContent)}`);
+      out.push(`nothing is logged before a code is accepted: ${page.shell.rows().length === 0}`);
+      $("#sp-pc", h).value = PC.game; $("#sp-code", h).dispatchEvent(new Event("submit", { cancelable: true })); await sleep(10);
+      out.push(`a 5-character code is accepted and form A opens: ${page.shell.phase() === "formA"}`);
+    }
+
+    // 6. A page without ?study=1 shows the "needs a link" screen and logs nothing
+    {
+      const h = fresh(), page = StudyPage.mount(h, { search: "", bank, now });
+      out.push(`without ?study=1 the page says it needs a study link: ${page.shell.phase() === "off" && /needs a study link/.test(h.textContent) && page.shell.rows().length === 0}`);
+    }
+
+    // 7. study.html itself loads (reading arm: no game files), and the shipping pages do not link to it
+    {
+      const f = document.createElement("iframe"); f.style.width = "1194px"; f.style.height = "834px"; f.src = `../study.html${urlFor("reading").replace(/pc=[^&]*&/, "")}`; document.body.appendChild(f);
+      await new Promise(r => { f.onload = r; }); await sleep(200);
+      const d = f.contentDocument;
+      out.push(`study.html shows the code screen: ${!!d.querySelector("[data-phase=code]") && !!d.querySelector("#sp-pc")}`);
+      out.push(`study.html buttons are at least 44 px tall: ${d.querySelector("#sp-go").getBoundingClientRect().height >= 44}`);
+      out.push(`study.html loads no game script for the reading arm: ${![...d.scripts].some(s => /game\.js|engine\.js|game-host/.test(s.src))}`);
+      f.remove();
+      const g = await (await fetch("../game.html")).text(), i = await (await fetch("../index.html")).text();
+      out.push(`game.html and index.html do not link study.html: ${!/study\.html/.test(g) && !/study\.html/.test(i)}`);
+    }
+    out.push("JS errors: 0");
+  } catch (e) { out.push("THROWN " + e.message + " " + (e.stack || "").split("\n")[1]); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

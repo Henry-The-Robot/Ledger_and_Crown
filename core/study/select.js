@@ -58,6 +58,24 @@
     return { farmName: farmName || "Thornfield", seconds: frame.seconds || 90, steps: steps.map(s => (s.page !== undefined ? Object.assign({}, s, { lines: 1 }) : s)) };
   }
 
-  const api = { select, overrideVerbs, checkStep, gradeCheck, frameSteps, windowOf };
+  // MBA-VO2: the boxes the study kit adds around a step, with the voice ids frame.js marks. Scene = the step id (the Court: "court").
+  // deps: { deposits: R.deposits rows, introLines(study, of, pass), practiceText(id) -> string }. A practice problem takes its numbers from the player's books: dynamic true.
+  const CHECK_YES = "Yes.", CHECK_NO = "Not quite. Keep it in mind.";
+  function extraBoxes(step, route, deps) {
+    const out = [], add = (id, who, text, more) => out.push(Object.assign({ scene: step.id, id, who, text }, more || {}));
+    if (step.kind === "deposit") {
+      const op = (step.pre || []).find(o => o.op === "placeOffer"), m = op && /^R\.deposits\[(\d+)\]$/.exec(op.from || ""), row = m && deps.deposits[+m[1]];
+      if (!row) throw new Error("study voice: step " + step.id + " has no deposit row");
+      add("deposit", row[0], row[6] || "I can pay part now, the rest when you deliver.");
+    }
+    (step.kind === "deposit" ? step.steps : step.after || []).forEach((x, i) => {
+      if (x.check) { add("check" + i, "maud", x.check.text); add("check" + i + "-yes", "maud", CHECK_YES); add("check" + i + "-no", "maud", CHECK_NO); }
+      else if (x.practice) add("practice" + i, "maud", deps.practiceText(x.practice), { dynamic: true });
+    });
+    if (step.kind === "court") { const c = route.court || {}, of = c.of || (c.claims || []).length; deps.introLines(c, of, c.pass || of).forEach((x, i) => add("intro-" + i, "maud", x)); }
+    return out;
+  }
+
+  const api = { select, overrideVerbs, checkStep, gradeCheck, frameSteps, windowOf, extraBoxes, CHECK_YES, CHECK_NO };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.StudySelect = api;
 })(typeof window !== "undefined" ? window : globalThis);

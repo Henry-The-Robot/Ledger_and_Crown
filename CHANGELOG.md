@@ -2,6 +2,10 @@
 
 **How to bump the version** (one command, never by hand): `node tools/stamp.js 0.4.7` writes the version into `version.js` and stamps every `?v=` in `game.html` and `index.html` (and the visible "v0.4.7" on the title page). `node tools/stamp.js --check` lists any tag that differs; `tests/test-version.js` and CI fail on a mismatch. Adding a script tag? Add it, then run `node tools/stamp.js`. The creative lead makes the release tag.
 
+## v0.4.14: Cash or on account is now a real choice
+- **Tomas's seed:** paying Cash now gets 2% off (9 packets: 106, not 108). On account you pay nothing today and owe 108 in 14 days, or 106 if you pay within 7. Pay late and the 2% is gone.
+- The buttons show both prices and the due days.
+
 ## v0.4.13: your game is kept safe
 - **Back up to a file:** each night's card offers "Back up my game". On iPad it opens the Share sheet, so you can save the file to Files.
 - **Restore:** the menu (☰) has "Restore from a backup file". It asks first, and a broken file changes nothing.
