@@ -16,7 +16,7 @@ function pump(w) { // do the one thing the game screen is asking for; true if so
   const court = d.getElementById("court");
   if (court) { // the Mini-Court: present the first card on each claim, then click through the screens (passing is not the test; reaching the verdict is)
     const present = court.querySelector('[data-a="present"]:not([disabled])'); if (present) { present.click(); return true; }
-    const step = court.querySelector(".ct-btn[data-k]:not([disabled])"); if (step) { step.click(); return true; }
+    const step = court.querySelector('.ct-btn[data-k]:not([disabled]), .ct-btn[data-a="next"]:not([disabled])'); if (step) { step.click(); return true; }
     const sel = court.querySelector('.ct-card[data-a="sel"]'); if (sel) { sel.click(); return true; }
     return false;
   }
@@ -57,7 +57,7 @@ function pump(w) { // do the one thing the game screen is asking for; true if so
     w.__fastVerbs = true; w.G.fast = true;
     out.push(`the real game is ready inside the study page (day ${w.G.s.day}): ${!!(w.G && w.G.s)}`);
     const t0 = Date.now(); let last = "";
-    while (Date.now() - t0 < 170000 && study.shell.phase() === "play") {
+    while (Date.now() - t0 < 80000 && study.shell.phase() === "play") { // run-html.js gives a page 90 s in CI
       const r = study.runner, cur = r && r.state() === "playing" && r.current() && r.current().id; if (cur && cur !== last) { steps.push(cur + "@d" + w.G.s.day); last = cur; }
       if (errs.length) break;
       const bad = sw.document.getElementById("study-root").innerText; if (/went wrong|could not start/.test(bad)) { errs.push("page: " + bad.replace(/\s+/g, " ").slice(0, 160)); break; }
