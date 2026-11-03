@@ -77,6 +77,8 @@ const load = () => new Promise(res => { const f = document.createElement("iframe
     w.G.installCard(true);
     const card = w.document.getElementById("installcard");
     out.push(`Home Screen card names the 3 steps: ${!!card && /Share/.test(card.textContent) && /Add to Home Screen/.test(card.textContent) && /icon/.test(card.textContent)}`);
+    w.document.getElementById("ic-ok").click();
+    out.push(`Got it hides the card for 7 days: ${!w.document.getElementById("installcard") && +w.localStorage.getItem("lc_install_hide") > Date.now() + 6 * 864e5}`);
     out.push(`JS errors: ${errs.length}`);
   } catch (e) { out.push("THROWN " + e.message); }
   document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");

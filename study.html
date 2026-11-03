@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Ledger &amp; Crown study</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Study page (card MBA-ST11). Not linked from game.html or index.html. URL: ?study=1&pc=<code>&arm=<game|reading>&order=<BC|CB>&seed=<n> (&vo=0 turns voice off).
+     Content swap points: core/study/fixture-items.js (the test forms) and core/study/reading-fixture.js (the reading) are FIXTURES until the curriculum cards replace them. -->
+<style>
+  :root { color-scheme: light; --ink: #2b2118; --paper: #f6efe0; --wood: #7a5230; --gold: #e0b341; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font: 20px/1.45 Georgia, "Times New Roman", serif; }
+  .sp { max-width: 46rem; margin: 0 auto; padding: 24px 20px 64px; }
+  .sp h1 { font-size: 1.5rem; margin: 0 0 12px; }
+  .sp-count { color: #6b5a47; margin: 0 0 8px; }
+  .sp-opts { display: grid; gap: 12px; margin-top: 16px; }
+  .sp button, .sp input { font: inherit; min-height: 44px; border-radius: 8px; border: 2px solid var(--wood); padding: 8px 16px; background: #fffaf0; color: var(--ink); }
+  .sp button { cursor: pointer; text-align: left; }
+  .sp button:hover:not(:disabled), .sp button:focus-visible { background: var(--gold); outline: none; }
+  .sp button:disabled { opacity: .5; cursor: default; }
+  .sp label { display: block; margin: 12px 0 4px; }
+  .sp input { width: 100%; box-sizing: border-box; }
+  #sp-go, #sp-done, #sp-copy { margin-top: 16px; background: var(--wood); color: #fff; text-align: center; }
+  #sp-err { color: #9b1c1c; min-height: 1.5em; }
+  #sp-result { width: 100%; box-sizing: border-box; font: 14px/1.3 monospace; word-break: break-all; }
+  .sp-read section { margin: 0 0 24px; }
+  #sp-game-stage { position: fixed; inset: 0; background: #000; }
+</style></head>
+<body>
+<div id="study-root"></div>
+<script src="core/study/assign.js"></script>
+<script src="core/study/log.js"></script>
+<script src="core/study/forms.js"></script>
+<script src="core/study/reading.js"></script>
+<script src="core/study/route.js"></script>
+<script src="core/study/shell.js"></script>
+<script src="core/study/fixture-items.js"></script>
+<script src="core/study/reading-fixture.js"></script>
+<script src="core/study/page.js"></script>
+<script>
+(function () {
+  const q = location.search, root = document.getElementById("study-root");
+  const go = (route, host) => {
+    window.__study = StudyPage.mount(root, { search: q, bank: StudyFixtureItems, sections: StudyReadingFixture.SECTIONS, route, known: host && host.known, gameHost: host });
+  };
+  if (StudyPage.armOf(q) !== "game") return go(null, null);
+  // Game arm: the route file and the game scripts load only for this arm, so the reading arm never carries the game.
+  fetch("study-route.json").then(r => r.json()).then(route => {
+    if (!window.StudyGame) { const s = document.createElement("script"); s.src = "core/study/game-host.js"; s.onload = () => go(route, StudyGame.host(q)); s.onerror = () => go(route, null); document.head.appendChild(s); }
+    else go(route, StudyGame.host(q));
+  }, () => go(null, null));
+})();
+</script>
+</body></html>

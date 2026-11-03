@@ -279,10 +279,12 @@
   }
   function installCard(force) { // the 3 iPad steps, shown until the game runs as a Home Screen app
     const standalone = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
-    if (standalone || $("installcard") || (!force && (fast || navigator.webdriver))) return;
+    // Lead 11-02: touch devices only (the steps are Safari's), and "Got it" hides it for 7 days
+    let hiddenUntil = 0; try { hiddenUntil = +localStorage.getItem("lc_install_hide") || 0; } catch (e) {}
+    if (standalone || $("installcard") || (!force && (fast || navigator.webdriver || !TOUCH || Date.now() < hiddenUntil))) return;
     const c = document.createElement("div"); c.id = "installcard"; c.style.cssText = "position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:140;max-width:460px;background:#2b3a26;color:#f3ecd2;border:2px solid #c9a24b;border-radius:10px;padding:12px 16px;font-size:15px";
     c.innerHTML = `<b>Keep your game safe</b><ol style="margin:6px 0 8px 18px;padding:0"><li>Tap the Share button in Safari.</li><li>Tap Add to Home Screen.</li><li>Open the game from that icon.</li></ol><button class="btn alt" id="ic-ok" style="min-height:44px">Got it</button>`;
-    document.body.appendChild(c); $("ic-ok").onclick = () => c.remove();
+    document.body.appendChild(c); $("ic-ok").onclick = () => { try { localStorage.setItem("lc_install_hide", String(Date.now() + 7 * 864e5)); } catch (e) {} c.remove(); };
   }
   // ---------- pause menu: always reachable (☰ button or Esc), so a glitch never traps the player ----------
   function pauseMenu() {
