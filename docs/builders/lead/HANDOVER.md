@@ -32,7 +32,9 @@ site gets it when #59 merges. Kyle: we pay for ElevenLabs and do not use it → 
 - Kyle chose saves via a Home Screen app + nightly backup file (card MBA-SV1, first). Card order: MBA-SV1 → MBA-ST11 → MBA-VO2.
 
 - Casting flow xKINGy2eYad9xhRHP6KT (eleven_v4, one take each). Maud: Harriet aAsWcN5jdLdiYG7Hq0YL, Morganna 7NsaqHdLuKNFvEfjpUno, Mora YHcCpa6SBWnKDaCPZJQR.
-  Crane: Orson pbP9aQdMnZUbnnLJT8rH, Aaron sNwCKTIAudVoHBcLnZER, Patrick lcDjPH5uMz9D85TM5h2g. Kyle picks; record his pick in AUTHORSHIP.md.
+  Crane: Orson pbP9aQdMnZUbnnLJT8rH, Aaron sNwCKTIAudVoHBcLnZER, Patrick lcDjPH5uMz9D85TM5h2g.
+- Kyle picked his own voices instead: Maud = Tessa - Wise Leader, Crane = Flint. The cast is in `assets/voice/CAST.md`.
+  After MBA-VO2 writes LINES-study.json, the Lead generates every Maud and Crane line (about 43-146 credits a line).
 - Expert-review outreach draft asked of the coordinator (help.py, 11-02).
 
 ## Next 3 actions (10-27; see the update above)
