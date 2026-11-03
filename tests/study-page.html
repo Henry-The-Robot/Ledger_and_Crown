@@ -4,7 +4,7 @@
 <!-- MBA-ST11: the study page plays both arms start to end with a bot's answers; a 3-character code is refused; a screened-out learner ends after form A.
      The page is mounted straight into #host with a fake clock; one iframe checks that study.html itself loads. -->
 <script src="../core/study/assign.js"></script><script src="../core/study/log.js"></script><script src="../core/study/forms.js"></script><script src="../core/study/reading.js"></script>
-<script src="../core/study/route.js"></script><script src="../core/study/shell.js"></script><script src="../core/study/fixture-items.js"></script><script src="../core/study/reading-fixture.js"></script><script src="../core/study/page.js"></script>
+<script src="../core/study/route.js"></script><script src="../core/study/shell.js"></script><script src="../core/study/items-clep.js"></script><script src="../core/study/reading-clep.js"></script><script src="../core/study/page.js"></script>
 <script>
 const out = [], sleep = ms => new Promise(r => setTimeout(r, ms)), SEED = 20261022;
 const PC = { game: "p0001", reading: "0123456789abcdef01234567" }; // pinned rows of the entry page: game/BC and reading/CB at SEED
@@ -13,7 +13,7 @@ const $ = (sel, root) => (root || document).querySelector(sel);
 const click = async el => { el.click(); await sleep(15); };
 
 // The bot's answers: it knows the right option because it builds the same form from the same seed (forms.js) and reads the answerIndex.
-const bank = StudyFixtureItems;
+const bank = StudyItemsClep, N = bank.items.length; // the real CLEP bank (MBA-ST12)
 const answerForm = async (host, form, right) => {
   const built = StudyForms.build(bank.items, form, SEED);
   for (let i = 0; i < built.length; i++) {
@@ -34,6 +34,17 @@ const urlFor = arm => { const a = StudyAssign.assign(PC[arm], SEED); return `?st
     out.push(`pinned code p0001 is the game arm: ${StudyAssign.assign(PC.game, SEED).arm === "game"}`);
     out.push(`pinned code 0123...4567 is the reading arm: ${StudyAssign.assign(PC.reading, SEED).arm === "reading"}`);
 
+    // 1b. The page runs on the real bank, not the fixtures (MBA-ST12). The key is checked by hand: A-01 is the bike shop, equity -1,200.
+    {
+      const builtA = StudyForms.build(bank.items, "A", SEED), bike = builtA.find(q => /bike shop/.test(q.stem));
+      out.push(`the bank has 10 items, one per concept S1-S10: ${N === 10 && bank.items.map(i => i.concept).join() === "S1,S2,S3,S4,S5,S6,S7,S8,S9,S10"}`);
+      out.push(`no fixture item id appears: ${!bank.items.some(i => i.fixture || /^fx-/.test(i.id)) && !builtA.some(q => /^fx-/.test(q.id))}`);
+      out.push(`form A holds the first CLEP item (A-01, bike shop): ${!!bike && bike.concept === "S1"}`);
+      out.push(`the A-01 key is -1,200 (assets 9,200 less liabilities 10,400): ${!!bike && bike.options[bike.answerIndex] === "−1,200"}`);
+      out.push(`every item has 5 options and an answer in range on forms A, B, C: ${bank.items.every(i => ["A", "B", "C"].every(f => i.forms[f].options.length === 5 && i.forms[f].answer >= 0 && i.forms[f].answer < 5))}`);
+      out.push(`the reading holds sections S1-S10 with text: ${StudyReadingClep.SECTIONS.map(x => x.id).join() === "S1,S2,S3,S4,S5,S6,S7,S8,S9,S10" && StudyReadingClep.SECTIONS.every(x => x.title && x.text.length > 1500)}`);
+    }
+
     // 2. Game arm start to end (a stub host walks every step; the real host is tested by the game-host card checks)
     {
       const h = fresh(), page = StudyPage.mount(h, { search: urlFor("game"), bank, route, known, now, tickMs: 5, gameHost: { play: async ({ runner }) => { while (runner.state() === "playing") { clock += 20000; runner.next(); await sleep(2); } } } });
@@ -51,7 +62,7 @@ const urlFor = arm => { const a = StudyAssign.assign(PC[arm], SEED); return `?st
       const c = counts(page.shell.rows()), steps = route.route.filter(s => s.kind !== "frame").length;
       out.push(`the log holds a scene_start for every non-frame step (${steps}): ${c.scene_start === steps}`);
       out.push(`the log holds a scene_end for every non-frame step: ${c.scene_end === steps}`);
-      out.push(`the log holds all 6 form answers (3 on A, 3 on B): ${c.item_answer === 6}`);
+      out.push(`the log holds all ${2 * N} form answers (${N} on A, ${N} on B): ${c.item_answer === 2 * N}`);
       out.push(`the log ends with an end row: ${page.shell.rows()[page.shell.rows().length - 1].ev === "end"}`);
       out.push(`every row carries the code and the arm: ${page.shell.rows().every(r => r.pc === PC.game && r.arm === "game")}`);
     }
@@ -59,10 +70,11 @@ const urlFor = arm => { const a = StudyAssign.assign(PC[arm], SEED); return `?st
     // 3. Reading arm start to end: the done button stays locked before 10 minutes of active time, then unlocks
     {
       clock += 5000;
-      const h = fresh(), page = StudyPage.mount(h, { search: urlFor("reading"), bank, sections: StudyReadingFixture.SECTIONS, now, tickMs: 5 });
+      const h = fresh(), page = StudyPage.mount(h, { search: urlFor("reading"), bank, sections: StudyReadingClep.SECTIONS, now, tickMs: 5 });
       await answerForm(h, "A", false);
       await sleep(30);
       out.push(`reading arm shows the reading page after form A: ${page.shell.phase() === "play" && $("[data-arm=reading]", h) !== null}`);
+      out.push(`the reading page shows sections S1-S10: ${[...h.querySelectorAll("section[data-id]")].map(e => e.dataset.id).join() === "S1,S2,S3,S4,S5,S6,S7,S8,S9,S10"}`);
       const done = $("#sp-done", h);
       out.push(`the done button is locked at the start: ${done.disabled === true}`);
       for (let i = 0; i < 9; i++) { clock += 50000; window.dispatchEvent(new Event("scroll")); await sleep(10); }
@@ -91,7 +103,7 @@ const urlFor = arm => { const a = StudyAssign.assign(PC[arm], SEED); return `?st
       await sleep(250);
       out.push(`the screened-out result still shows a code: ${$("#sp-result", h).value.length > 20}`);
       const c = counts(page.shell.rows());
-      out.push(`the screened-out log has form A only and no scenes: ${c.item_answer === 3 && !c.scene_start && !c.read_start}`);
+      out.push(`the screened-out log has form A only and no scenes: ${c.item_answer === N && !c.scene_start && !c.read_start}`);
     }
 
     // 5. A 3-character code is refused; a good one is accepted
