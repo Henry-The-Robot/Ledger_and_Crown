@@ -11,10 +11,10 @@ f.onload = async () => { try {
   G.closeDlg(); G.hidePanel();
   // 1. books preview before buying seed
   G.talk("tomas"); await sleep(40); btn(/Buy 3 for Cash/).click(); await sleep(60);
-  out.push(`preview shows the entry: ${/Before you do it/.test(txt()) && /Dr Inventory 36/.test(txt()) && /Cr Cash 36/.test(txt())}`, `preview shows the lesson: ${/Seed is Inventory/.test(txt())}`, `nothing posted yet: ${s.seeds === 0}`);
+  out.push(`preview shows the entry: ${/Before you do it/.test(txt()) && /Dr Inventory 36/.test(txt()) && /Cr Cash 35/.test(txt())}`, `preview shows the lesson: ${/Seed is Inventory/.test(txt())}`, `nothing posted yet: ${s.seeds === 0}`);
   btn(/Not now/).click(); await sleep(30); out.push(`"Not now" leaves the books alone: ${s.seeds === 0 && s.bal.cash === 200}`);
   G.talk("tomas"); await sleep(40); btn(/Buy 3 for Cash/).click(); await sleep(60); btn(/Do it/).click(); await sleep(60);
-  out.push(`"Do it" posts it: ${s.seeds === 3 && s.bal.cash === 164}`); G.closeDlg();
+  out.push(`"Do it" posts it: ${s.seeds === 3 && s.bal.cash === 165}` /* v0.4.14: Cash gets Tomas's 2% (35, not 36) */); G.closeDlg();
   // 2. click a HUD number
   d.getElementById("h-cash").click(); await sleep(40); out.push(`clicking Cash explains it: ${/Money in hand/.test(panel()) && /latest postings/.test(panel())}`); G.hidePanel();
   // 3. ledger tour
