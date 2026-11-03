@@ -249,6 +249,43 @@
       const ok = document.execCommand("copy"); ta.remove(); done(ok);
     } catch (e) { done(false); }
   }
+  // ---------- SV1: backup file, restore, save health, Home Screen card (no account, no server) ----------
+  function saveHealth() { // one line: when the game last saved, whether the browser keeps it, when it was last backed up
+    try { const b = Save.load(), sl = b.slot, st = b.profile.settings || {}, t = sl && sl.savedAt ? new Date(sl.savedAt) : null;
+      const at = t && !isNaN(t) ? `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}` : "";
+      return `Last saved: ${sl ? `day ${sl.s.day}${at ? ", " + at : ""}` : "nothing yet"}. Kept by this browser: ${st.persisted ? "yes" : "no"}. Last backup: ${st.backedUpDay ? "day " + st.backedUpDay : "never"}.`;
+    } catch (e) { return "Save status unavailable."; }
+  }
+  function markBackup() { try { const p = Save.profile(); Save.write({ profile: { settings: Object.assign({}, p.settings, { backedUpDay: s.day }) } }); } catch (e) {} const h = $("pz-health"); if (h) h.innerHTML = saveHealth(); }
+  async function backupNow() { // share sheet to Files where the browser has one, else a download; the text is kept in window.__lastBackup for tests
+    try { save(); const code = await Save.exportCompressed(), name = Save.fileName();
+      const file = typeof File === "function" ? new File([code], name, { type: "text/plain" }) : null;
+      window.__lastBackup = { code, name };
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: "Ledger & Crown backup" }); } catch (e) { if (e && e.name === "AbortError") return false; throw e; } }
+      else { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+      markBackup(); toast("Backup saved. Keep the file somewhere safe."); return true;
+    } catch (e) { toast("Could not make a backup."); return false; }
+  }
+  async function restoreText(text) { // asks first; a broken file changes nothing
+    const r = await Save.parseCode(text); if (!r.ok) { toast(r.why); return false; }
+    const sl = (r.blob || {}).slot;
+    if (!confirm(sl ? `Replace this game with the backup from day ${sl.s.day}, saved ${String(sl.savedAt).slice(0, 10)}? A one-step undo is kept.` : "Replace this game with the backup?")) return false;
+    const w = await Save.import(text); toast(w.ok ? "Restored. Reloading." : w.why); if (w.ok) setTimeout(() => { location.search = ""; }, 600); return !!w.ok;
+  }
+  function pickBackupFile() {
+    const i = document.createElement("input"); i.type = "file"; i.accept = ".lcsave,text/plain"; i.style.display = "none"; document.body.appendChild(i);
+    i.onchange = async () => { const f = i.files && i.files[0]; i.remove(); if (!f) return; let t = ""; try { t = await f.text(); } catch (e) {} restoreText(t); };
+    i.click();
+  }
+  function installCard(force) { // the 3 iPad steps, shown until the game runs as a Home Screen app
+    const standalone = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    // Lead 11-02: touch devices only (the steps are Safari's), and "Got it" hides it for 7 days
+    let hiddenUntil = 0; try { hiddenUntil = +localStorage.getItem("lc_install_hide") || 0; } catch (e) {}
+    if (standalone || $("installcard") || (!force && (fast || navigator.webdriver || !TOUCH || Date.now() < hiddenUntil))) return;
+    const c = document.createElement("div"); c.id = "installcard"; c.style.cssText = "position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:140;max-width:460px;background:#2b3a26;color:#f3ecd2;border:2px solid #c9a24b;border-radius:10px;padding:12px 16px;font-size:15px";
+    c.innerHTML = `<b>Keep your game safe</b><ol style="margin:6px 0 8px 18px;padding:0"><li>Tap the Share button in Safari.</li><li>Tap Add to Home Screen.</li><li>Open the game from that icon.</li></ol><button class="btn alt" id="ic-ok" style="min-height:44px">Got it</button>`;
+    document.body.appendChild(c); $("ic-ok").onclick = () => { try { localStorage.setItem("lc_install_hide", String(Date.now() + 7 * 864e5)); } catch (e) {} c.remove(); };
+  }
   // ---------- pause menu: always reachable (☰ button or Esc), so a glitch never traps the player ----------
   function pauseMenu() {
     if ($("pause")) return $("pause").remove();
@@ -262,6 +299,9 @@
       <p><button class="btn alt" id="pz-sound" style="width:100%"></button></p>
       <p><button class="btn alt" id="pz-export" style="width:100%">Export my game</button></p>
       <p><button class="btn alt" id="pz-import" style="width:100%">Import a saved game</button></p>
+      <p><button class="btn alt" id="pz-backup" style="width:100%">Back up my game to a file</button></p>
+      <p><button class="btn alt" id="pz-restore" style="width:100%">Restore from a backup file</button></p>
+      <p class="hint" id="pz-health">${saveHealth()}</p>
       <p><button class="btn alt" id="pz-feedback" style="width:100%">Copy feedback details</button></p>
       ${askSkip ? `<p><button class="btn alt" id="pz-skip" style="width:100%">Report a problem and skip this question</button></p><p class="hint">Use this only if the game seems broken. The lesson won't count as mastered, and Maud will bring it up again later. Copies feedback details too, so you can paste them to Kyle.</p>` : ""}
       <p class="hint">Today's progress since the morning save is lost if you restart or leave.</p></div>`;
@@ -277,6 +317,8 @@
         try { await navigator.clipboard.writeText(code); } catch (e) {}
         const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" })); a.download = Save.fileName(); document.body.appendChild(a); a.click(); a.remove();
         toast("Game exported: copied, and saved as a file."); } catch (e) { toast("Could not export."); } };
+    $("pz-backup").onclick = () => backupNow();
+    $("pz-restore").onclick = () => pickBackupFile();
     $("pz-import").onclick = async () => {
       const code = prompt("Paste your saved-game code. This replaces the game on this device (a one-step backup is kept).");
       if (!code) return; const r = await Save.parseCode(code); if (!r.ok) return toast(r.why);
@@ -666,12 +708,14 @@
       [["Open the Ledger", ledger], ["Later", null]]);
   }
   function night(title, notes, then, info) { // info: the day-end card (Cash change, who owes you, losses); tap to dismiss early
+    const offerBackup = !!info && !fast && storyOn && ((Save.profile().settings || {}).backedUpDay || 0) < info.day + 1; // SV1: offered once per in-game day, never forced
     const n = $("night"), rows = info ? [`Day ${info.day} ended. Cash <span class="${info.d < 0 ? "neg" : "pos"}">${info.d < 0 ? "−" : "+"}${Math.abs(info.d)}</span> (now ${s.bal.cash})`, ...info.owes, ...info.losses.map(m => `Lost: ${m}`)] : [];
-    n.innerHTML = info ? `<div class="card"><h2>${title}</h2>${rows.concat(notes).map(t => `<p>${t}</p>`).join("")}<p class="tap">Tap to continue</p></div>` : `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join("");
-    n.classList.add("on"); let done = false;
-    const end = () => { if (done) return; done = true; n.onclick = null; n.classList.remove("on"); then && then(); };
+    n.innerHTML = info ? `<div class="card"><h2>${title}</h2>${rows.concat(notes).map(t => `<p>${t}</p>`).join("")}${offerBackup ? `<p><button class="btn alt" id="bk-btn" style="min-height:44px">Back up my game</button></p>` : ""}<p class="tap">Tap to continue</p></div>` : `<h2>${title}</h2>` + notes.map(t => `<p>${t}</p>`).join("");
+    n.classList.add("on"); let done = false, timer = 0;
+    const end = () => { if (done) return; done = true; clearTimeout(timer); n.onclick = null; n.classList.remove("on"); then && then(); };
     n.onclick = () => end();
-    setTimeout(end, 1500 + notes.length * 500 + rows.length * 400);
+    if (offerBackup && $("bk-btn")) $("bk-btn").onclick = async e => { e.stopPropagation(); clearTimeout(timer); const b = $("bk-btn"); b.disabled = true; if (await backupNow()) b.textContent = "Backed up"; else b.disabled = false; };
+    timer = setTimeout(end, Math.max(1500 + notes.length * 500 + rows.length * 400, offerBackup ? 5000 : 0));
   }
   function morningBark() { // coaching fades: only real danger once the player is past chapter 5
     const c = S.coach(s); if (!c) { calm++; return; }
@@ -938,7 +982,7 @@
   // ---------- the API the story uses (and tests) ----------
   window.G = { get s() { return s; }, say: sayP, ask, haggle, board, page, reveal, pickLine, goal, toast, hud, save, act: fn => act(fn),
     dlg, showPanel, cam, T, spot, floatAt, openDoc, world: { CHEST, CRATE, SACKS, FWELL, BOARD, WELL }, // WS3: verbs.js and story.js build on these
-    restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
+    backupNow, restoreText, saveHealth, installCard, restart, travel: travelTo, openTravel, night, interactTile, talk, crate, desk, sleepNow, ledgerTour, explain, noticeBoard, commit, ledger, notebook, transcript, closeBooks, review, closeDlg: () => { $("dlg").style.display = "none"; $("dlg").classList.remove("kb"); }, hidePanel,
     set fast(v) { fast = v; }, pl, keys, step: dt => move(dt), tick,
     play(policy, days) { storyOn = false; for (let d = 0; d < days && !s.over; d++) { Bot[policy].day(s); drainUses(); S.sleep(s); drainUses(); } hud(); if (s.over) closeBooks(); } };
   // A forced later season (?season=ch1/summer) with no closed Spring starts from the canonical heir. In the browser Save.heir() has no file system, so load the frozen heir first.
@@ -967,6 +1011,7 @@
     // a finished season: coming back (a reload, a new tab) returns to the books, the Reeve's Court and the ending instead of silently starting over
     else if (saved && storyOn && saved.s.over && !q.has("new")) { s = saved.s; hud(); const o = saved.s.outcome; dlg({ who: "maud", text: o === "sold" ? "Welcome back. The farm is sold, but its ending is still here." : o === "insolvent" ? "Welcome back. The season ended badly: the post-mortem is still here." : "Welcome back. The spring is over: the books, the Reeve's Court and the ending are waiting.", choices: ["Continue", "Start a new game"] }).then(r => { if (r.i !== 0) return begin(null); begin(saved); setTimeout(() => { if (o === "sold") Story.showEnding("sold"); else closeBooks(); }, 60); }); }
     else begin(null);
+    if (storyOn) setTimeout(() => installCard(), 2500);
   }
   // ---------- sound: a tap on any button, and the score follows what's happening ----------
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("button"); if (b && !b.disabled && !b.closest("#pause")) FX.sfx(b.closest(".np") ? "pad" : "tap"); }, true);

@@ -2,6 +2,12 @@
 
 **How to bump the version** (one command, never by hand): `node tools/stamp.js 0.4.7` writes the version into `version.js` and stamps every `?v=` in `game.html` and `index.html` (and the visible "v0.4.7" on the title page). `node tools/stamp.js --check` lists any tag that differs; `tests/test-version.js` and CI fail on a mismatch. Adding a script tag? Add it, then run `node tools/stamp.js`. The creative lead makes the release tag.
 
+## v0.4.13: your game is kept safe
+- **Back up to a file:** each night's card offers "Back up my game". On iPad it opens the Share sheet, so you can save the file to Files.
+- **Restore:** the menu (☰) has "Restore from a backup file". It asks first, and a broken file changes nothing.
+- **Save status:** the menu shows the day of your last save and your last backup.
+- **Home Screen:** on iPad, a card shows how to add the game to your Home Screen, where Safari keeps your save.
+
 ## v0.4.12: the narrator's voice plays by default
 - **Voice:** the opening narration now plays for everyone; add `?vo=0` to the address to turn it off.
 - **Fixes:** saves and season carry-over; Court claims; behind-the-scenes groundwork for the study version and for Summer (not playable yet).

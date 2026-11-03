@@ -1,0 +1,86 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Save: backup file, restore, save health, Home Screen</title></head>
+<body><pre id="out">running</pre>
+<!-- SV1: the manifest opens game.html; the night card offers one backup a day; the backup file restores the same day, cash and chapter; restore asks first; a broken file changes nothing; the menu shows the last saved day. -->
+<script>
+const out = [], sleep = ms => new Promise(r => setTimeout(r, ms));
+const load = () => new Promise(res => { const f = document.createElement("iframe"); f.style.width = "1280px"; f.style.height = "800px"; f.src = "../game.html?new=1&savetest&seed=3"; f.onload = () => res(f); document.body.appendChild(f); });
+(async () => {
+  try {
+    const m = await (await fetch("../manifest.webmanifest")).json();
+    out.push(`manifest names game.html: ${m.start_url === "game.html" && m.display === "standalone"}`);
+    out.push(`manifest has 192 and 512 icons: ${m.icons.some(i => i.sizes === "192x192") && m.icons.some(i => i.sizes === "512x512")}`);
+    const html = await (await fetch("../game.html")).text();
+    out.push(`game.html links the manifest and the Home Screen tags: ${/rel="manifest" href="manifest.webmanifest"/.test(html) && /apple-mobile-web-app-capable/.test(html)}`);
+
+    localStorage.clear();
+    const f = await load(), w = f.contentWindow; await sleep(700);
+    const errs = []; w.addEventListener("error", e => errs.push(e.message));
+    const key = () => w.localStorage.getItem("lc_save_v4");
+
+    // state to back up
+    w.G.s.day = 5; w.G.s.bal.cash = 777; w.G.save(); await sleep(100);
+    const ch = w.Story.state.ch;
+
+    // the night card offers the backup button; the button makes a file whose import restores the same game
+    w.G.night("Day 5", [], () => {}, { day: 4, d: 0, owes: [], losses: [] });
+    out.push(`night card offers a backup button: ${!!w.document.getElementById("bk-btn")}`);
+    w.document.getElementById("bk-btn").click(); await sleep(600);
+    const bk = w.__lastBackup;
+    out.push(`backup button produced a .lcsave file: ${!!bk && /\.lcsave$/.test(bk.name) && /^LC4/.test(bk.code)}`);
+    const parsed = await w.Save.parseCode(bk.code);
+    out.push(`backup holds the same day, cash and chapter: ${parsed.ok && parsed.blob.slot.s.day === 5 && parsed.blob.slot.s.bal.cash === 777 && parsed.blob.slot.story.ch === ch}`);
+    out.push(`backup day is remembered in the profile: ${w.Save.profile().settings.backedUpDay === 5}`);
+    w.document.getElementById("night").classList.remove("on");
+    w.G.night("Day 5", [], () => {}, { day: 4, d: 0, owes: [], losses: [] });
+    out.push(`not offered twice for one day: ${!w.document.getElementById("bk-btn")}`);
+    w.document.getElementById("night").classList.remove("on");
+
+    // share sheet is used when the browser has one
+    let shared = null;
+    Object.defineProperty(w.navigator, "canShare", { value: () => true, configurable: true });
+    Object.defineProperty(w.navigator, "share", { value: async d => { shared = d; }, configurable: true });
+    await w.G.backupNow();
+    out.push(`share sheet gets the .lcsave file: ${!!shared && shared.files && /\.lcsave$/.test(shared.files[0].name)}`);
+    Object.defineProperty(w.navigator, "canShare", { value: undefined, configurable: true });
+
+    // move on, then restore
+    w.G.s.day = 9; w.G.s.bal.cash = 1; w.G.save(); await sleep(100);
+    const before = key();
+
+    // the menu shows the last saved day
+    w.document.getElementById("menubtn").click(); await sleep(100);
+    const health = (w.document.getElementById("pz-health") || {}).textContent || "";
+    out.push(`menu shows the last saved day: ${/Last saved: day 9/.test(health)}`);
+    out.push(`menu shows persisted and backup lines: ${/Kept by this browser: (yes|no)/.test(health) && /Last backup: day 5/.test(health)}`);
+    w.document.getElementById("pz-resume").click();
+
+    // a broken file changes nothing
+    let asked = 0; w.confirm = () => { asked++; return true; };
+    const r1 = await w.G.restoreText("this is not a save");
+    out.push(`broken file is refused and changes nothing: ${r1 === false && key() === before && asked === 0}`);
+    const r2 = await w.G.restoreText("LC4U.AAAA");
+    out.push(`damaged code is refused and changes nothing: ${r2 === false && key() === before}`);
+
+    // restore asks first; no changes the first time
+    w.confirm = () => { asked++; return false; };
+    const r3 = await w.G.restoreText(bk.code);
+    out.push(`restore asks first and a No changes nothing: ${r3 === false && asked === 1 && key() === before}`);
+
+    // a Yes restores the same day, cash and chapter
+    w.confirm = () => true;
+    const r4 = await w.G.restoreText(bk.code);
+    const now = JSON.parse(key());
+    out.push(`restore brings back day, cash and chapter: ${r4 === true && now.slot.s.day === 5 && now.slot.s.bal.cash === 777 && now.slot.story.ch === ch}`);
+
+    // the Home Screen card
+    w.G.installCard(true);
+    const card = w.document.getElementById("installcard");
+    out.push(`Home Screen card names the 3 steps: ${!!card && /Share/.test(card.textContent) && /Add to Home Screen/.test(card.textContent) && /icon/.test(card.textContent)}`);
+    w.document.getElementById("ic-ok").click();
+    out.push(`Got it hides the card for 7 days: ${!w.document.getElementById("installcard") && +w.localStorage.getItem("lc_install_hide") > Date.now() + 6 * 864e5}`);
+    out.push(`JS errors: ${errs.length}`);
+  } catch (e) { out.push("THROWN " + e.message); }
+  document.getElementById("out").textContent = "RESULTS\n" + out.join("\n");
+})();
+</script></body></html>

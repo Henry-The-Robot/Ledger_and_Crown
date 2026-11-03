@@ -1,0 +1,251 @@
+{
+  "_about": "Ledger & Crown study version: the ordered scenes and options. The study runner (card MBA-ST7) loads this file; a change here needs no code change to the order. Plan: projects/mba-game/STUDY-VERSION-PLAN.md. Log format: projects/studio/STUDY-LOG-SCHEMA.md.",
+  "status": "pending Kyle's decision D3 (anchor)",
+  "anchor": "CLEP Financial Accounting (slice option A)",
+  "game": "ledger-crown",
+  "build": "lc-study-0.1",
+  "version": 1,
+  "modeledMinutes": 28.3,
+  "transitionMinutes": 0.5,
+  "_minutes": "28.3 = the route steps' minutes (26.3) + the frame (1.5) + 10 scene transitions at 3 s (0.5). Rate model: plan section 1.",
+  "stopMinutes": 30,
+  "engine": {
+    "newGame": { "story": true, "seed": 11 },
+    "quiet": true,
+    "autoFarm": true,
+    "notices": "decline",
+    "farmName": "Thornfield",
+    "_note": "The engine seed is fixed so everyone meets the same numbers. The forms' shuffle seed comes from the entry URL (core/study/shell.js urlSeed). Random events start on day 14; this route never passes day 8."
+  },
+  "logging": {
+    "conceptField": "S-id (S1..S10) from the slice concept list",
+    "gameConceptField": "gameConcept (the transcript id) is logged beside it",
+    "events": ["scene_start", "input", "outcome", "scene_end"]
+  },
+  "court": {
+    "claims": [
+      { "id": "ownsNothing", "concept": "S1", "gameConcept": "equation" },
+      { "id": "margin", "concept": "S3", "gameConcept": "margin" },
+      { "id": "termsVsWages", "concept": "S8", "gameConcept": "wc", "_new": "builder B4 in the plan: Hobb's price vs his 14-day terms against weekly wages; replaces dukeGenerous" },
+      { "id": "profitCash", "concept": "S10", "gameConcept": "cfs" }
+    ],
+    "order": "fixed",
+    "seed": 11,
+    "pass": 3,
+    "of": 4,
+    "retake": false,
+    "intro": "one box",
+    "endAt": "verdict",
+    "_cut": "six claims (plus inventoryCash, arCash) pass 4 of 6 was the slice draft; cut C3 of the plan. Restore by adding the two ids and setting pass 4, of 6."
+  },
+  "route": [
+    {
+      "id": "frame",
+      "kind": "frame",
+      "day": 1,
+      "concept": "",
+      "seconds": 90,
+      "steps": [
+        { "verb": "ch1Open" },
+        { "speak": "crane", "text": "Edric's heir. Bailiff Crane, of the Crown. Item: forty-one things to list before Midwinter, and I shall be thorough about every one. Walk with me.", "buttons": ["Walk with you"] },
+        { "tell": "That's Crane. He counts everything twice because he's frightened of nearly everything." },
+        { "tell": "Profit is an opinion. Cash is a fact. Edric never learned the difference. You will, this spring." },
+        { "page": 0, "lines": 1 }
+      ],
+      "_note": "Crane's first box is ch1's own; the runner skips it inside ch1 (skipFirstSpeak). Page 0 is Edric's first page, one line."
+    },
+    {
+      "id": "s1-bailiff",
+      "kind": "lesson",
+      "record": "ch1",
+      "day": 1,
+      "concept": "S1",
+      "gameConcept": "equation",
+      "select": { "skipFirstSpeak": true, "skipVerbs": ["nameFarm", "craneOffer", "craneOff"], "skipPages": true },
+      "stakes": "tag assets and liabilities, More/Less, the equity stamp",
+      "minutes": 2.9
+    },
+    {
+      "id": "s2-first-seed",
+      "kind": "lesson",
+      "record": "ch2",
+      "day": 1,
+      "concept": "S2",
+      "gameConcept": "inventory",
+      "pre": [{ "op": "harvest" }],
+      "stakes": "9 packets bought for Cash: 108 coin becomes Inventory",
+      "minutes": 0.8
+    },
+    {
+      "id": "s3-bakery",
+      "kind": "lesson",
+      "record": "ch3",
+      "day": 1,
+      "concept": "S3",
+      "gameConcept": "margin",
+      "select": {
+        "skipQuizzes": ["cost"],
+        "haggle": { "rounds": 1 },
+        "insertAfter": { "match": { "master": "margin" }, "from": { "record": "ch5", "window": { "from": { "speak": "tomas" }, "to": { "master": "margin" } } } }
+      },
+      "post": [{ "op": "ship", "who": "ashby" }],
+      "stakes": "the haggle (coin); Tomas's markup bet (2 coin)",
+      "minutes": 3.9
+    },
+    {
+      "id": "s4-hobb",
+      "kind": "lesson",
+      "record": "ch4",
+      "day": 1,
+      "concept": "S4",
+      "gameConcept": "accrual",
+      "post": [{ "op": "ship", "who": "hobb" }],
+      "stakes": "the sale on 14-day terms: revenue today, Cash on day 15",
+      "minutes": 1.1
+    },
+    {
+      "id": "s4-bet",
+      "kind": "lesson",
+      "record": "ch4b",
+      "day": 1,
+      "concept": "S4",
+      "gameConcept": "accrual",
+      "select": { "skipPages": true },
+      "verbs": { "ch4bBet": { "reveal": "now", "from": "forecast" } },
+      "stakes": "5 coin on the chest the morning after Hobb pays; revealed at once from the cash forecast",
+      "minutes": 2.4
+    },
+    {
+      "id": "s5-extension",
+      "kind": "scene",
+      "scene": "hobb_extension",
+      "day": 1,
+      "concept": "S5",
+      "gameConcept": "ar",
+      "stakes": "a real due date moves (+7 days) or does not",
+      "minutes": 1.2
+    },
+    {
+      "id": "s6-deposit",
+      "kind": "deposit",
+      "day": 2,
+      "concept": "S6",
+      "gameConcept": "unearned",
+      "pre": [{ "op": "placeOffer", "from": "R.deposits[0]", "who": "ashby" }],
+      "steps": [
+        { "accept": "ashby" },
+        { "verb": "depositLesson" },
+        { "check": { "text": "Ashby paid 122 today on 27 sacks you have not delivered. How much Revenue have you earned from that order so far?", "options": ["122", "0", "243"], "right": 1, "concept": "S6" } }
+      ],
+      "stakes": "accepting the deposit: Cash +122 and a liability, Customer deposits",
+      "minutes": 1.5
+    },
+    {
+      "id": "s7-on-account",
+      "kind": "lesson",
+      "record": "tvm",
+      "day": 2,
+      "init": { "again": false },
+      "concept": "S7",
+      "gameConcept": "ap",
+      "select": { "untilVerb": "tvmTimeline" },
+      "stakes": "seed bought on account: a bill pinned, due in 14 days",
+      "minutes": 0.7
+    },
+    {
+      "id": "s7-ezra",
+      "kind": "lesson",
+      "record": "ch7",
+      "day": 2,
+      "concept": "S7",
+      "gameConcept": "interest",
+      "select": { "skipVerbs": ["timeline"] },
+      "verbs": { "loan": { "buttons": ["Borrow 100", "Nothing today"] } },
+      "after": [
+        { "check": { "text": "You owe Ezra 200 at 2.5% a week. What leaves the chest at the next pay-day for the loan?", "options": ["5 of interest", "200, the whole loan", "Nothing until Midwinter"], "right": 0, "concept": "S7" } }
+      ],
+      "stakes": "the loan: Cash +100 now; interest posts at the day-7 sleep",
+      "minutes": 1.0
+    },
+    {
+      "id": "advance-to-wages",
+      "kind": "advance",
+      "toDay": 8,
+      "concept": "",
+      "autoFarm": true,
+      "notices": "decline",
+      "assert": { "noWalkOff": true, "noInsolvency": true },
+      "_note": "Six nights. Wages and interest fall on the day-7 sleep. Cash before: about 200 - 108 + 42 + 122 + 100 = 356; after wages about 306.",
+      "minutes": 0.2
+    },
+    {
+      "id": "s8-wages-day",
+      "kind": "lesson",
+      "record": "ch5",
+      "day": 8,
+      "concept": "S8",
+      "gameConcept": "wc",
+      "select": { "skipPages": true, "skipVerbs": ["costScene"], "skipWindow": { "from": { "speak": "tomas" }, "to": { "master": "margin" } } },
+      "after": [{ "practice": "ratio", "concept": "S8", "gameConcept": "ratios" }],
+      "stakes": "wages left the chest at the day-7 sleep; the current ratio on the player's own books",
+      "minutes": 2.0
+    },
+    {
+      "id": "s9-s10-close",
+      "kind": "lesson",
+      "record": "close",
+      "day": 8,
+      "concept": "S10",
+      "gameConcept": "cfs",
+      "init": { "from": "Books.close" },
+      "stakes": "the first tap on the cash-flow line is evidence",
+      "minutes": 3.0
+    },
+    {
+      "id": "court",
+      "kind": "court",
+      "day": 8,
+      "concept": "S10",
+      "config": "court",
+      "minutes": 5.6
+    }
+  ],
+  "cuts": [
+    { "id": "C1", "applied": true, "what": "opt-1 off: ashby_guarantee, letter 6, claim guarantee", "concept": "contingent liability", "minutes": 2.9 },
+    { "id": "C2", "applied": true, "what": "runner opens scenes itself; auto-ship on a closed deal", "concept": "none (glue)", "minutes": 1.6 },
+    { "id": "C3", "applied": true, "what": "mini-Court 6 claims to 4, pass 3 of 4, one intro box", "concept": "S2, S4-S5 lose their Court claim; both keep a coin stake in play", "minutes": 2.8 },
+    { "id": "C4", "applied": true, "what": "S3: typed cost-floor quiz dropped", "concept": "S3", "minutes": 1.2 },
+    { "id": "C5", "applied": true, "what": "S7: typed interest problem becomes a three-option check", "concept": "S7", "minutes": 0.75 },
+    { "id": "C6", "applied": true, "what": "S6: typed deposit problem becomes a three-option check", "concept": "S6", "minutes": 0.75 },
+    { "id": "N1", "applied": false, "what": "S8: ratio typed to a three-option check", "concept": "S8", "minutes": 0.75, "when": "pilot median over 30" },
+    { "id": "N2", "applied": false, "what": "S3: markup bet out", "concept": "S3", "minutes": 1.2, "when": "pilot median over 30 after N1" },
+    { "id": "N3", "applied": false, "what": "hobb_extension out", "concept": "S5", "minutes": 1.2, "when": "pilot median over 30 after N2" }
+  ],
+  "optional": {
+    "opt-1": {
+      "on": false,
+      "scene": { "kind": "scene", "scene": "ashby_guarantee", "day": 8, "concept": "opt-1", "gameConcept": "accrual", "insertBefore": "s9-s10-close" },
+      "claim": { "id": "guarantee", "concept": "opt-1", "gameConcept": "accrual" },
+      "minutes": 2.9
+    }
+  },
+  "selectOptions": {
+    "_about": "Options the runner's select helper (plan B2) applies to a record's steps. All are optional.",
+    "skipVerbs": "verb names to drop",
+    "skipQuizzes": "quiz steps to drop, by their answer variable",
+    "skipPages": "drop every { page } step",
+    "skipFirstSpeak": "drop the first { speak } step (the frame already showed it)",
+    "untilVerb": "keep steps before the first step with this verb",
+    "window": "{ from: {key: value}, to: {key: value} }: the inclusive run of steps from the first match to the next match",
+    "skipWindow": "drop that run",
+    "insertAfter": "{ match, from: { record, window } }: insert another record's window after the first matching step",
+    "haggle": "{ rounds: n }: the haggle verb closes after n counter rounds"
+  },
+  "ops": {
+    "harvest": "Spring.act on every ripe plot (Bot.farm's first pass)",
+    "ship": "Spring.deliver the named customer's open order at once (no crate)",
+    "placeOffer": "Spring.addOffer from the named R.deposits row on this day, with its deposit share and line",
+    "check": "a three-option question; logs outcome with ok and rt; no coin",
+    "practice": "the named Practice.BANK problem on the player's own books, typed; logs outcome"
+  }
+}

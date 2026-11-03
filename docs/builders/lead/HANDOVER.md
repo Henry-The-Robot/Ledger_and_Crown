@@ -28,6 +28,15 @@ site gets it when #59 merges. Kyle: we pay for ElevenLabs and do not use it → 
 - Gap found: no page loads the study version. New card MBA-ST11 (study.html, both arms) is first. MBA-VO2 fixes the voice line list.
 - Coverage: Spring covers 15 of 177 MBA sessions (8 percent). The other 162 are planned for later seasons.
 
+- Later 11-02: Kyle allowed the Lead to run `infra/git_sync_game.py`; it worked. CI pinned to ubuntu-24.04 (ubuntu-latest = 26.04 broke Playwright).
+- Kyle chose saves via a Home Screen app + nightly backup file (card MBA-SV1, first). Card order: MBA-SV1 → MBA-ST11 → MBA-VO2.
+
+- Casting flow xKINGy2eYad9xhRHP6KT (eleven_v4, one take each). Maud: Harriet aAsWcN5jdLdiYG7Hq0YL, Morganna 7NsaqHdLuKNFvEfjpUno, Mora YHcCpa6SBWnKDaCPZJQR.
+  Crane: Orson pbP9aQdMnZUbnnLJT8rH, Aaron sNwCKTIAudVoHBcLnZER, Patrick lcDjPH5uMz9D85TM5h2g.
+- Kyle picked his own voices instead: Maud = Tessa - Wise Leader, Crane = Flint. The cast is in `assets/voice/CAST.md`.
+  After MBA-VO2 writes LINES-study.json, the Lead generates every Maud and Crane line (about 43-146 credits a line).
+- Expert-review outreach draft asked of the coordinator (help.py, 11-02).
+
 ## Next 3 actions (10-27; see the update above)
 1. When the Builder pushes MBA-FX1, read the diff. Confirm CI is green. The Lead edited `tests/voice-opening.html`;
    CI has not run it yet. The reviewer's next pass must list no CRITICAL or MAJOR. Then merge #59.
