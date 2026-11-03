@@ -280,8 +280,9 @@ window.Court = (function () {
     const total = { mistakes: [], attempts: 0 }; let out = null;
     const study = o.study || null, of = study ? (study.of || study.claims.length) : TOTAL, pass = study ? (study.pass || of) : PASS;
     try {
-      await say("maud", "Say the number, then the reason. A claim answered with a number alone is half an answer.", "Next"); // C0.08: exam technique
-      await say("maud", "The Crown's advocate will make " + (study ? of : "nine") + " claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and " + (study ? pass : "six") + " refuted will satisfy the court.", "Begin");
+      const intro = introLines(study, of, pass);
+      mark(0); await say("maud", intro[0], "Next"); // C0.08: exam technique
+      mark(1); await say("maud", intro[1], "Begin");
       for (let attempt = 0; ; attempt++) {
         total.attempts = attempt + 1; const r = await hearing(o, attempt); total.mistakes = total.mistakes.concat(r.mistakes || []);
         if (r.left) { out = { passed: false, left: true, score: r.results.filter(x => x && x.ok).length, of, results: r.results.filter(Boolean).map(x => ({ id: x.id, ok: x.ok })), mistakes: total.mistakes, attempts: total.attempts }; break; }
@@ -314,5 +315,11 @@ window.Court = (function () {
   }
   const q0 = new URLSearchParams(location.search);
   if (q0.get("court") === "1") { const go = () => setTimeout(() => demo(q0), 0); if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go(); }
-  return { run, build, demo, PASS, TOTAL, BUILDERS };
+  // The two opening boxes of the hall (MBA-VO2: the study route's voice list reads them from here). Voice ids: scene "court", boxes intro-0 and intro-1.
+  function introLines(study, of, pass) {
+    return ["Say the number, then the reason. A claim answered with a number alone is half an answer.",
+      "The Crown's advocate will make " + (study ? of : "nine") + " claims about this farm. Press a claim to make the advocate say more (you may learn something), then pick a card (a line from your books or a clue) and Present it to refute the claim, and " + (study ? pass : "six") + " refuted will satisfy the court."];
+  }
+  const mark = k => { try { if (window.Voice) { window.Voice.mark("court", "intro-" + k); window.Voice.start(); } } catch (e) { /* voice is optional */ } };
+  return { run, build, demo, introLines, PASS, TOTAL, BUILDERS };
 })();

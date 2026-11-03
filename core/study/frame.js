@@ -39,11 +39,14 @@
   }
 
   // A three-option check as a dialog: the pick is logged as an outcome with ok and rt.
-  async function check(c, ctx) {
+  const vm = (scene, id) => { try { if (root.Voice) root.Voice.mark(scene, id); } catch (e) { /* voice is optional */ } }; // the box ids come from StudySelect.extraBoxes (MBA-VO2)
+  async function check(c, ctx, i) {
     const t0 = Date.now();
+    vm(ctx.step.id, "check" + i);
     const pick = await G.say("maud", c.text, c.options);
     ctx.outcome({ scene: ctx.step.id, concept: c.concept || ctx.step.concept, choice: String(pick), ok: pick === c.right, rt: Date.now() - t0 });
-    await G.say("maud", pick === c.right ? "Yes." : "Not quite. Keep it in mind.", ["Next"]);
+    vm(ctx.step.id, "check" + i + (pick === c.right ? "-yes" : "-no"));
+    await G.say("maud", pick === c.right ? Sel().CHECK_YES : Sel().CHECK_NO, ["Next"]);
   }
   // A typed problem on the player's own books (Practice.BANK).
   async function practice(x, ctx) {
@@ -77,7 +80,7 @@
         }
         await playRecord(step.id, Sel().overrideVerbs(Sel().select(rec.steps, step.select, root.Lessons.BY), step.verbs), init);
       }
-      for (const x of step.after || []) { if (x.check) await check(x.check, ctx); else if (x.practice) await practice(x, ctx); }
+      for (const [i, x] of (step.after || []).entries()) { if (x.check) await check(x.check, ctx, i); else if (x.practice) await practice(x, ctx); }
     },
     async scene(step) {
       const sc = root.Scenes.BY[step.scene];
@@ -87,10 +90,11 @@
     async deposit(step, ctx) {
       const s = G.s, o = s.offers.find(x => x.who === (step.steps.find(y => y.accept) || {}).accept && x.deposit);
       if (!o) throw new Error("study deposit: no deposit offer on the table");
+      vm(step.id, "deposit");
       const k = await G.say(o.who, o.say || "I can pay part now, the rest when you deliver.", ["Accept", "No thanks"]);
       if (k === 0) S().accept(s, o.id);
       G.hud();
-      for (const x of step.steps) if (x.check) await check(x.check, ctx);
+      for (const [i, x] of step.steps.entries()) if (x.check) await check(x.check, ctx, i);
     },
     async advance(step, ctx) { toDay(step.toDay, ctx); },
     async court(step, ctx) {
