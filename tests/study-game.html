@@ -3,7 +3,7 @@
 <body><pre id="out">running</pre><div id="frames"></div>
 <!-- MBA-ST11: study.html opens the real game in a frame; a bot (the pump from smoke-story.html) plays every step of study-route.json through the real scene player,
      verbs, dialog and Mini-Court, and the page must reach the result code with every step in the log. -->
-<script src="../core/study/assign.js"></script><script src="../core/study/forms.js"></script><script src="../core/study/fixture-items.js"></script>
+<script src="../core/study/assign.js"></script><script src="../core/study/forms.js"></script><script src="../core/study/items-clep.js"></script>
 <script>
 const out = [], errs = [], sleep = ms => new Promise(r => setTimeout(r, ms)), SEED = 20261022, PC = "p0001";
 const a = StudyAssign.assign(PC, SEED);
@@ -47,7 +47,7 @@ function pump(w) { // do the one thing the game screen is asking for; true if so
     const sw = f.contentWindow; sw.addEventListener("error", e => errs.push("study: " + e.message)); sw.addEventListener("unhandledrejection", e => errs.push("study rejection: " + (e.reason && e.reason.message || e.reason)));
     await sleep(300);
     // form A: all wrong, so the learner is not screened out
-    const built = StudyForms.build(StudyFixtureItems.items, "A", SEED);
+    const built = StudyForms.build(StudyItemsClep.items, "A", SEED);
     for (let i = 0; i < built.length; i++) { sw.document.querySelector(`.sp-opt[data-i="${(built[i].answerIndex + 1) % built[i].options.length}"]`).click(); await sleep(20); }
     const study = sw.__study, steps = [];
     // the game frame
@@ -74,7 +74,7 @@ function pump(w) { // do the one thing the game screen is asking for; true if so
     out.push(`the log holds a scene_start and a scene_end for each of the ${want.length} non-frame route steps: ${want.every(id => started.includes(id) && ended.includes(id))}`);
     out.push(`the log holds outcome rows for the checks and problems (${rows.filter(r => r.ev === "outcome").length}): ${rows.filter(r => r.ev === "outcome").length >= 3}`);
     out.push(`after the route the page asks form B: ${study.shell.phase() === "formB"}`);
-    const builtB = StudyForms.build(StudyFixtureItems.items, "B", SEED);
+    const builtB = StudyForms.build(StudyItemsClep.items, "B", SEED);
     for (let i = 0; i < builtB.length && study.shell.phase() === "formB"; i++) { sw.document.querySelector(`.sp-opt[data-i="${builtB[i].answerIndex}"]`).click(); await sleep(20); }
     await sleep(500);
     const box = sw.document.getElementById("sp-result");

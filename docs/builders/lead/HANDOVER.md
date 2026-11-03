@@ -42,6 +42,12 @@ site gets it when #59 merges. Kyle: we pay for ElevenLabs and do not use it → 
   unlinked MBA-ST11 files (study.html, core/study/page.js). They are reachable by URL only; finish ST11 before linking.
 - Lesson: the Builder and the Lead share one checkout. Before a sync, run `git status` to see whose files are in it.
 
+- 11-03: Kyle's playtest: on account was never worse than Cash. Cash now gets Tomas's 2% (v0.4.14, PR #61).
+  The first-seed lesson keeps the list price (opt.list), so "Cash down 36, Inventory up 36" stays exact.
+  Goldens re-recorded: test-story-trace, test-golden-bots, and story-seed3.json (pulled from the CI dump step).
+- 11-03: MBA-ST11 and MBA-VO2 merged. The live study.html still runs on fixture questions (break-even). The real CLEP
+  items and reading exist and pass in knowledge/mba/study/clep-fa-slice/. Card MBA-ST12 wires them; it is first.
+
 ## Next 3 actions (10-27; see the update above)
 1. When the Builder pushes MBA-FX1, read the diff. Confirm CI is green. The Lead edited `tests/voice-opening.html`;
    CI has not run it yet. The reviewer's next pass must list no CRITICAL or MAJOR. Then merge #59.
